@@ -175,8 +175,8 @@
 </div>
 
 <script>
-    // URL ATUALIZADA DO GOOGLE APPS SCRIPT
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyvNjHSmqHPid70wY9xs1G-WYauMh9_LrEJ58xhr0HJFLUyowb4zcP0Bjb4HBoA69Q75Q/exec";
+    // NOVO LINK ATUALIZADO DO GOOGLE APPS SCRIPT
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxD1ghsuRobUpxeHDE3VXygTvOdCElZszCWHIbvpbPkWXA6nPXIjoy99PKppolBfdSC_Q/exec";
     let tecnicoLogado = "";
 
     // 1. LÓGICA DE LOGIN E CARREGAMENTO DOS DADOS AUTOMÁTICOS
@@ -206,3 +206,10 @@
                     fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getControladoras" }) }).then(r => r.json()),
                     fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getCodigosServico" }) }).then(r => r.json())
                 ]);
+            } else {
+                throw new Error(data.error || "Erro de autenticação");
+            }
+        })
+        .then(([osData, ctrlData, codData]) => {
+            if(osData.result === "success") {
+                document.getElementById('numero_os').value = osData.numero
