@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ordem de Serviço - Web App</title>
+    <title>Ordem de Serviço - Ecomix</title>
+    <!-- Incluindo a biblioteca jsPDF para exportação em PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --primary: #007bff; --bg: #f4f6f9; --success: #28a745; --whatsapp: #25d366; }
+        :root { --primary: #007bff; --bg: #f4f6f9; --success: #28a745; --whatsapp: #25d366; --dark: #343a40; --brand-green: #00966b; }
         body { font-family: Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
-        .container { max-width: 800px; background: white; margin: 0 auto; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .container { max-width: 900px; background: white; margin: 0 auto; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .hidden { display: none !important; }
         h2 { color: #333; border-bottom: 2px solid var(--primary); padding-bottom: 8px; margin-top: 0; }
         fieldset { border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 20px; }
@@ -23,17 +25,46 @@
         .radio-group label { margin: 0; font-weight: normal; cursor: pointer; }
         button { background-color: var(--primary); color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         button:hover { background-color: #0056b3; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-secondary:hover { background-color: #5a6268; }
         .btn-whats { background-color: var(--whatsapp); }
         .btn-whats:hover { background-color: #1ebd59; }
+        .btn-pdf { background-color: #dc3545; }
+        .btn-pdf:hover { background-color: #c82333; }
+        .btn-menu { height: 60px; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; border-radius: 6px; }
         #msgLogin, #mensagem { margin-top: 15px; text-align: center; font-weight: bold; }
-        .login-box { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .login-box, .menu-box { max-width: 450px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+        
+        /* Tabela de Relatório */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: var(--primary); color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .actions-cell { display: flex; gap: 5px; }
+        .actions-cell button { padding: 5px 10px; font-size: 12px; margin: 0; width: auto; }
     </style>
 </head>
 <body>
 
-<!-- TELA DE LOGIN -->
-<div id="telaLogin" class="login-box">
-    <h2>Login do Técnico</h2>
+<!-- TELA 1: MENU PRINCIPAL (PRIMEIRA TELA COM A LOGO) -->
+<div id="telaMenu" class="menu-box container">
+    <div style="margin-bottom: 20px;">
+        <!-- Logo Ecomix fornecida -->
+        <img src="https://i.ibb.co/V93Vp96/Whats-App-Image-2026-09-30-at-06-43-55.jpg" alt="Ecomix Logo" style="max-width: 180px; height: auto; display: block; margin: 0 auto 10px auto;">
+        <span style="font-size: 14px; color: #666; font-weight: bold;">Gestão e Planejamentos</span>
+    </div>
+    
+    <button type="button" id="menuBtnForm" class="btn-menu" style="background-color: var(--brand-green);">📝 Lançamento de O.S</button>
+    
+    <a href="https://www.google.com/maps/d/viewer?mid=1VhFRzI_GfxmRoRvVWv7RzN6_8GbJYk0&ll=-22.91169477718409%2C-43.05790850000001&z=12" target="_blank" class="btn-menu btn-secondary" style="color:white; background-color: #17a2b8;">🗺️ Mapa das Controladoras</a>
+    
+    <button type="button" id="menuBtnRelatorio" class="btn-menu btn-secondary">📊 Consulta e Relatório de O.S</button>
+</div>
+
+<!-- TELA 2: LOGIN (SOLICITADO APENAS AO CLICAR EM LANÇAR OU CONSULTAR) -->
+<div id="telaLogin" class="login-box hidden">
+    <h2 id="tituloLogin">Identificação Necessária</h2>
+    <p id="subLogin" style="font-size: 13px; color: #666; margin-bottom: 20px;">Faça login para prosseguir.</p>
     <form id="formLogin">
         <label for="usuario">Usuário / Nome:</label>
         <input type="text" id="usuario" required>
@@ -42,19 +73,57 @@
         <input type="password" id="senha" required>
 
         <button type="submit" id="btnLogin">Entrar</button>
+        <button type="button" class="btnVoltarMenu btn-secondary" style="margin-top: 10px;">Voltar ao Menu</button>
     </form>
     <div id="msgLogin"></div>
 </div>
 
-<!-- TELA DO FORMULÁRIO DE OS -->
+<!-- TELA 3: CONSULTA / RELATÓRIO DE OS -->
+<div id="telaRelatorio" class="container hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>Consulta de Ordens de Serviço</h2>
+        <button type="button" class="btnVoltarMenu btn-secondary" style="width: auto; padding: 5px 15px;">Voltar ao Menu</button>
+    </div>
+
+    <fieldset>
+        <legend>Filtros de Pesquisa</legend>
+        <div class="grid-4">
+            <div><label>Nº da OS:</label><input type="text" id="filtroOS"></div>
+            <div><label>Data:</label><input type="date" id="filtroData"></div>
+            <div><label>Técnico:</label><input type="text" id="filtroTecnico"></div>
+            <div><label>Equipe:</label><input type="text" id="filtroEquipe"></div>
+        </div>
+        <button type="button" id="btnFiltrarRelatorio">Pesquisar</button>
+    </fieldset>
+
+    <div style="overflow-x: auto;">
+        <table id="tabelaResultados">
+            <thead>
+                <tr>
+                    <th>OS</th>
+                    <th>Data</th>
+                    <th>Controladora</th>
+                    <th>Técnico</th>
+                    <th>Equipe</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="7" style="text-align:center;">Clique em Pesquisar para carregar as O.S...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- TELA 4: FORMULÁRIO DE LANÇAMENTO DE OS -->
 <div id="telaForm" class="container hidden">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>Ordem de Serviço</h2>
-        <span id="userLogadoLabel" style="font-size: 14px; color: #666; font-weight: bold;"></span>
+        <h2>Lançamento de Ordem de Serviço</h2>
+        <button type="button" class="btnVoltarMenu btn-secondary" style="width: auto; padding: 5px 15px;">Voltar ao Menu</button>
     </div>
 
     <form id="formOS">
-        <!-- Identificação e Tipo -->
         <fieldset>
             <legend>Identificação do Serviço</legend>
             <div class="grid-3">
@@ -87,7 +156,6 @@
             </div>
         </fieldset>
 
-        <!-- Datas e Horários -->
         <fieldset>
             <legend>Período de Atendimento</legend>
             <div class="grid-4">
@@ -98,7 +166,6 @@
             </div>
         </fieldset>
 
-        <!-- Descrição e Medições -->
         <fieldset>
             <legend>Detalhamento Técnico</legend>
             <label>Descrição do Serviço:</label>
@@ -113,7 +180,6 @@
             </div>
         </fieldset>
 
-        <!-- Componentes -->
         <fieldset>
             <legend>Verificação de Infraestrutura</legend>
             <div class="grid-3">
@@ -131,7 +197,6 @@
             </div>
         </fieldset>
 
-        <!-- Status e Finalização -->
         <fieldset>
             <legend>Finalização</legend>
             <div class="grid-2">
@@ -175,11 +240,44 @@
 </div>
 
 <script>
-    // NOVO LINK ATUALIZADO DO GOOGLE APPS SCRIPT
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxD1ghsuRobUpxeHDE3VXygTvOdCElZszCWHIbvpbPkWXA6nPXIjoy99PKppolBfdSC_Q/exec";
     let tecnicoLogado = "";
+    let isSupervisor = false;
+    let destinoAcesso = ""; // 'form' ou 'relatorio'
+    let cacheOS = []; // Armazena a lista de OS buscadas para gerar PDF/WhatsApp
 
-    // 1. LÓGICA DE LOGIN E CARREGAMENTO DOS DADOS AUTOMÁTICOS
+    function mostrarTela(idTela) {
+        document.getElementById('telaMenu').classList.add('hidden');
+        document.getElementById('telaLogin').classList.add('hidden');
+        document.getElementById('telaRelatorio').classList.add('hidden');
+        document.getElementById('telaForm').classList.add('hidden');
+        document.getElementById(idTela).classList.remove('hidden');
+    }
+
+    document.querySelectorAll('.btnVoltarMenu').forEach(btn => {
+        btn.addEventListener('click', () => mostrarTela('telaMenu'));
+    });
+
+    // Botões do Menu Principal pedem login
+    document.getElementById('menuBtnForm').addEventListener('click', () => {
+        destinoAcesso = 'form';
+        document.getElementById('tituloLogin').innerText = "Login para Lançamento";
+        document.getElementById('subLogin').innerText = "Informe suas credenciais para abrir o formulário.";
+        document.getElementById('formLogin').reset();
+        document.getElementById('msgLogin').innerText = "";
+        mostrarTela('telaLogin');
+    });
+
+    document.getElementById('menuBtnRelatorio').addEventListener('click', () => {
+        destinoAcesso = 'relatorio';
+        document.getElementById('tituloLogin').innerText = "Login para Consulta";
+        document.getElementById('subLogin').innerText = "Informe suas credenciais para acessar os relatórios.";
+        document.getElementById('formLogin').reset();
+        document.getElementById('msgLogin').innerText = "";
+        mostrarTela('telaLogin');
+    });
+
+    // LÓGICA DE LOGIN
     document.getElementById('formLogin').addEventListener('submit', function(e) {
         e.preventDefault();
         const user = document.getElementById('usuario').value.trim();
@@ -189,6 +287,7 @@
 
         btn.disabled = true;
         btn.innerText = "Verificando...";
+        msg.innerText = "";
 
         fetch(URL_APPS_SCRIPT, {
             method: 'POST',
@@ -196,20 +295,368 @@
         })
         .then(res => res.json())
         .then(data => {
+            btn.disabled = false;
+            btn.innerText = "Entrar";
             if(data.result === "success") {
                 tecnicoLogado = data.user;
-                document.getElementById('tecnico').value = data.user;
-                document.getElementById('userLogadoLabel').innerText = "Técnico: " + data.user;
+                isSupervisor = data.isSupervisor;
 
-                return Promise.all([
-                    fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getProximaOS" }) }).then(r => r.json()),
-                    fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getControladoras" }) }).then(r => r.json()),
-                    fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getCodigosServico" }) }).then(r => r.json())
-                ]);
+                if(destinoAcesso === 'form') {
+                    document.getElementById('tecnico').value = data.user;
+                    carregarDadosFormulario();
+                    mostrarTela('telaForm');
+                } else {
+                    if(!isSupervisor) {
+                        document.getElementById('filtroTecnico').value = data.user;
+                        document.getElementById('filtroTecnico').disabled = true;
+                    } else {
+                        document.getElementById('filtroTecnico').disabled = false;
+                        document.getElementById('filtroTecnico').value = "";
+                    }
+                    mostrarTela('telaRelatorio');
+                    carregarRelatorio();
+                }
             } else {
-                throw new Error(data.error || "Erro de autenticação");
+                throw new Error(data.error || "Usuário ou senha inválidos.");
             }
         })
-        .then(([osData, ctrlData, codData]) => {
-            if(osData.result === "success") {
-                document.getElementById('numero_os').value = osData.numero
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerText = "Entrar";
+            msg.style.color = "red";
+            msg.innerText = err.message;
+        });
+    });
+
+    function carregarDadosFormulario() {
+        Promise.all([
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getProximaOS" }) }).then(r => r.json()),
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getControladoras" }) }).then(r => r.json()),
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getCodigosServico" }) }).then(r => r.json())
+        ]).then(([osData, ctrlData, codData]) => {
+            if(osData.result === "success") document.getElementById('numero_os').value = osData.numero_os;
+            if(ctrlData.result === "success" && ctrlData.controladoras) {
+                const datalistCtrl = document.getElementById('listaControladoras');
+                datalistCtrl.innerHTML = "";
+                ctrlData.controladoras.forEach(ctrl => {
+                    const opt = document.createElement('option');
+                    opt.value = ctrl;
+                    datalistCtrl.appendChild(opt);
+                });
+            }
+            if(codData.result === "success" && codData.codigos) {
+                const datalistCod = document.getElementById('listaCodigos');
+                datalistCod.innerHTML = "";
+                codData.codigos.forEach(cod => {
+                    const opt = document.createElement('option');
+                    opt.value = cod;
+                    datalistCod.appendChild(opt);
+                });
+            }
+        });
+    }
+
+    // CONSULTA / RELATÓRIO
+    function carregarRelatorio() {
+        const tbody = document.querySelector('#tabelaResultados tbody');
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Carregando dados...</td></tr>';
+
+        const payload = {
+            action: "buscarOS",
+            usuarioLogado: tecnicoLogado,
+            isSupervisor: isSupervisor,
+            filtroOS: document.getElementById('filtroOS').value,
+            filtroData: document.getElementById('filtroData').value,
+            filtroTecnico: document.getElementById('filtroTecnico').value,
+            filtroEquipe: document.getElementById('filtroEquipe').value
+        };
+
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === "success") {
+                cacheOS = data.lista || [];
+                tbody.innerHTML = "";
+                if (cacheOS.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma O.S encontrada.</td></tr>';
+                    return;
+                }
+                cacheOS.forEach((os, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><b>${os.numero_os}</b></td>
+                        <td>${os.data_inicial ? os.data_inicial.split('-').reverse().join('/') : ''}</td>
+                        <td>${os.controladora}</td>
+                        <td>${os.tecnico}</td>
+                        <td>${os.equipe}</td>
+                        <td>${os.status_servico}</td>
+                        <td class="actions-cell">
+                            <button type="button" class="btn-whats" onclick="enviarWhatsAppIndex(${index})">💬 Whats</button>
+                            <button type="button" class="btn-pdf" onclick="gerarPDFIndex(${index})">📄 PDF</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        })
+        .catch(err => {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">Erro ao buscar dados: ${err.message}</td></tr>`;
+        });
+    }
+
+    document.getElementById('btnFiltrarRelatorio').addEventListener('click', carregarRelatorio);
+
+    // WHATSAPP DA CONSULTA
+    function enviarWhatsAppIndex(index) {
+        const os = cacheOS[index];
+        const texto = `*Mantenção semafórica*%0A%0A` +
+                      `Data Inicial: ${os.data_inicial ? os.data_inicial.split('-').reverse().join('/') : ''}%0A` +
+                      `Horario inicial: ${os.hora_inicial || ''}%0A` +
+                      `Data final: ${os.data_final ? os.data_final.split('-').reverse().join('/') : ''}%0A` +
+                      `Horario final: ${os.hora_final || ''}%0A%0A` +
+                      `Controladora: ${os.controladora}%0A%0A` +
+                      `Código: ${os.codigo_servico || ''}%0A%0A` +
+                      `${os.tipo_servico || ''}%0A` +
+                      `Entrada de Alimentação (CA): ${os.tensao_alternada || ''}%0A` +
+                      `Aterramento: ${os.aterramento || ''}%0A` +
+                      `Nobreak: ${os.nobreak || ''}%0A` +
+                      `Fusíveis: ${os.fusivel || ''}%0A%0A` +
+                      `Saída da fonte de Alimentação (CC):%0A` +
+                      `7,5V: ${os.tensao_75vdc || ''}%0A` +
+                      `12V: ${os.tensao_12vdc || ''}%0A` +
+                      `24V: ${os.tensao_24vdc || ''}%0A%0A` +
+                      `Cabeamento: ${os.cabeamento || ''}%0A` +
+                      `Invólucro: ${os.involucro || ''}%0A` +
+                      `Gabinetes: ${os.gabinetes || ''}%0A` +
+                      `Placas de CPU e Potência: ${os.placas_cpu_potencia || ''}%0A` +
+                      `Grupos focais: ${os.blocos_semaforicos || ''}%0A` +
+                      `Colunas: ${os.colunas || ''}%0A` +
+                      `Braços: ${os.bracos || ''}%0A` +
+                      `Padronizada: ${os.padronizada || ''}%0A%0A` +
+                      `Status da Controladora: ${os.status_controlador || ''}%0A%0A` +
+                      `Material Utilizado: ${os.material || ''}%0A%0A` +
+                      `Obs.: ${os.observacao || ''}%0A%0A` +
+                      `Equipe: ${os.equipe || ''}%0A` +
+                      `Eletrotécnico Responsável: ${os.tecnico || ''}%0A%0A` +
+                      `O.S SM: ${os.numero_os}`;
+
+        window.open(`https://api.whatsapp.com/send?text=${texto}`, '_blank');
+    }
+
+    // EXPORTAR EM PDF NO FORMATO EXATO DO MODELO
+    function gerarPDFIndex(index) {
+        const os = cacheOS[index];
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text("Kecomix", 14, 15);
+        doc.setFontSize(10);
+        doc.text("Gestão e Planejamento", 14, 20);
+
+        doc.setFontSize(16);
+        doc.text("ORDEM DE SERVIÇO", 120, 15);
+        doc.setFontSize(11);
+        doc.text(`N° SM: ${os.numero_os}`, 120, 22);
+
+        doc.setLineWidth(0.5);
+        doc.line(14, 26, 196, 26);
+
+        // Controladora e Tipo
+        doc.setFontSize(10);
+        doc.text("CONTROLADORA:", 14, 33);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(os.controladora || ""), 48, 33);
+
+        doc.setFont("helvetica", "bold");
+        doc.text("TIPO DO SERVIÇO:", 14, 40);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(os.tipo_servico || ""), 48, 40);
+
+        // Período
+        doc.rect(14, 45, 182, 18);
+        doc.setFont("helvetica", "bold");
+        doc.text("PERÍODO DA ATIVIDADE", 16, 51);
+        doc.text("INÍCIO", 60, 51);
+        doc.text("TÉRMINO", 130, 51);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Data: ${os.data_inicial ? os.data_inicial.split('-').reverse().join('/') : ''}  Hora: ${os.hora_inicial || ''}`, 40, 58);
+        doc.text(`Data: ${os.data_final ? os.data_final.split('-').reverse().join('/') : ''}  Hora: ${os.hora_final || ''}`, 110, 58);
+
+        // Código do Serviço e Descrição
+        doc.setFont("helvetica", "bold");
+        doc.text(`CÓD. DO SERVIÇO: ${os.codigo_servico || ''}`, 14, 69);
+        doc.text("DESCRIÇÃO DO SERVIÇO REALIZADO:", 14, 76);
+        doc.rect(14, 79, 182, 18);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(os.descricao_servico || ""), 16, 85, { maxWidth: 178 });
+
+        // Tabela de Medições e Verificações
+        let y = 103;
+        doc.setFont("helvetica", "bold");
+        doc.text("MEDIDAS E VERIFICAÇÕES:", 14, y);
+        y += 6;
+
+        const itens = [
+            ["Tensão (CA):", os.tensao_alternada, "Cabeamento:", os.cabeamento],
+            ["Aterramento:", os.aterramento, "Invólucro:", os.involucro],
+            ["Tensão 7,5VCC:", os.tensao_75vdc, "Gabinetes:", os.gabinetes],
+            ["Tensão 12VCC:", os.tensao_12vdc, "Placas CPU/Potência:", os.placas_cpu_potencia],
+            ["Tensão 24VCC:", os.tensao_24vdc, "Grupos Focais:", os.blocos_semaforicos],
+            ["Fusíveis:", os.fusivel, "Colunas / Braços:", `${os.colunas || ''} / ${os.bracos || ''}`],
+            ["Nobreak:", os.nobreak, "Padronizada:", os.padronizada]
+        ];
+
+        doc.setFont("helvetica", "normal");
+        itens.forEach(row => {
+            doc.text(row[0], 16, y);
+            doc.text(String(row[1] || ""), 50, y);
+            doc.text(row[2], 105, y);
+            doc.text(String(row[3] || ""), 145, y);
+            y += 6;
+        });
+
+        // Status e Finalização
+        y += 4;
+        doc.rect(14, y, 182, 18);
+        doc.setFont("helvetica", "bold");
+        doc.text("STATUS DO SERVIÇO:", 16, y + 6);
+        doc.text("STATUS DA CONTROLADORA:", 105, y + 6);
+        doc.setFont("helvetica", "normal");
+        doc.text(os.status_servico || "", 16, y + 13);
+        doc.text(os.status_controlador || "", 105, y + 13);
+
+        y += 22;
+        doc.text(`Pendência: ${os.pendencia || 'Nenhuma'}`, 14, y);
+        y += 6;
+        doc.text(`Material Utilizado: ${os.material || 'Nenhum'}`, 14, y);
+        y += 6;
+        doc.text(`Observação: ${os.observacao || 'Nenhuma'}`, 14, y);
+
+        // Rodapé Equipe / Técnico / Supervisor
+        y += 12;
+        doc.rect(14, y, 182, 16);
+        doc.setFont("helvetica", "bold");
+        doc.text("EQUIPE", 25, y + 6);
+        doc.text("SUPERVISOR", 85, y + 6);
+        doc.text("TÉCNICO RESPONSÁVEL", 145, y + 6);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(os.equipe || ""), 25, y + 13);
+        doc.text(String(os.supervisor || ""), 85, y + 13);
+        doc.text(String(os.tecnico || ""), 145, y + 13);
+
+        doc.save(`Ordem_Servico_${os.numero_os}.pdf`);
+    }
+
+    // REGISTRAR O.S
+    document.getElementById('formOS').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnEnviar');
+        const msg = document.getElementById('mensagem');
+        const numeroOS = document.getElementById('numero_os').value;
+
+        btn.disabled = true;
+        btn.innerText = "Registrando O.S...";
+
+        const payload = {
+            numero_os: numeroOS,
+            controladora: document.getElementById('controladora').value,
+            codigo_servico: document.getElementById('codigo_servico').value,
+            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
+            data_inicial: document.getElementById('data_inicial').value,
+            hora_inicial: document.getElementById('hora_inicial').value,
+            data_final: document.getElementById('data_final').value,
+            hora_final: document.getElementById('hora_final').value,
+            descricao_servico: document.getElementById('descricao_servico').value,
+            tensao_alternada: document.getElementById('tensao_alternada').value,
+            tensao_75vdc: document.getElementById('tensao_75vdc').value,
+            tensao_12vdc: document.getElementById('tensao_12vdc').value,
+            tensao_24vdc: document.getElementById('tensao_24vdc').value,
+            aterramento: document.getElementById('aterramento').value,
+            cabeamento: document.getElementById('cabeamento').value,
+            fusivel: document.getElementById('fusivel').value,
+            involucro: document.getElementById('involucro').value,
+            gabinetes: document.getElementById('gabinetes').value,
+            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
+            padronizada: document.getElementById('padronizada').value,
+            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
+            colunas: document.getElementById('colunas').value,
+            bracos: document.getElementById('bracos').value,
+            status_servico: document.querySelector('input[name="status_servico"]:checked')?.value || "",
+            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
+            pendencia: document.getElementById('pendencia').value,
+            material: document.getElementById('material').value,
+            observacao: document.getElementById('observacao').value,
+            equipe: document.getElementById('equipe').value,
+            tecnico: tecnicoLogado,
+            supervisor: document.getElementById('supervisor').value,
+            nobreak: document.getElementById('nobreak').value
+        };
+
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === "success") {
+                alert(`Ordem de Serviço Nº ${numeroOS} registrada com sucesso!`);
+                msg.style.color = "green";
+                msg.innerText = `O.S Nº ${numeroOS} registrada! Você já pode enviar o relatório para o WhatsApp.`;
+                btn.innerText = "O.S Registrada com Sucesso!";
+                document.getElementById('btnWhatsApp').classList.remove('hidden');
+            } else {
+                throw new Error(data.error);
+            }
+        })
+        .catch(err => {
+            msg.style.color = "red";
+            msg.innerText = "Erro ao registrar O.S: " + err.message;
+            btn.disabled = false;
+            btn.innerText = "Registrar O.S";
+        });
+    });
+
+    // BOTÃO WHATSAPP PÓS-CADASTRO
+    document.getElementById('btnWhatsApp').addEventListener('click', function() {
+        const osTemp = {
+            numero_os: document.getElementById('numero_os').value,
+            controladora: document.getElementById('controladora').value,
+            codigo_servico: document.getElementById('codigo_servico').value,
+            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
+            data_inicial: document.getElementById('data_inicial').value,
+            hora_inicial: document.getElementById('hora_inicial').value,
+            data_final: document.getElementById('data_final').value,
+            hora_final: document.getElementById('hora_final').value,
+            tensao_alternada: document.getElementById('tensao_alternada').value,
+            aterramento: document.getElementById('aterramento').value,
+            nobreak: document.getElementById('nobreak').value,
+            fusivel: document.getElementById('fusivel').value,
+            tensao_75vdc: document.getElementById('tensao_75vdc').value,
+            tensao_12vdc: document.getElementById('tensao_12vdc').value,
+            tensao_24vdc: document.getElementById('tensao_24vdc').value,
+            cabeamento: document.getElementById('cabeamento').value,
+            involucro: document.getElementById('involucro').value,
+            gabinetes: document.getElementById('gabinetes').value,
+            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
+            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
+            colunas: document.getElementById('colunas').value,
+            bracos: document.getElementById('bracos').value,
+            padronizada: document.getElementById('padronizada').value,
+            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
+            material: document.getElementById('material').value,
+            observacao: document.getElementById('observacao').value,
+            equipe: document.getElementById('equipe').value,
+            tecnico: tecnicoLogado
+        };
+        cacheOS.push(osTemp);
+        enviarWhatsAppIndex(cacheOS.length - 1);
+    });
+</script>
+
+</body>
+</html>
