@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ordem de Serviço - Ecomix</title>
-    <!-- Incluindo a biblioteca jsPDF para exportação em PDF -->
+    <!-- Biblioteca jsPDF para exportação em PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { --primary: #007bff; --bg: #f4f6f9; --success: #28a745; --whatsapp: #25d366; --dark: #343a40; --brand-green: #00966b; }
@@ -33,24 +33,24 @@
         .btn-pdf:hover { background-color: #c82333; }
         .btn-menu { height: 60px; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; border-radius: 6px; }
         #msgLogin, #mensagem { margin-top: 15px; text-align: center; font-weight: bold; }
-        .login-box, .menu-box { max-width: 450px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+        .menu-box, .login-box { max-width: 450px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
         
-        /* Tabela de Relatório */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: var(--primary); color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .actions-cell { display: flex; gap: 5px; }
         .actions-cell button { padding: 5px 10px; font-size: 12px; margin: 0; width: auto; }
+        .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .filter-row input[type="checkbox"] { width: auto; margin: 0; }
     </style>
 </head>
 <body>
 
-<!-- TELA 1: MENU PRINCIPAL (PRIMEIRA TELA COM A LOGO) -->
+<!-- TELA 1: MENU PRINCIPAL (COM LOGO DO GOOGLE DRIVE) -->
 <div id="telaMenu" class="menu-box container">
     <div style="margin-bottom: 20px;">
-        <!-- Logo Ecomix fornecida -->
-        <img src="https://i.ibb.co/V93Vp96/Whats-App-Image-2026-09-30-at-06-43-55.jpg" alt="Ecomix Logo" style="max-width: 180px; height: auto; display: block; margin: 0 auto 10px auto;">
+        <img src="https://lh3.googleusercontent.com/d/1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Ecomix Logo" style="max-width: 180px; height: auto; display: block; margin: 0 auto 10px auto;" crossorigin="anonymous">
         <span style="font-size: 14px; color: #666; font-weight: bold;">Gestão e Planejamentos</span>
     </div>
     
@@ -61,16 +61,25 @@
     <button type="button" id="menuBtnRelatorio" class="btn-menu btn-secondary">📊 Consulta e Relatório de O.S</button>
 </div>
 
-<!-- TELA 2: LOGIN (SOLICITADO APENAS AO CLICAR EM LANÇAR OU CONSULTAR) -->
+<!-- TELA 2: ESCOLHA DE PERFIL PARA CONSULTA -->
+<div id="telaEscolhaPerfil" class="login-box hidden">
+    <h2>Tipo de Consulta</h2>
+    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Selecione o seu perfil de acesso:</p>
+    <button type="button" id="btnPerfilTecnico" class="btn-menu" style="background-color: #007bff; height: 50px; font-size: 16px;">Técnico (Consulta Limitada)</button>
+    <button type="button" id="btnPerfilSupervisor" class="btn-menu" style="background-color: #6c757d; height: 50px; font-size: 16px;">Supervisor (Consulta Completa)</button>
+    <button type="button" class="btnVoltarMenu btn-secondary" style="margin-top: 15px;">Voltar ao Menu</button>
+</div>
+
+<!-- TELA 3: LOGIN UNIFICADO -->
 <div id="telaLogin" class="login-box hidden">
-    <h2 id="tituloLogin">Identificação Necessária</h2>
-    <p id="subLogin" style="font-size: 13px; color: #666; margin-bottom: 20px;">Faça login para prosseguir.</p>
+    <h2 id="tituloLogin">Login</h2>
+    <p id="subLogin" style="font-size: 13px; color: #666; margin-bottom: 20px;"></p>
     <form id="formLogin">
         <label for="usuario">Usuário / Nome:</label>
         <input type="text" id="usuario" required>
 
-        <label for="senha">Senha:</label>
-        <input type="password" id="senha" required>
+        <label for="senha" id="labelSenha">Senha:</label>
+        <input type="password" id="senha">
 
         <button type="submit" id="btnLogin">Entrar</button>
         <button type="button" class="btnVoltarMenu btn-secondary" style="margin-top: 10px;">Voltar ao Menu</button>
@@ -78,20 +87,36 @@
     <div id="msgLogin"></div>
 </div>
 
-<!-- TELA 3: CONSULTA / RELATÓRIO DE OS -->
+<!-- TELA 4: CONSULTA / RELATÓRIO DE OS -->
 <div id="telaRelatorio" class="container hidden">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>Consulta de Ordens de Serviço</h2>
+        <div>
+            <h2>Consulta de Ordens de Serviço</h2>
+            <span id="infoSupervisor" style="font-size: 13px; color: var(--brand-green); font-weight: bold;"></span>
+        </div>
         <button type="button" class="btnVoltarMenu btn-secondary" style="width: auto; padding: 5px 15px;">Voltar ao Menu</button>
     </div>
 
     <fieldset>
-        <legend>Filtros de Pesquisa</legend>
+        <legend>Filtros de Pesquisa (Marque para ativar)</legend>
         <div class="grid-4">
-            <div><label>Nº da OS:</label><input type="text" id="filtroOS"></div>
-            <div><label>Data:</label><input type="date" id="filtroData"></div>
-            <div><label>Técnico:</label><input type="text" id="filtroTecnico"></div>
-            <div><label>Equipe:</label><input type="text" id="filtroEquipe"></div>
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkOS"><label for="chkOS" style="margin:0;">Nº da OS</label></div>
+                <input type="text" id="filtroOS" placeholder="Filtrar OS...">
+            </div>
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkData"><label for="chkData" style="margin:0;">Data Inicial</label></div>
+                <input type="date" id="filtroData">
+            </div>
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkTecnico"><label for="chkTecnico" style="margin:0;">Técnico</label></div>
+                <select id="filtroTecnicoSelect" style="display:none; width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;"><option value="">Todos os técnicos</option></select>
+                <input type="text" id="filtroTecnicoInput" placeholder="Técnico...">
+            </div>
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkEquipe"><label for="chkEquipe" style="margin:0;">Equipe</label></div>
+                <input type="text" id="filtroEquipe" placeholder="Equipe...">
+            </div>
         </div>
         <button type="button" id="btnFiltrarRelatorio">Pesquisar</button>
     </fieldset>
@@ -110,13 +135,13 @@
                 </tr>
             </thead>
             <tbody>
-                <tr><td colspan="7" style="text-align:center;">Clique em Pesquisar para carregar as O.S...</td></tr>
+                <tr><td colspan="7" style="text-align:center;">Selecione os filtros e clique em Pesquisar...</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- TELA 4: FORMULÁRIO DE LANÇAMENTO DE OS -->
+<!-- TELA 5: FORMULÁRIO DE LANÇAMENTO DE OS -->
 <div id="telaForm" class="container hidden">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h2>Lançamento de Ordem de Serviço</h2>
@@ -240,14 +265,17 @@
 </div>
 
 <script>
+    // LINK ATUALIZADO DO GOOGLE APPS SCRIPT
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxD1ghsuRobUpxeHDE3VXygTvOdCElZszCWHIbvpbPkWXA6nPXIjoy99PKppolBfdSC_Q/exec";
     let tecnicoLogado = "";
     let isSupervisor = false;
-    let destinoAcesso = ""; // 'form' ou 'relatorio'
-    let cacheOS = []; // Armazena a lista de OS buscadas para gerar PDF/WhatsApp
+    let acaoAtual = ""; // 'form' ou 'relatorio'
+    let tipoLoginAtual = ""; // 'tecnico' ou 'supervisor'
+    let cacheOS = [];
 
     function mostrarTela(idTela) {
         document.getElementById('telaMenu').classList.add('hidden');
+        document.getElementById('telaEscolhaPerfil').classList.add('hidden');
         document.getElementById('telaLogin').classList.add('hidden');
         document.getElementById('telaRelatorio').classList.add('hidden');
         document.getElementById('telaForm').classList.add('hidden');
@@ -258,26 +286,49 @@
         btn.addEventListener('click', () => mostrarTela('telaMenu'));
     });
 
-    // Botões do Menu Principal pedem login
     document.getElementById('menuBtnForm').addEventListener('click', () => {
-        destinoAcesso = 'form';
-        document.getElementById('tituloLogin').innerText = "Login para Lançamento";
-        document.getElementById('subLogin').innerText = "Informe suas credenciais para abrir o formulário.";
+        acaoAtual = 'form';
+        tipoLoginAtual = 'tecnico';
+        document.getElementById('tituloLogin').innerText = "Login do Técnico";
+        document.getElementById('subLogin').innerText = "Informe suas credenciais para lançar uma O.S.";
+        document.getElementById('labelSenha').style.display = "block";
+        document.getElementById('senha').style.display = "block";
+        document.getElementById('senha').required = true;
         document.getElementById('formLogin').reset();
         document.getElementById('msgLogin').innerText = "";
         mostrarTela('telaLogin');
     });
 
     document.getElementById('menuBtnRelatorio').addEventListener('click', () => {
-        destinoAcesso = 'relatorio';
-        document.getElementById('tituloLogin').innerText = "Login para Consulta";
-        document.getElementById('subLogin').innerText = "Informe suas credenciais para acessar os relatórios.";
+        acaoAtual = 'relatorio';
+        mostrarTela('telaEscolhaPerfil');
+    });
+
+    document.getElementById('btnPerfilTecnico').addEventListener('click', () => {
+        tipoLoginAtual = 'tecnico';
+        document.getElementById('tituloLogin').innerText = "Login de Técnico";
+        document.getElementById('subLogin').innerText = "Informe seu usuário e senha.";
+        document.getElementById('labelSenha').style.display = "block";
+        document.getElementById('senha').style.display = "block";
+        document.getElementById('senha').required = true;
         document.getElementById('formLogin').reset();
         document.getElementById('msgLogin').innerText = "";
         mostrarTela('telaLogin');
     });
 
-    // LÓGICA DE LOGIN
+    document.getElementById('btnPerfilSupervisor').addEventListener('click', () => {
+        tipoLoginAtual = 'supervisor';
+        document.getElementById('tituloLogin').innerText = "Identificação de Supervisor";
+        document.getElementById('subLogin').innerText = "Informe seu nome de supervisor.";
+        document.getElementById('labelSenha').style.display = "none";
+        document.getElementById('senha').style.display = "none";
+        document.getElementById('senha').required = false;
+        document.getElementById('formLogin').reset();
+        document.getElementById('msgLogin').innerText = "";
+        mostrarTela('telaLogin');
+    });
+
+    // LOGIN / VALIDAÇÃO
     document.getElementById('formLogin').addEventListener('submit', function(e) {
         e.preventDefault();
         const user = document.getElementById('usuario').value.trim();
@@ -289,9 +340,11 @@
         btn.innerText = "Verificando...";
         msg.innerText = "";
 
+        const actionName = (tipoLoginAtual === 'supervisor') ? "loginSupervisor" : "loginTecnico";
+
         fetch(URL_APPS_SCRIPT, {
             method: 'POST',
-            body: JSON.stringify({ action: "login", usuario: user, senha: pass })
+            body: JSON.stringify({ action: actionName, usuario: user, senha: pass })
         })
         .then(res => res.json())
         .then(data => {
@@ -299,25 +352,40 @@
             btn.innerText = "Entrar";
             if(data.result === "success") {
                 tecnicoLogado = data.user;
-                isSupervisor = data.isSupervisor;
+                isSupervisor = (tipoLoginAtual === 'supervisor');
 
-                if(destinoAcesso === 'form') {
+                if(acaoAtual === 'form') {
                     document.getElementById('tecnico').value = data.user;
                     carregarDadosFormulario();
                     mostrarTela('telaForm');
                 } else {
-                    if(!isSupervisor) {
-                        document.getElementById('filtroTecnico').value = data.user;
-                        document.getElementById('filtroTecnico').disabled = true;
+                    if(isSupervisor) {
+                        document.getElementById('infoSupervisor').innerText = `Supervisor: ${data.user}`;
+                        document.getElementById('chkTecnico').parentElement.style.display = "block";
+                        document.getElementById('filtroTecnicoSelect').style.display = "block";
+                        document.getElementById('filtroTecnicoInput').style.display = "none";
+                        
+                        const sel = document.getElementById('filtroTecnicoSelect');
+                        sel.innerHTML = '<option value="">Todos os técnicos</option>';
+                        if(data.tecnicos) {
+                            data.tecnicos.forEach(t => {
+                                const opt = document.createElement('option');
+                                opt.value = t;
+                                opt.innerText = t;
+                                sel.appendChild(opt);
+                            });
+                        }
                     } else {
-                        document.getElementById('filtroTecnico').disabled = false;
-                        document.getElementById('filtroTecnico').value = "";
+                        document.getElementById('infoSupervisor').innerText = `Técnico: ${data.user}`;
+                        document.getElementById('chkTecnico').parentElement.style.display = "none";
+                        document.getElementById('filtroTecnicoSelect').style.display = "none";
+                        document.getElementById('filtroTecnicoInput').style.display = "none";
                     }
                     mostrarTela('telaRelatorio');
                     carregarRelatorio();
                 }
             } else {
-                throw new Error(data.error || "Usuário ou senha inválidos.");
+                throw new Error(data.error || "Acesso negado.");
             }
         })
         .catch(err => {
@@ -356,19 +424,28 @@
         });
     }
 
-    // CONSULTA / RELATÓRIO
+    // CONSULTA / RELATÓRIO COM CHECKBOXES
     function carregarRelatorio() {
         const tbody = document.querySelector('#tabelaResultados tbody');
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Carregando dados...</td></tr>';
+
+        const usarOS = document.getElementById('chkOS').checked;
+        const usarData = document.getElementById('chkData').checked;
+        const usarTecnico = isSupervisor ? document.getElementById('chkTecnico').checked : true;
+        const usarEquipe = document.getElementById('chkEquipe').checked;
 
         const payload = {
             action: "buscarOS",
             usuarioLogado: tecnicoLogado,
             isSupervisor: isSupervisor,
-            filtroOS: document.getElementById('filtroOS').value,
-            filtroData: document.getElementById('filtroData').value,
-            filtroTecnico: document.getElementById('filtroTecnico').value,
-            filtroEquipe: document.getElementById('filtroEquipe').value
+            usarOS: usarOS,
+            filtroOS: usarOS ? document.getElementById('filtroOS').value : "",
+            usarData: usarData,
+            filtroData: usarData ? document.getElementById('filtroData').value : "",
+            usarTecnico: usarTecnico,
+            filtroTecnico: isSupervisor ? (usarTecnico ? document.getElementById('filtroTecnicoSelect').value : "") : tecnicoLogado,
+            usarEquipe: usarEquipe,
+            filtroEquipe: usarEquipe ? document.getElementById('filtroEquipe').value : ""
         };
 
         fetch(URL_APPS_SCRIPT, {
@@ -466,7 +543,6 @@
         doc.setLineWidth(0.5);
         doc.line(14, 26, 196, 26);
 
-        // Controladora e Tipo
         doc.setFontSize(10);
         doc.text("CONTROLADORA:", 14, 33);
         doc.setFont("helvetica", "normal");
@@ -477,7 +553,6 @@
         doc.setFont("helvetica", "normal");
         doc.text(String(os.tipo_servico || ""), 48, 40);
 
-        // Período
         doc.rect(14, 45, 182, 18);
         doc.setFont("helvetica", "bold");
         doc.text("PERÍODO DA ATIVIDADE", 16, 51);
@@ -487,7 +562,6 @@
         doc.text(`Data: ${os.data_inicial ? os.data_inicial.split('-').reverse().join('/') : ''}  Hora: ${os.hora_inicial || ''}`, 40, 58);
         doc.text(`Data: ${os.data_final ? os.data_final.split('-').reverse().join('/') : ''}  Hora: ${os.hora_final || ''}`, 110, 58);
 
-        // Código do Serviço e Descrição
         doc.setFont("helvetica", "bold");
         doc.text(`CÓD. DO SERVIÇO: ${os.codigo_servico || ''}`, 14, 69);
         doc.text("DESCRIÇÃO DO SERVIÇO REALIZADO:", 14, 76);
@@ -495,7 +569,6 @@
         doc.setFont("helvetica", "normal");
         doc.text(String(os.descricao_servico || ""), 16, 85, { maxWidth: 178 });
 
-        // Tabela de Medições e Verificações
         let y = 103;
         doc.setFont("helvetica", "bold");
         doc.text("MEDIDAS E VERIFICAÇÕES:", 14, y);
@@ -520,7 +593,6 @@
             y += 6;
         });
 
-        // Status e Finalização
         y += 4;
         doc.rect(14, y, 182, 18);
         doc.setFont("helvetica", "bold");
@@ -537,7 +609,6 @@
         y += 6;
         doc.text(`Observação: ${os.observacao || 'Nenhuma'}`, 14, y);
 
-        // Rodapé Equipe / Técnico / Supervisor
         y += 12;
         doc.rect(14, y, 182, 16);
         doc.setFont("helvetica", "bold");
@@ -621,7 +692,6 @@
         });
     });
 
-    // BOTÃO WHATSAPP PÓS-CADASTRO
     document.getElementById('btnWhatsApp').addEventListener('click', function() {
         const osTemp = {
             numero_os: document.getElementById('numero_os').value,
