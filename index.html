@@ -19,8 +19,8 @@
         input[type="text"], input[type="password"], input[type="date"], input[type="time"], textarea, select {
             width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
         }
-        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-        .checkbox-group input { width: auto; margin: 0; }
+        .radio-group { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+        .radio-group label { margin: 0; font-weight: normal; cursor: pointer; }
         button { background-color: var(--primary); color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         button:hover { background-color: #0056b3; }
         .btn-whats { background-color: var(--whatsapp); }
@@ -57,21 +57,33 @@
         <!-- Identificação e Tipo -->
         <fieldset>
             <legend>Identificação do Serviço</legend>
-            <div class="grid-2">
+            <div class="grid-3">
                 <div>
                     <label for="numero_os">Número da OS:</label>
                     <input type="text" id="numero_os" readonly style="background:#e9ecef; font-weight: bold;" required>
                 </div>
                 <div>
                     <label for="controladora">Controladora:</label>
-                    <input type="text" id="controladora" required>
+                    <input type="text" id="controladora" list="listaControladoras" placeholder="Selecione ou busque..." required autocomplete="off">
+                    <datalist id="listaControladoras"></datalist>
+                </div>
+                <div>
+                    <label for="codigo_servico">Código do Serviço:</label>
+                    <input type="text" id="codigo_servico" list="listaCodigos" placeholder="Selecione o código..." required autocomplete="off">
+                    <datalist id="listaCodigos"></datalist>
                 </div>
             </div>
+            
             <label>Tipo de Serviço:</label>
-            <div class="grid-3">
-                <div class="checkbox-group"><input type="checkbox" id="corretivo"><label for="corretivo">Corretivo</label></div>
-                <div class="checkbox-group"><input type="checkbox" id="preventivo"><label for="preventivo">Preventivo</label></div>
-                <div class="checkbox-group"><input type="checkbox" id="implantacao"><label for="implantacao">Implantação</label></div>
+            <div class="radio-group">
+                <input type="radio" id="corretivo" name="tipo_servico" value="Corretivo" required>
+                <label for="corretivo">Corretivo</label>
+                
+                <input type="radio" id="preventivo" name="tipo_servico" value="Preventivo">
+                <label for="preventivo">Preventivo</label>
+                
+                <input type="radio" id="implantacao" name="tipo_servico" value="Implantação">
+                <label for="implantacao">Implantação</label>
             </div>
         </fieldset>
 
@@ -79,10 +91,10 @@
         <fieldset>
             <legend>Período de Atendimento</legend>
             <div class="grid-4">
-                <div><label>Data Inicial:</label><input type="date" id="data_inicial"></div>
-                <div><label>Hora Inicial:</label><input type="time" id="hora_inicial"></div>
-                <div><label>Data Final:</label><input type="date" id="data_final"></div>
-                <div><label>Hora Final:</label><input type="time" id="hora_final"></div>
+                <div><label>Data Inicial:</label><input type="date" id="data_inicial" required></div>
+                <div><label>Hora Inicial:</label><input type="time" id="hora_inicial" required></div>
+                <div><label>Data Final:</label><input type="date" id="data_final" required></div>
+                <div><label>Hora Final:</label><input type="time" id="hora_final" required></div>
             </div>
         </fieldset>
 
@@ -90,13 +102,14 @@
         <fieldset>
             <legend>Detalhamento Técnico</legend>
             <label>Descrição do Serviço:</label>
-            <textarea id="descricao_servico" rows="3"></textarea>
+            <textarea id="descricao_servico" rows="3" required></textarea>
+            
             <label>Medições de Tensão:</label>
             <div class="grid-4">
-                <div><label>Tensão CA:</label><input type="text" id="tensao_alternada"></div>
-                <div><label>7.5VDC:</label><input type="text" id="tensao_75vdc"></div>
-                <div><label>12VDC:</label><input type="text" id="tensao_12vdc"></div>
-                <div><label>24VDC:</label><input type="text" id="tensao_24vdc"></div>
+                <div><label>Tensão CA:</label><input type="text" id="tensao_alternada" required></div>
+                <div><label>7.5VDC:</label><input type="text" id="tensao_75vdc" required></div>
+                <div><label>12VDC:</label><input type="text" id="tensao_12vdc" required></div>
+                <div><label>24VDC:</label><input type="text" id="tensao_24vdc" required></div>
             </div>
         </fieldset>
 
@@ -104,52 +117,68 @@
         <fieldset>
             <legend>Verificação de Infraestrutura</legend>
             <div class="grid-3">
-                <div><label>Aterramento:</label><input type="text" id="aterramento"></div>
-                <div><label>Cabeamento:</label><input type="text" id="cabeamento"></div>
-                <div><label>Fusível:</label><input type="text" id="fusivel"></div>
-                <div><label>Invólucro:</label><input type="text" id="involucro"></div>
-                <div><label>Gabinetes:</label><input type="text" id="gabinetes"></div>
-                <div><label>Placas CPU/Potência:</label><input type="text" id="placas_cpu_potencia"></div>
-                <div><label>Padronizada:</label><input type="text" id="padronizada"></div>
-                <div><label>Blocos Semafóricos:</label><input type="text" id="blocos_semaforicos"></div>
-                <div><label>Colunas:</label><input type="text" id="colunas"></div>
-                <div><label>Braços:</label><input type="text" id="bracos"></div>
-                <div><label>Nobreak:</label><input type="text" id="nobreak"></div>
-                <div><label>Código:</label><input type="text" id="codigo"></div>
+                <div><label>Aterramento:</label><input type="text" id="aterramento" required></div>
+                <div><label>Cabeamento:</label><input type="text" id="cabeamento" required></div>
+                <div><label>Fusível:</label><input type="text" id="fusivel" required></div>
+                <div><label>Invólucro:</label><input type="text" id="involucro" required></div>
+                <div><label>Gabinetes:</label><input type="text" id="gabinetes" required></div>
+                <div><label>Placas CPU/Potência:</label><input type="text" id="placas_cpu_potencia" required></div>
+                <div><label>Padronizada:</label><input type="text" id="padronizada" required></div>
+                <div><label>Blocos Semafóricos:</label><input type="text" id="blocos_semaforicos" required></div>
+                <div><label>Colunas:</label><input type="text" id="colunas" required></div>
+                <div><label>Braços:</label><input type="text" id="bracos" required></div>
+                <div><label>Nobreak:</label><input type="text" id="nobreak" required></div>
             </div>
         </fieldset>
 
-        <!-- Status e Envio -->
+        <!-- Status e Finalização -->
         <fieldset>
             <legend>Finalização</legend>
-            <div class="grid-4">
-                <div class="checkbox-group"><input type="checkbox" id="concluido"><label>Concluído</label></div>
-                <div class="checkbox-group"><input type="checkbox" id="pendente"><label>Pendente</label></div>
-                <div class="checkbox-group"><input type="checkbox" id="operacional"><label>Operacional</label></div>
-                <div class="checkbox-group"><input type="checkbox" id="inoperante"><label>Inoperante</label></div>
+            <div class="grid-2">
+                <div>
+                    <label>Status do Serviço:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="st_concluido" name="status_servico" value="Concluído" required>
+                        <label for="st_concluido">Concluído</label>
+
+                        <input type="radio" id="st_pendente" name="status_servico" value="Pendente">
+                        <label for="st_pendente">Pendente</label>
+                    </div>
+                </div>
+                <div>
+                    <label>Status do Controlador:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="st_operacional" name="status_controlador" value="Operacional" required>
+                        <label for="st_operacional">Operacional</label>
+
+                        <input type="radio" id="st_inoperante" name="status_controlador" value="Inoperante">
+                        <label for="st_inoperante">Inoperante</label>
+                    </div>
+                </div>
             </div>
-            <label>Pendência:</label><input type="text" id="pendencia">
-            <label>Material Utilizado:</label><textarea id="material" rows="2"></textarea>
-            <label>Observações:</label><textarea id="observacao" rows="2"></textarea>
+
+            <label>Pendência:</label><input type="text" id="pendencia" required>
+            <label>Material Utilizado:</label><textarea id="material" rows="2" required></textarea>
+            <label>Observações:</label><textarea id="observacao" rows="2" required></textarea>
+            
             <div class="grid-3">
-                <div><label>Equipe:</label><input type="text" id="equipe"></div>
-                <div><label>Técnico:</label><input type="text" id="tecnico" readonly style="background:#e9ecef;"></div>
-                <div><label>Supervisor:</label><input type="text" id="supervisor"></div>
+                <div><label>Equipe:</label><input type="text" id="equipe" required></div>
+                <div><label>Técnico:</label><input type="text" id="tecnico" readonly style="background:#e9ecef;" required></div>
+                <div><label>Supervisor:</label><input type="text" id="supervisor" required></div>
             </div>
         </fieldset>
 
-        <button type="submit" id="btnEnviar">Registrar OS na Planilha</button>
+        <button type="submit" id="btnEnviar">Registrar O.S</button>
         <button type="button" id="btnWhatsApp" class="btn-whats hidden">Enviar Relatório via WhatsApp</button>
     </form>
     <div id="mensagem"></div>
 </div>
 
 <script>
-    // URL ATUALIZADA DO GOOGLE APPS SCRIPT
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycby6BcNNMWkl4juAisYzYWDKZimFRC4tTKltX85idwSjk-ZuT-4jKyjPztm3IlTB02e3_A/exec";
     let tecnicoLogado = "";
 
-    // 1. LÓGICA DE LOGIN E BUSCA DO NÚMERO DA OS
+    // 1. LÓGICA DE LOGIN E CARREGAMENTO DOS DADOS AUTOMÁTICOS
     document.getElementById('formLogin').addEventListener('submit', function(e) {
         e.preventDefault();
         const user = document.getElementById('usuario').value.trim();
@@ -171,18 +200,36 @@
                 document.getElementById('tecnico').value = data.user;
                 document.getElementById('userLogadoLabel').innerText = "Técnico: " + data.user;
 
-                return fetch(URL_APPS_SCRIPT, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: "getProximaOS" })
-                });
+                return Promise.all([
+                    fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getProximaOS" }) }).then(r => r.json()),
+                    fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getControladoras" }) }).then(r => r.json()),
+                    fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getCodigosServico" }) }).then(r => r.json())
+                ]);
             } else {
                 throw new Error(data.error || "Erro de autenticação");
             }
         })
-        .then(res => res.json())
-        .then(osData => {
+        .then(([osData, ctrlData, codData]) => {
             if(osData.result === "success") {
                 document.getElementById('numero_os').value = osData.numero_os;
+            }
+            if(ctrlData.result === "success" && ctrlData.controladoras) {
+                const datalistCtrl = document.getElementById('listaControladoras');
+                datalistCtrl.innerHTML = "";
+                ctrlData.controladoras.forEach(ctrl => {
+                    const opt = document.createElement('option');
+                    opt.value = ctrl;
+                    datalistCtrl.appendChild(opt);
+                });
+            }
+            if(codData.result === "success" && codData.codigos) {
+                const datalistCod = document.getElementById('listaCodigos');
+                datalistCod.innerHTML = "";
+                codData.codigos.forEach(cod => {
+                    const opt = document.createElement('option');
+                    opt.value = cod;
+                    datalistCod.appendChild(opt);
+                });
             }
             document.getElementById('telaLogin').classList.add('hidden');
             document.getElementById('telaForm').classList.remove('hidden');
@@ -195,20 +242,21 @@
         });
     });
 
-    // 2. LÓGICA DE ENVIO DA OS PARA A PLANILHA
+    // 2. REGISTRAR O.S E MOSTRAR NOTIFICAÇÃO
     document.getElementById('formOS').addEventListener('submit', function(e) {
         e.preventDefault();
         const btn = document.getElementById('btnEnviar');
         const msg = document.getElementById('mensagem');
+        const numeroOS = document.getElementById('numero_os').value;
+
         btn.disabled = true;
-        btn.innerText = "Salvando na planilha...";
+        btn.innerText = "Registrando O.S...";
 
         const payload = {
-            numero_os: document.getElementById('numero_os').value,
+            numero_os: numeroOS,
             controladora: document.getElementById('controladora').value,
-            corretivo: document.getElementById('corretivo').checked,
-            preventivo: document.getElementById('preventivo').checked,
-            implantacao: document.getElementById('implantacao').checked,
+            codigo_servico: document.getElementById('codigo_servico').value,
+            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
             data_inicial: document.getElementById('data_inicial').value,
             hora_inicial: document.getElementById('hora_inicial').value,
             data_final: document.getElementById('data_final').value,
@@ -228,18 +276,15 @@
             blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
             colunas: document.getElementById('colunas').value,
             bracos: document.getElementById('bracos').value,
-            concluido: document.getElementById('concluido').checked,
-            pendente: document.getElementById('pendente').checked,
+            status_servico: document.querySelector('input[name="status_servico"]:checked')?.value || "",
+            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
             pendencia: document.getElementById('pendencia').value,
             material: document.getElementById('material').value,
             observacao: document.getElementById('observacao').value,
             equipe: document.getElementById('equipe').value,
             tecnico: tecnicoLogado,
             supervisor: document.getElementById('supervisor').value,
-            codigo: document.getElementById('codigo').value,
-            nobreak: document.getElementById('nobreak').value,
-            operacional: document.getElementById('operacional').checked,
-            inoperante: document.getElementById('inoperante').checked
+            nobreak: document.getElementById('nobreak').value
         };
 
         fetch(URL_APPS_SCRIPT, {
@@ -249,11 +294,10 @@
         .then(res => res.json())
         .then(data => {
             if (data.result === "success") {
+                alert(`Ordem de Serviço Nº ${numeroOS} registrada com sucesso!`);
                 msg.style.color = "green";
-                msg.innerText = "OS salva com sucesso! Agora você pode enviar para o WhatsApp.";
-                btn.innerText = "Salvo com Sucesso!";
-                
-                // EXIBE O BOTÃO DO WHATSAPP APÓS SALVAR
+                msg.innerText = `O.S Nº ${numeroOS} registrada! Você já pode enviar o relatório para o WhatsApp.`;
+                btn.innerText = "O.S Registrada com Sucesso!";
                 document.getElementById('btnWhatsApp').classList.remove('hidden');
             } else {
                 throw new Error(data.error);
@@ -261,17 +305,17 @@
         })
         .catch(err => {
             msg.style.color = "red";
-            msg.innerText = "Erro ao salvar: " + err.message;
+            msg.innerText = "Erro ao registrar O.S: " + err.message;
             btn.disabled = false;
-            btn.innerText = "Registrar OS na Planilha";
+            btn.innerText = "Registrar O.S";
         });
     });
 
-    // 3. AÇÃO DO BOTÃO DO WHATSAPP (Formato padrão exato)
+    // 3. AÇÃO DO BOTÃO DO WHATSAPP
     document.getElementById('btnWhatsApp').addEventListener('click', function() {
         const os = document.getElementById('numero_os').value;
         const controladora = document.getElementById('controladora').value;
-        const codigo = document.getElementById('codigo').value || "Não informado";
+        const codServico = document.getElementById('codigo_servico').value || "";
         
         const dtInicioRaw = document.getElementById('data_inicial').value;
         const dtInicio = dtInicioRaw ? dtInicioRaw.split('-').reverse().join('/') : "";
@@ -281,10 +325,7 @@
         const dtFim = dtFimRaw ? dtFimRaw.split('-').reverse().join('/') : "";
         const hrFim = document.getElementById('hora_final').value;
         
-        let tipoServico = "";
-        if(document.getElementById('preventivo').checked) tipoServico = "Preventiva";
-        else if(document.getElementById('corretivo').checked) tipoServico = "Corretiva";
-        else if(document.getElementById('implantacao').checked) tipoServico = "Implantação";
+        const tipoServico = document.querySelector('input[name="tipo_servico"]:checked')?.value || "";
 
         const tensaoCA = document.getElementById('tensao_alternada').value || "";
         const aterramento = document.getElementById('aterramento').value || "";
@@ -302,7 +343,7 @@
         const bracos = document.getElementById('bracos').value || "";
         const padronizada = document.getElementById('padronizada').value || "";
 
-        const statusCtrl = document.getElementById('operacional').checked ? "Operacional" : "Inoperante";
+        const statusCtrl = document.querySelector('input[name="status_controlador"]:checked')?.value || "";
         const material = document.getElementById('material').value || "";
         const obs = document.getElementById('observacao').value || "";
         const equipe = document.getElementById('equipe').value || "";
@@ -312,36 +353,11 @@
                            `Data Inicial: ${dtInicio}%0A` +
                            `Horario inicial: ${hrInicio}%0A` +
                            `Data final: ${dtFim}%0A` +
-                           `Horario final: ${hrFim}%0A%0A` +
-                           `Controladora: ${controladora}%0A%0A` +
-                           `Código: ${codigo}%0A%0A` +
-                           `${tipoServico}%0A` +
-                           `Entrada de Alimentação (CA): ${tensaoCA}%0A` +
-                           `Aterramento: ${aterramento}%0A` +
-                           `Nobreak: ${nobreak}%0A%0A` +
-                           `Fusíveis: ${fusivel}%0A%0A` +
+                           `Horario final: ${hrFim}\%0A\%0A` + `Controladora: ${controladora}%0A%0A` +
+                           `Código: ${codServico}\%0A\%0A` + `${tipoServico}%0A` +
+                           `Entrada de Alimentação (CA): ${tensaoCA}\%0A` + `Aterramento: ${aterramento}%0A` +
+                           `Nobreak: ${nobreak}\%0A\%0A` + `Fusíveis: ${fusivel}%0A%0A` +
                            `Saída da fonte de Alimentação (CC):%0A` +
                            `7,5V: ${v75}%0A` +
-                           `12V: ${v12}%0A` +
-                           `24V: ${v24}%0A%0A` +
-                           `Cabeamento: ${cabeamento}%0A` +
-                           `Invólucro: ${involucro}%0A` +
-                           `Gabinetes: ${gabinetes}%0A` +
-                           `Placas de CPU e Potência: ${placas}%0A` +
-                           `Grupos focais: ${blocos}%0A` +
-                           `Colunas: ${colunas}%0A` +
-                           `Braços: ${bracos}%0A` +
-                           `Padronizada: ${padronizada}%0A%0A` +
-                           `Status da Controladora: ${statusCtrl}%0A%0A` +
-                           `Material Utilizado: ${material}%0A%0A` +
-                           `Obs.: ${obs}%0A%0A` +
-                           `Equipe: ${equipe}%0A` +
-                           `Eletrotécnico Responsável: ${tecnico}%0A%0A` +
-                           `O.S SM: ${os}`;
-
-        window.open(`https://api.whatsapp.com/send?text=${textoWhats}`, '_blank');
-    });
-</script>
-
-</body>
-</html>
+                           `12V: ${v12}\%0A` + `24V: ${v24}%0A%0A` +
+                           `Cabeamento: ${cabeamento}\%0A` + `Invólucro: ${involucro}%
