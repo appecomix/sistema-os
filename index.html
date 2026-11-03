@@ -90,8 +90,10 @@
         <label for="usuario">Usuário / Nome:</label>
         <input type="text" id="usuario" required>
 
-        <label for="senha" id="labelSenha">Senha:</label>
-        <input type="password" id="senha">
+        <div id="blocoSenha">
+            <label for="senha" id="labelSenha">Senha:</label>
+            <input type="password" id="senha">
+        </div>
 
         <button type="submit" id="btnLogin">Entrar</button>
         <button type="button" class="btnVoltarMenuSeguro btn-secondary" style="margin-top: 10px;">Voltar ao Menu</button>
@@ -371,8 +373,7 @@
         tipoLoginAtual = 'tecnico';
         document.getElementById('tituloLogin').innerText = "Login do Técnico";
         document.getElementById('subLogin').innerText = "Informe suas credenciais para lançar uma O.S.";
-        document.getElementById('labelSenha').style.display = "block";
-        document.getElementById('senha').style.display = "block";
+        document.getElementById('blocoSenha').style.display = "block";
         document.getElementById('senha').required = true;
         document.getElementById('formLogin').reset();
         document.getElementById('msgLogin').innerText = "";
@@ -388,8 +389,7 @@
         tipoLoginAtual = 'tecnico';
         document.getElementById('tituloLogin').innerText = "Login de Técnico";
         document.getElementById('subLogin').innerText = "Informe seu usuário e senha.";
-        document.getElementById('labelSenha').style.display = "block";
-        document.getElementById('senha').style.display = "block";
+        document.getElementById('blocoSenha').style.display = "block";
         document.getElementById('senha').required = true;
         document.getElementById('formLogin').reset();
         document.getElementById('msgLogin').innerText = "";
@@ -400,9 +400,9 @@
         tipoLoginAtual = 'supervisor';
         document.getElementById('tituloLogin').innerText = "Identificação de Supervisor";
         document.getElementById('subLogin').innerText = "Informe seu nome de supervisor.";
-        document.getElementById('labelSenha').style.display = "none";
-        document.getElementById('senha').style.display = "none";
-        document.getElementById('senha').required = false;
+        document.getElementById('blocoSenha').style.display = "block";
+        document.getElementById('labelSenha').innerText = "Senha / Confirmação:";
+        document.getElementById('senha').required = false; // Opcional ou livre para supervisor
         document.getElementById('formLogin').reset();
         document.getElementById('msgLogin').innerText = "";
         mostrarTela('telaLogin');
@@ -619,13 +619,19 @@
 
     function enviarWhatsAppIndex(index) {
         const os = cacheOS[index];
+        let codigoApenasNumero = "";
+        if (os.codigo_servico) {
+            let partes = os.codigo_servico.split(' - ');
+            codigoApenasNumero = partes[0].trim();
+        }
+
         const texto = `*Mantenção semafórica*%0A%0A` +
                       `Data Inicial: ${os.data_inicial ? os.data_inicial.split('-').reverse().join('/') : ''}%0A` +
                       `Horario inicial: ${os.hora_inicial || ''}%0A` +
                       `Data final: ${os.data_final ? os.data_final.split('-').reverse().join('/') : ''}%0A` +
                       `Horario final: ${os.hora_final || ''}%0A%0A` +
                       `Controladora: ${os.controladora}%0A%0A` +
-                      `Código: ${os.codigo_servico || ''}%0A%0A` +
+                      `Código: ${codigoApenasNumero}%0A%0A` +
                       `${os.tipo_servico || ''}%0A` +
                       `Entrada de Alimentação (CA): ${os.tensao_alternada || ''}%0A` +
                       `Aterramento: ${os.aterramento || ''}%0A` +
