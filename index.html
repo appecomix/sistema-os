@@ -1,336 +1,361 @@
-function doPost(e) {
-  var lock = LockService.getScriptLock();
-  lock.tryLock(10000);
-
-  try {
-    var data = JSON.parse(e.postData.contents);
-
-    // ------------------------------------------------------------------
-    // 1. LOGIN / AUTENTICAÇÃO DE TÉCNICOS
-    // ------------------------------------------------------------------
-    if (data.action === "loginTecnico") {
-      var ID_PLANILHA_TECNICOS = "1ATknNAY8uWYaEbJw4CLdSSB_RW-GSxD9Es9OrI_RsZQ";
-      var docTecnicos = SpreadsheetApp.openById(ID_PLANILHA_TECNICOS);
-      var sheetTecnicos = docTecnicos.getSheetByName("Respostas ao formulário 1");
-      
-      var dadosTecnicos = sheetTecnicos.getRange(2, 2, sheetTecnicos.getLastRow() - 1, 2).getValues();
-      var usuarioDigitado = String(data.usuario).trim().toLowerCase();
-      var senhaDigitada = String(data.senha).trim();
-      var usuarioValido = false;
-      var nomeReal = "";
-
-      for (var i = 0; i < dadosTecnicos.length; i++) {
-        var nomeTecnico = String(dadosTecnicos[i][0]).trim();
-        var senhaTecnico = String(dadosTecnicos[i][1]).trim();
-
-        if (nomeTecnico.toLowerCase() === usuarioDigitado && senhaTecnico === senhaDigitada) {
-          usuarioValido = true;
-          nomeReal = nomeTecnico;
-          break;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordem de Serviço - Ecomix Filial Niterói</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root { 
+            --primary: #007bff; 
+            --bg: #e0f2f1; 
+            --success: #28a745; 
+            --whatsapp: #25d366; 
+            --dark: #343a40; 
+            --brand-green: #00897b; 
+            --brand-green-hover: #00695c;
         }
-      }
-
-      if (usuarioValido) {
-        return ContentService.createTextOutput(JSON.stringify({ "result": "success", "user": nomeReal }))
-          .setMimeType(ContentService.MimeType.JSON);
-      } else {
-        return ContentService.createTextOutput(JSON.stringify({ "result": "error", "error": "Usuário ou senha de técnico incorretos." }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-    }
-
-    // ------------------------------------------------------------------
-    // 2. LOGIN / VALIDAÇÃO DE SUPERVISORES
-    // ------------------------------------------------------------------
-    if (data.action === "loginSupervisor") {
-      var ID_PLANILHA_SUPERVISORES = "19vF1aGs4-ONFQ8d4G2tBLxPyxZbF87X07TPIso_GXt8";
-      var docSup = SpreadsheetApp.openById(ID_PLANILHA_SUPERVISORES);
-      var sheetSup = docSup.getSheets()[0];
-      var dadosSup = sheetSup.getRange(2, 1, sheetSup.getLastRow() - 1, 1).getValues();
-      
-      var usuarioDigitado = String(data.usuario).trim().toLowerCase();
-      var supervisorValido = false;
-      var nomeSup = "";
-
-      for (var s = 0; s < dadosSup.length; s++) {
-        var nomeS = String(dadosSup[s][0]).trim();
-        if (nomeS.toLowerCase() === usuarioDigitado) {
-          supervisorValido = true;
-          nomeSup = nomeS;
-          break;
-        }
-      }
-
-      if (supervisorValido) {
-        var ID_PLANILHA_TECNICOS = "1ATknNAY8uWYaEbJw4CLdSSB_RW-GSxD9Es9OrI_RsZQ";
-        var docTec = SpreadsheetApp.openById(ID_PLANILHA_TECNICOS);
-        var sheetTec = docTec.getSheetByName("Respostas ao formulário 1");
-        var dadosTec = sheetTec.getRange(2, 2, sheetTec.getLastRow() - 1, 1).getValues();
-        var listaTecnicos = [];
-        for (var t = 0; t < dadosTec.length; t++) {
-          var tNome = String(dadosTec[t][0]).trim();
-          if (tNome !== "" && !listaTecnicos.includes(tNome)) listaTecnicos.push(tNome);
-        }
-
-        return ContentService.createTextOutput(JSON.stringify({ 
-          "result": "success", 
-          "user": nomeSup,
-          "tecnicos": listaTecnicos 
-        })).setMimeType(ContentService.MimeType.JSON);
-      } else {
-        return ContentService.createTextOutput(JSON.stringify({ "result": "error", "error": "Supervisor não cadastrado." }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-    }
-
-    // ------------------------------------------------------------------
-    // 3. BUSCAR LISTA DE MATERIAIS DO ALMOXARIFADO (IGNORA COLUNAS A E B)
-    // ------------------------------------------------------------------
-    if (data.action === "getMateriaisAlmoxarifado") {
-      var ID_PLANILHA_ALMOX = "1RXvLOSMnhFRIZMvslt9npmZTbqZrLa9lBeOxL8o1lEA";
-      var docAlmox = SpreadsheetApp.openById(ID_PLANILHA_ALMOX);
-      var sheetAlmox = docAlmox.getSheets()[0];
-      var colunas = sheetAlmox.getRange(1, 1, 1, sheetAlmox.getLastColumn()).getValues()[0];
-      
-      var listaMateriais = [];
-      // Começa da coluna C (índice 2), ignorando colunas A (0) e B (1)
-      for (var m = 2; m < colunas.length; m++) {
-        var mat = String(colunas[m]).trim();
-        if (mat !== "") {
-          listaMateriais.push(mat);
-        }
-      }
-
-      return ContentService.createTextOutput(JSON.stringify({ "result": "success", "materiais": listaMateriais }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // ------------------------------------------------------------------
-    // 4. CONSULTA DE OS
-    // ------------------------------------------------------------------
-    if (data.action === "buscarOS") {
-      var docOS = SpreadsheetApp.getActiveSpreadsheet();
-      var sheetOS = docOS.getSheetByName("Dados");
-      var ultLinha = sheetOS.getLastRow();
-      
-      if (ultLinha < 2) {
-        return ContentService.createTextOutput(JSON.stringify({ "result": "success", "lista": [] }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-
-      var dados = sheetOS.getRange(2, 1, ultLinha - 1, 37).getValues();
-      var resultados = [];
-
-      for (var r = 0; r < dados.length; r++) {
-        var row = dados[r];
-        var numOS = String(row[1] || "");
-        var dtInicial = String(row[6] || "");
-        var tecnico = String(row[31] || "");
-        var equipe = String(row[30] || "");
-
-        if (!data.isSupervisor && tecnico.toLowerCase() !== String(data.usuarioLogado).toLowerCase()) {
-          continue;
-        }
-
-        var matchOS = !data.usarOS || (data.filtroOS && numOS.toLowerCase().includes(String(data.filtroOS).toLowerCase()));
-        var matchData = !data.usarData || (data.filtroData && dtInicial.includes(String(data.filtroData)));
-        var matchTecnico = !data.usarTecnico || (data.filtroTecnico && tecnico.toLowerCase().includes(String(data.filtroTecnico).toLowerCase()));
-        var matchEquipe = !data.usarEquipe || (data.filtroEquipe && equipe.toLowerCase().includes(String(data.filtroEquipe).toLowerCase()));
-
-        if (matchOS && matchData && matchTecnico && matchEquipe) {
-          resultados.push({
-            numero_os: numOS,
-            controladora: row[2],
-            tipo_servico: row[3] === "X" ? "Corretivo" : (row[4] === "X" ? "Preventivo" : "Implantação"),
-            data_inicial: dtInicial,
-            hora_inicial: row[7],
-            data_final: row[8],
-            hora_final: row[9],
-            descricao_servico: row[10],
-            tensao_alternada: row[11],
-            tensao_75vdc: row[12],
-            tensao_12vdc: row[13],
-            tensao_24vdc: row[14],
-            aterramento: row[15],
-            cabeamento: row[16],
-            fusivel: row[17],
-            involucro: row[18],
-            gabinetes: row[19],
-            placas_cpu_potencia: row[20],
-            padronizada: row[21],
-            blocos_semaforicos: row[22],
-            colunas: row[23],
-            bracos: row[24],
-            status_servico: row[25] === "X" ? "Concluído" : (row[26] === "X" ? "Pendente" : ""),
-            pendencia: row[27],
-            material: row[28],
-            observacao: row[29],
-            equipe: equipe,
-            tecnico: tecnico,
-            supervisor: row[32],
-            codigo_servico: row[33],
-            nobreak: row[34],
-            status_controlador: row[35] === "X" ? "Operacional" : (row[36] === "X" ? "Inoperante" : "")
-          });
-        }
-      }
-
-      return ContentService.createTextOutput(JSON.stringify({ "result": "success", "lista": resultados }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // ------------------------------------------------------------------
-    // 5. CARREGAR AUXILIARES
-    // ------------------------------------------------------------------
-    if (data.action === "getControladoras") {
-      var ID_PLANILHA_CTRL = "1PEqr3WGnwxPeNB3R10PLB5JeVM54l0ek7y9ulBrj7_A";
-      var docCtrl = SpreadsheetApp.openById(ID_PLANILHA_CTRL);
-      var sheetCtrl = docCtrl.getSheets()[0];
-      var dadosCtrl = sheetCtrl.getRange(2, 1, sheetCtrl.getLastRow() - 1, 2).getValues();
-      var listaControladoras = [];
-      for (var j = 0; j < dadosCtrl.length; j++) {
-        var codigo = String(dadosCtrl[j][0]).trim();
-        var endereco = String(dadosCtrl[j][1]).trim();
-        if (endereco !== "") {
-          listaControladoras.push(codigo !== "" ? codigo + " - " + endereco : endereco);
-        }
-      }
-      return ContentService.createTextOutput(JSON.stringify({ "result": "success", "controladoras": listaControladoras })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    if (data.action === "getCodigosServico") {
-      var ID_PLANILHA_CODIGOS = "1k87SyixjdvwdN6QLjvQ4TVxZZsykTVG0DAG5-9JsJ4A";
-      var docCod = SpreadsheetApp.openById(ID_PLANILHA_CODIGOS);
-      var sheetCod = docCod.getSheets()[0];
-      var dadosCod = sheetCod.getRange(1, 1, sheetCod.getLastRow(), 2).getValues();
-      var listaCodigos = [];
-      for (var k = 0; k < dadosCod.length; k++) {
-        var numCod = String(dadosCod[k][0]).trim();
-        var descCod = String(dadosCod[k][1]).trim();
-        if (numCod !== "" && descCod !== "") {
-          listaCodigos.push(numCod + " - " + descCod);
-        }
-      }
-      return ContentService.createTextOutput(JSON.stringify({ "result": "success", "codigos": listaCodigos })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // ------------------------------------------------------------------
-    // 6. SALVAMENTO UNIFICADO DA O.S
-    // ------------------------------------------------------------------
-    var docOS = SpreadsheetApp.getActiveSpreadsheet();
-    var sheetOS = docOS.getSheetByName("Dados");
-
-    // LÊ A CÉLULA A1 DA PLANILHA PRINCIPAL NO MOMENTO DO ENVIO
-    var numeroOSGerado = sheetOS.getRange("A1").getValue();
-
-    var isCross = (data.modelo_controlador === "Cross");
-
-    var newRowOS = [
-      "", 
-      numeroOSGerado,
-      data.controladora || "",
-      data.tipo_servico === "Corretivo" ? "X" : "",
-      data.tipo_servico === "Preventivo" ? "X" : "",
-      data.tipo_servico === "Implantação" ? "X" : "",
-      data.data_inicial || "",
-      data.hora_inicial || "",
-      data.data_final || "",
-      data.hora_final || "",
-      data.descricao_servico || "",
-      data.tensao_alternada || "",
-      isCross ? (data.tensao_75vdc || "") : "",
-      isCross ? (data.tensao_12vdc || "") : "",
-      isCross ? (data.tensao_24vdc || "") : "",
-      data.aterramento || "",
-      data.cabeamento || "",
-      data.fusivel || "",
-      data.involucro || "",
-      data.gabinetes || "",
-      data.placas_cpu_potencia || "",
-      data.padronizada || "",
-      data.blocos_semaforicos || "",
-      data.colunas || "",
-      data.bracos || "",
-      data.status_servico === "Concluído" ? "X" : "",
-      data.status_servico === "Pendente" ? "X" : "",
-      data.pendencia || "",
-      data.material_texto || "",
-      data.observacao || "",
-      data.equipe || "",
-      data.tecnico || "",
-      data.supervisor || "",
-      data.codigos_servico || "",
-      data.nobreak || "",
-      data.status_controlador === "Operacional" ? "X" : "",
-      data.status_controlador === "Inoperante" ? "X" : ""
-    ];
-
-    sheetOS.appendRow(newRowOS);
-
-    // 6.2. SALVAMENTO NA PLANILHA DE ANÁLISE DE RISCO (MAPEAMENTO DAS COLUNAS A ATÉ I)
-    if (data.trabalho_altura === "Sim") {
-      try {
-        var ID_PLANILHA_RISCO = "1S6G6v0TBOv0fCdjWoteCemhGDe5itL4RQz3QNQkn4i0";
-        var docRisco = SpreadsheetApp.openById(ID_PLANILHA_RISCO);
-        var sheetRisco = docRisco.getSheets()[0];
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 10px; }
+        .container { width: 100%; max-width: 900px; background: white; margin: 0 auto; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .hidden { display: none !important; }
+        h2 { color: #333; border-bottom: 2px solid var(--brand-green); padding-bottom: 8px; margin-top: 0; font-size: 20px; }
+        fieldset { border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 15px; width: 100%; }
+        legend { font-weight: bold; color: var(--brand-green); padding: 0 5px; font-size: 14px; }
         
-        // Estrutura das colunas: A: Carimbo | B: NSM | C: Local | D: Serviço | E: Data Inicial | F: Hora Inicial | G: Data Final | H: Hora Final | I: Trabalhadores
-        sheetRisco.appendRow([
-          new Date(),
-          numeroOSGerado,
-          data.controladora || "",
-          data.descricao_servico || "",
-          data.data_inicial || "",
-          data.hora_inicial || "",
-          data.data_final || "",
-          data.hora_final || "",
-          data.trabalhadores_altura || ""
-        ]);
-      } catch (eRisco) {
-        // Log secundário
-      }
+        .grid-2, .grid-3, .grid-4 { display: grid; gap: 10px; width: 100%; }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #555; }
+        input[type="text"], input[type="password"], input[type="date"], input[type="time"], textarea, select {
+            width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;
+        }
+        .radio-group { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
+        .radio-group label { margin: 0; font-weight: normal; cursor: pointer; }
+        button { background-color: var(--brand-green); color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background-color: var(--brand-green-hover); }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-secondary:hover { background-color: #5a6268; }
+        .btn-whats { background-color: var(--whatsapp); }
+        .btn-whats:hover { background-color: #1ebd59; }
+        .btn-pdf { background-color: #dc3545; }
+        .btn-pdf:hover { background-color: #c82333; }
+        .btn-menu { height: 55px; font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; border-radius: 6px; width: 100%; border: none; color: white; cursor: pointer; font-weight: bold; }
+        #msgLogin, #mensagem { margin-top: 15px; text-align: center; font-weight: bold; }
+        .menu-box, .login-box { width: 100%; max-width: 450px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid var(--brand-green); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: var(--brand-green); color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .actions-cell { display: flex; gap: 5px; }
+        .actions-cell button { padding: 5px 10px; font-size: 12px; margin: 0; width: auto; }
+        .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .filter-row input[type="checkbox"] { width: auto; margin: 0; }
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin-bottom: 10px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; background: #f8f9fa; padding: 6px; border-radius: 4px; border: 1px solid #e9ecef; }
+        .checkbox-item input[type="checkbox"] { width: auto; margin: 0; }
+    </style>
+</head>
+<body>
+
+<!-- TELA 1: MENU PRINCIPAL -->
+<div id="telaMenu" class="menu-box container">
+    <div style="margin-bottom: 20px;">
+        <img src="https://lh3.googleusercontent.com/d/1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Ecomix Logo" style="max-width: 160px; height: auto; display: block; margin: 0 auto 8px auto;" crossorigin="anonymous">
+        <div style="font-size: 12px; color: #555; font-weight: bold; margin-top: 5px;">Filial Niterói</div>
+    </div>
+    
+    <button type="button" id="menuBtnForm" class="btn-menu" style="background-color: var(--brand-green);">📝 Nova Ordem de Serviço</button>
+    <button type="button" id="menuBtnRelatorio" class="btn-menu" style="background-color: #007bff;">📊 Consultar Ordem de Serviço</button>
+    <a href="https://www.google.com/maps/d/viewer?mid=1VhFRzI_GfxmRoRvVWv7RzN6_8GbJYk0&ll=-22.91169477718409%2C-43.05790850000001&z=12" target="_blank" class="btn-menu btn-secondary" style="background-color: #17a2b8; box-sizing: border-box; line-height: normal;">🗺️ Mapa das Controladoras</a>
+</div>
+
+<!-- TELA 2: ESCOLHA DE PERFIL PARA CONSULTA -->
+<div id="telaEscolhaPerfil" class="login-box hidden">
+    <h2>Tipo de Consulta</h2>
+    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Selecione o seu perfil de acesso:</p>
+    <button type="button" id="btnPerfilTecnico" class="btn-menu" style="background-color: #007bff; height: 50px; font-size: 16px;">Técnico (Consulta Limitada)</button>
+    <button type="button" id="btnPerfilSupervisor" class="btn-menu" style="background-color: #6c757d; height: 50px; font-size: 16px;">Supervisor (Consulta Completa)</button>
+    <button type="button" class="btnVoltarMenuSeguro btn-secondary" style="margin-top: 15px;">Voltar ao Menu</button>
+</div>
+
+<!-- TELA 3: LOGIN / AUTENTICAÇÃO -->
+<div id="telaLogin" class="login-box hidden">
+    <h2 id="tituloLogin">Login</h2>
+    <p id="subLogin" style="font-size: 13px; color: #666; margin-bottom: 20px;"></p>
+    <form id="formLogin">
+        <label for="usuario">Usuário / Nome:</label>
+        <input type="text" id="usuario" required>
+
+        <label for="senha" id="labelSenha">Senha:</label>
+        <input type="password" id="senha">
+
+        <button type="submit" id="btnLogin">Entrar</button>
+        <button type="button" class="btnVoltarMenuSeguro btn-secondary" style="margin-top: 10px;">Voltar ao Menu</button>
+    </form>
+    <div id="msgLogin"></div>
+</div>
+
+<!-- TELA 4: CONSULTA / RELATÓRIO DE OS -->
+<div id="telaRelatorio" class="container hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div>
+            <h2>Consulta de OS</h2>
+            <span id="infoSupervisor" style="font-size: 12px; color: var(--brand-green); font-weight: bold;"></span>
+        </div>
+        <button type="button" class="btnVoltarMenuSeguro btn-secondary" style="width: auto; padding: 6px 12px; font-size: 13px;">Voltar ao Menu</button>
+    </div>
+
+    <fieldset>
+        <legend>Filtros de Pesquisa</legend>
+        <div class="grid-4">
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkOS"><label for="chkOS" style="margin:0;">Nº da OS</label></div>
+                <input type="text" id="filtroOS" placeholder="Filtrar OS...">
+            </div>
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkData"><label for="chkData" style="margin:0;">Data Inicial</label></div>
+                <input type="date" id="filtroData">
+            </div>
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkTecnico"><label for="chkTecnico" style="margin:0;">Técnico</label></div>
+                <select id="filtroTecnicoSelect" style="display:none; width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;"><option value="">Todos os técnicos</option></select>
+                <input type="text" id="filtroTecnicoInput" placeholder="Técnico...">
+            </div>
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkEquipe"><label for="chkEquipe" style="margin:0;">Equipe</label></div>
+                <input type="text" id="filtroEquipe" placeholder="Equipe...">
+            </div>
+        </div>
+        <button type="button" id="btnFiltrarRelatorio">Pesquisar</button>
+    </fieldset>
+
+    <div style="overflow-x: auto;">
+        <table id="tabelaResultados">
+            <thead>
+                <tr>
+                    <th>OS</th>
+                    <th>Data</th>
+                    <th>Controladora</th>
+                    <th>Técnico</th>
+                    <th>Equipe</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="7" style="text-align:center;">Selecione os filtros e clique em Pesquisar...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- TELA 5: FORMULÁRIO DE LANÇAMENTO DE OS -->
+<div id="telaForm" class="container hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2>Nova Ordem de Serviço</h2>
+        <button type="button" class="btnVoltarMenuSeguro btn-secondary" style="width: auto; padding: 6px 12px; font-size: 13px;">Voltar ao Menu</button>
+    </div>
+
+    <form id="formOS">
+        <!-- Identificação e Tipo -->
+        <fieldset>
+            <legend>Identificação do Serviço</legend>
+            <div class="grid-2">
+                <div>
+                    <label for="controladora">Controladora:</label>
+                    <input type="text" id="controladora" list="listaControladoras" placeholder="Selecione ou busque..." required autocomplete="off">
+                    <datalist id="listaControladoras"></datalist>
+                </div>
+                <div>
+                    <label>Tipo de Serviço:</label>
+                    <div class="radio-group" style="margin-top: 8px;">
+                        <input type="radio" id="corretivo" name="tipo_servico" value="Corretivo" required>
+                        <label for="corretivo">Corretivo</label>
+                        
+                        <input type="radio" id="preventivo" name="tipo_servico" value="Preventivo">
+                        <label for="preventivo">Preventivo</label>
+                        
+                        <input type="radio" id="implantacao" name="tipo_servico" value="Implantação">
+                        <label for="implantacao">Implantação</label>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Datas e Horários -->
+        <fieldset>
+            <legend>Período de Atendimento</legend>
+            <div class="grid-4">
+                <div><label>Data Inicial:</label><input type="date" id="data_inicial" required></div>
+                <div><label>Hora Inicial:</label><input type="time" id="hora_inicial" required></div>
+                <div><label>Data Final:</label><input type="date" id="data_final" required></div>
+                <div><label>Hora Final:</label><input type="time" id="hora_final" required></div>
+            </div>
+        </fieldset>
+
+        <!-- Detalhamento Técnico & Múltiplos Códigos -->
+        <fieldset>
+            <legend>Detalhamento Técnico</legend>
+            <label>Código(s) do Serviço (Selecione um ou mais):</label>
+            <div id="containerCodigos" style="max-height: 160px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px; margin-bottom: 10px; background: #fafafa;">
+                Carregando códigos...
+            </div>
+
+            <label>Descrição do Serviço:</label>
+            <textarea id="descricao_servico" rows="3" required></textarea>
+            
+            <label>Medições Padrão:</label>
+            <div class="grid-2">
+                <div><label>Tensão CA:</label><input type="text" id="tensao_alternada" required></div>
+                <div><label>Aterramento:</label><input type="text" id="aterramento" required></div>
+            </div>
+        </fieldset>
+
+        <!-- Manutenção Preventiva (Modelo de Controlador e DC Condicional) -->
+        <fieldset>
+            <legend>Manutenção Preventiva / Modelo de Controlador</legend>
+            <label for="modelo_controlador">Modelo de Controlador:</label>
+            <select id="modelo_controlador" required>
+                <option value="">Selecione o modelo...</option>
+                <option value="Contransin">Contransin</option>
+                <option value="Cross">Cross</option>
+                <option value="Meng">Meng</option>
+                <option value="Dataprom">Dataprom</option>
+            </select>
+
+            <div id="secaoDC" class="hidden" style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <label style="color: var(--brand-green);">Medições de Tensão CC (Exclusivo Modelo Cross):</label>
+                <div class="grid-3">
+                    <div><label>7.5VDC:</label><input type="text" id="tensao_75vdc"></div>
+                    <div><label>12VDC:</label><input type="text" id="tensao_12vdc"></div>
+                    <div><label>24VDC:</label><input type="text" id="tensao_24vdc"></div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Verificação de Infraestrutura -->
+        <fieldset>
+            <legend>Verificação de Infraestrutura</legend>
+            <div class="grid-3">
+                <div><label>Cabeamento:</label><input type="text" id="cabeamento" required></div>
+                <div><label>Fusível:</label><input type="text" id="fusivel" required></div>
+                <div><label>Invólucro:</label><input type="text" id="involucro" required></div>
+                <div><label>Gabinetes:</label><input type="text" id="gabinetes" required></div>
+                <div><label>Placas CPU/Potência:</label><input type="text" id="placas_cpu_potencia" required></div>
+                <div><label>Padronizada:</label><input type="text" id="padronizada" required></div>
+                <div><label>Blocos Semafóricos:</label><input type="text" id="blocos_semaforicos" required></div>
+                <div><label>Colunas:</label><input type="text" id="colunas" required></div>
+                <div><label>Braços:</label><input type="text" id="bracos" required></div>
+                <div><label>Nobreak:</label><input type="text" id="nobreak" required></div>
+            </div>
+        </fieldset>
+
+        <!-- Análise de Risco -->
+        <fieldset>
+            <legend>Análise de Risco</legend>
+            <label>Houve trabalho em altura acima de 2 metros?</label>
+            <div class="radio-group">
+                <input type="radio" id="altura_nao" name="trabalho_altura" value="Não" checked required>
+                <label for="altura_nao">Não</label>
+                
+                <input type="radio" id="altura_sim" name="trabalho_altura" value="Sim">
+                <label for="altura_sim">Sim</label>
+            </div>
+
+            <div id="campoTrabalhadores" class="hidden" style="margin-top: 10px;">
+                <label for="trabalhadores_altura">Trabalhadores (Nomes dos colaboradores envolvidos):</label>
+                <input type="text" id="trabalhadores_altura" placeholder="Digite os nomes...">
+            </div>
+        </fieldset>
+
+        <!-- Almoxarifado -->
+        <fieldset>
+            <legend>Almoxarifado / Materiais Utilizados</legend>
+            <label>Foi utilizado algum material?</label>
+            <div class="radio-group" style="margin-bottom: 10px;">
+                <input type="radio" id="material_nao" name="usou_material" value="nao" checked required>
+                <label for="material_nao">Não</label>
+                
+                <input type="radio" id="material_sim" name="usou_material" value="sim">
+                <label for="material_sim">Sim</label>
+            </div>
+
+            <div id="listaMateriaisContainer" class="hidden" style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa;">
+                <label style="margin-bottom: 8px; color: var(--brand-green);">Selecione os materiais e informe as quantidades:</label>
+                <div id="checkboxesMateriais" class="checkbox-grid">Carregando almoxarifado...</div>
+            </div>
+        </fieldset>
+
+        <!-- Finalização -->
+        <fieldset>
+            <legend>Finalização</legend>
+            <div class="grid-2">
+                <div>
+                    <label>Status do Serviço:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="st_concluido" name="status_servico" value="Concluído" required>
+                        <label for="st_concluido">Concluído</label>
+
+                        <input type="radio" id="st_pendente" name="status_servico" value="Pendente">
+                        <label for="st_pendente">Pendente</label>
+                    </div>
+                </div>
+                <div>
+                    <label>Status do Controlador:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="st_operacional" name="status_controlador" value="Operacional" required>
+                        <label for="st_operacional">Operacional</label>
+
+                        <input type="radio" id="st_inoperante" name="status_controlador" value="Inoperante">
+                        <label for="st_inoperante">Inoperante</label>
+                    </div>
+                </div>
+            </div>
+
+            <label>Pendência:</label><input type="text" id="pendencia" required>
+            <label>Observações:</label><textarea id="observacao" rows="2" required></textarea>
+            
+            <div class="grid-3">
+                <div><label>Equipe:</label><input type="text" id="equipe" required></div>
+                <div><label>Técnico:</label><input type="text" id="tecnico" readonly style="background:#e9ecef;" required></div>
+                <div><label>Supervisor:</label><input type="text" id="supervisor" required></div>
+            </div>
+        </fieldset>
+
+        <button type="submit" id="btnEnviar">Registrar O.S</button>
+        <button type="button" id="btnWhatsApp" class="btn-whats hidden">Enviar Relatório via WhatsApp</button>
+    </form>
+    <div id="mensagem"></div>
+</div>
+
+<script>
+    // URL DE EXECUÇÃO DO APPS SCRIPT ATUALIZADA
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyWIT3p2Or6FNFW3LH0jupGIfxTh93kI9e-jkkMafKO98e-1Js6PohMy3Jz0-WDn7dQ7Q/exec";
+    let tecnicoLogado = "";
+    let isSupervisor = false;
+    let acaoAtual = ""; 
+    let tipoLoginAtual = ""; 
+    let cacheOS = [];
+    let numeroOSGeradoFinal = "";
+
+    function mostrarTela(idTela) {
+        document.getElementById('telaMenu').classList.add('hidden');
+        document.getElementById('telaEscolhaPerfil').classList.add('hidden');
+        document.getElementById('telaLogin').classList.add('hidden');
+        document.getElementById('telaRelatorio').classList.add('hidden');
+        document.getElementById('telaForm').classList.add('hidden');
+        document.getElementById(idTela).classList.remove('hidden');
     }
 
-    // 6.3. SALVAMENTO NA PLANILHA DE ALMOXARIFADO (ADICIONA LINHA VINCULADA À OS)
-    if (data.usou_material && data.materiais_utilizados && data.materiais_utilizados.length > 0) {
-      try {
-        var ID_PLANILHA_ALMOX = "1RXvLOSMnhFRIZMvslt9npmZTbqZrLa9lBeOxL8o1lEA";
-        var docAlmox = SpreadsheetApp.openById(ID_PLANILHA_ALMOX);
-        var sheetAlmox = docAlmox.getSheets()[0];
-        var cabecalhos = sheetAlmox.getRange(1, 1, 1, sheetAlmox.getLastColumn()).getValues()[0];
-        
-        var linhaAlmox = new Array(cabecalhos.length).fill("");
-        
-        // Coluna A (Índice 0): Carimbo de data/hora
-        linhaAlmox[0] = new Date();
-        // Coluna B (Índice 1): Número da O.S
-        linhaAlmox[1] = numeroOSGerado;
-
-        // Preenche as quantidades nas colunas dos respectivos materiais
-        data.materiais_utilizados.forEach(function(item) {
-          for (var col = 2; col < cabecalhos.length; col++) {
-            if (String(cabecalhos[col]).trim().toLowerCase() === String(item.nome).trim().toLowerCase()) {
-              linhaAlmox[col] = item.qtd;
-              break;
-            }
-          }
-        });
-
-        sheetAlmox.appendRow(linhaAlmox);
-      } catch (eAlmox) {
-        // Log secundário
-      }
-    }
-
-    return ContentService.createTextOutput(JSON.stringify({ 
-      "result": "success", 
-      "numero_os": numeroOSGerado 
-    })).setMimeType(ContentService.MimeType.JSON);
-
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ "result": "error", "error": error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } finally {
-    lock.releaseLock();
-  }
-}
+    document.querySelectorAll('.btnVoltarMenuSeguro').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const formVisivel = !document.getElementById('telaForm').classList.contains('hidden');
+            if (formVisivel) {
+                if (confirm("Tem certeza que deseja voltar? Todos os dados preenchidos serão perdidos.")) {
+                    document.getElementById('formOS').reset();
+                    document.getElementById('btnWhatsApp').classList.add('hidden');
+                    document.getElementById('mensagem').
