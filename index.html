@@ -322,7 +322,7 @@
             <div class="grid-3">
                 <div><label>Equipe:</label><input type="text" id="equipe" required></div>
                 <div><label>Técnico:</label><input type="text" id="tecnico" readonly style="background:#e9ecef;" required></div>
-                <div><label>Supervisor:</label><input type="text" id="supervisor" required></div>
+                <div><label>Supervisor: (Opcional)</label><input type="text" id="supervisor"></div>
             </div>
         </fieldset>
 
@@ -333,7 +333,6 @@
 </div>
 
 <script>
-    // URL DE EXECUÇÃO DO APPS SCRIPT ATUALIZADA
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyWIT3p2Or6FNFW3LH0jupGIfxTh93kI9e-jkkMafKO98e-1Js6PohMy3Jz0-WDn7dQ7Q/exec";
     let tecnicoLogado = "";
     let isSupervisor = false;
@@ -874,7 +873,8 @@
             material: document.getElementById('observacao').value,
             observacao: document.getElementById('observacao').value,
             equipe: document.getElementById('equipe').value,
-            tecnico: tecnicoLogado
+            tecnico: tecnicoLogado,
+            supervisor: document.getElementById('supervisor').value
         };
         cacheOS.push(osTemp);
         enviarWhatsAppIndex(cacheOS.length - 1);
