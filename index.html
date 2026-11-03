@@ -3,17 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ordem de Serviço - Ecomix</title>
-    <!-- Biblioteca jsPDF para exportação em PDF -->
+    <title>Ordem de Serviço - Ecomix Filial Niterói</title>
+    <!-- Biblioteca jsPDF para exportação no formato padrão de OS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --primary: #007bff; --bg: #f4f6f9; --success: #28a745; --whatsapp: #25d366; --dark: #343a40; --brand-green: #00966b; }
+        :root { 
+            --primary: #007bff; 
+            --bg: #f4f6f9; 
+            --success: #28a745; 
+            --whatsapp: #25d366; 
+            --dark: #343a40; 
+            --brand-green: #00897b; 
+            --brand-green-hover: #00695c;
+            --brand-bg: #e0f2f1;
+        }
         body { font-family: Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
         .container { max-width: 900px; background: white; margin: 0 auto; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .hidden { display: none !important; }
-        h2 { color: #333; border-bottom: 2px solid var(--primary); padding-bottom: 8px; margin-top: 0; }
+        h2 { color: #333; border-bottom: 2px solid var(--brand-green); padding-bottom: 8px; margin-top: 0; }
         fieldset { border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 20px; }
-        legend { font-weight: bold; color: var(--primary); padding: 0 5px; }
+        legend { font-weight: bold; color: var(--brand-green); padding: 0 5px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
@@ -23,8 +32,8 @@
         }
         .radio-group { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
         .radio-group label { margin: 0; font-weight: normal; cursor: pointer; }
-        button { background-color: var(--primary); color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        button:hover { background-color: #0056b3; }
+        button { background-color: var(--brand-green); color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background-color: var(--brand-green-hover); }
         .btn-secondary { background-color: #6c757d; }
         .btn-secondary:hover { background-color: #5a6268; }
         .btn-whats { background-color: var(--whatsapp); }
@@ -33,32 +42,34 @@
         .btn-pdf:hover { background-color: #c82333; }
         .btn-menu { height: 60px; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; border-radius: 6px; }
         #msgLogin, #mensagem { margin-top: 15px; text-align: center; font-weight: bold; }
-        .menu-box, .login-box { max-width: 450px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+        .menu-box, .login-box { max-width: 450px; margin: 40px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid var(--brand-green); }
         
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: var(--primary); color: white; }
+        th { background-color: var(--brand-green); color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .actions-cell { display: flex; gap: 5px; }
         .actions-cell button { padding: 5px 10px; font-size: 12px; margin: 0; width: auto; }
         .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
         .filter-row input[type="checkbox"] { width: auto; margin: 0; }
+        .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; background: #f8f9fa; padding: 6px; border-radius: 4px; border: 1px solid #e9ecef; }
+        .checkbox-item input { width: auto; margin: 0; }
     </style>
 </head>
-<body>
+<body style="background-color: var(--brand-bg);">
 
-<!-- TELA 1: MENU PRINCIPAL (COM LOGO DO GOOGLE DRIVE) -->
+<!-- TELA 1: MENU PRINCIPAL -->
 <div id="telaMenu" class="menu-box container">
     <div style="margin-bottom: 20px;">
-        <img src="https://lh3.googleusercontent.com/d/1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Ecomix Logo" style="max-width: 180px; height: auto; display: block; margin: 0 auto 10px auto;" crossorigin="anonymous">
-        <span style="font-size: 14px; color: #666; font-weight: bold;">Gestão e Planejamentos</span>
+        <h1 style="color: var(--brand-green); margin: 0; font-size: 26px;">Ecomix</h1>
+        <div style="font-size: 14px; color: #555; font-weight: bold;">Gestão e Planejamento</div>
+        <div style="font-size: 12px; color: #777; margin-top: 2px;">Filial Niterói</div>
     </div>
     
-    <button type="button" id="menuBtnForm" class="btn-menu" style="background-color: var(--brand-green);">📝 Lançamento de O.S</button>
-    
+    <button type="button" id="menuBtnForm" class="btn-menu">📝 Nova Ordem de Serviço</button>
+    <button type="button" id="menuBtnRelatorio" class="btn-menu btn-secondary" style="background-color: #007bff;">📊 Consultar Ordem de Serviço</button>
     <a href="https://www.google.com/maps/d/viewer?mid=1VhFRzI_GfxmRoRvVWv7RzN6_8GbJYk0&ll=-22.91169477718409%2C-43.05790850000001&z=12" target="_blank" class="btn-menu btn-secondary" style="color:white; background-color: #17a2b8;">🗺️ Mapa das Controladoras</a>
-    
-    <button type="button" id="menuBtnRelatorio" class="btn-menu btn-secondary">📊 Consulta e Relatório de O.S</button>
 </div>
 
 <!-- TELA 2: ESCOLHA DE PERFIL PARA CONSULTA -->
@@ -67,10 +78,10 @@
     <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Selecione o seu perfil de acesso:</p>
     <button type="button" id="btnPerfilTecnico" class="btn-menu" style="background-color: #007bff; height: 50px; font-size: 16px;">Técnico (Consulta Limitada)</button>
     <button type="button" id="btnPerfilSupervisor" class="btn-menu" style="background-color: #6c757d; height: 50px; font-size: 16px;">Supervisor (Consulta Completa)</button>
-    <button type="button" class="btnVoltarMenu btn-secondary" style="margin-top: 15px;">Voltar ao Menu</button>
+    <button type="button" class="btnVoltarMenuSeguro btn-secondary" style="margin-top: 15px;">Voltar ao Menu</button>
 </div>
 
-<!-- TELA 3: LOGIN UNIFICADO -->
+<!-- TELA 3: LOGIN / AUTENTICAÇÃO -->
 <div id="telaLogin" class="login-box hidden">
     <h2 id="tituloLogin">Login</h2>
     <p id="subLogin" style="font-size: 13px; color: #666; margin-bottom: 20px;"></p>
@@ -82,7 +93,7 @@
         <input type="password" id="senha">
 
         <button type="submit" id="btnLogin">Entrar</button>
-        <button type="button" class="btnVoltarMenu btn-secondary" style="margin-top: 10px;">Voltar ao Menu</button>
+        <button type="button" class="btnVoltarMenuSeguro btn-secondary" style="margin-top: 10px;">Voltar ao Menu</button>
     </form>
     <div id="msgLogin"></div>
 </div>
@@ -94,7 +105,7 @@
             <h2>Consulta de Ordens de Serviço</h2>
             <span id="infoSupervisor" style="font-size: 13px; color: var(--brand-green); font-weight: bold;"></span>
         </div>
-        <button type="button" class="btnVoltarMenu btn-secondary" style="width: auto; padding: 5px 15px;">Voltar ao Menu</button>
+        <button type="button" class="btnVoltarMenuSeguro btn-secondary" style="width: auto; padding: 5px 15px;">Voltar ao Menu</button>
     </div>
 
     <fieldset>
@@ -144,43 +155,37 @@
 <!-- TELA 5: FORMULÁRIO DE LANÇAMENTO DE OS -->
 <div id="telaForm" class="container hidden">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>Lançamento de Ordem de Serviço</h2>
-        <button type="button" class="btnVoltarMenu btn-secondary" style="width: auto; padding: 5px 15px;">Voltar ao Menu</button>
+        <h2>Nova Ordem de Serviço</h2>
+        <button type="button" class="btnVoltarMenuSeguro btn-secondary" style="width: auto; padding: 5px 15px;">Voltar ao Menu</button>
     </div>
 
     <form id="formOS">
+        <!-- Identificação e Tipo -->
         <fieldset>
             <legend>Identificação do Serviço</legend>
-            <div class="grid-3">
-                <div>
-                    <label for="numero_os">Número da OS:</label>
-                    <input type="text" id="numero_os" readonly style="background:#e9ecef; font-weight: bold;" required>
-                </div>
+            <div class="grid-2">
                 <div>
                     <label for="controladora">Controladora:</label>
                     <input type="text" id="controladora" list="listaControladoras" placeholder="Selecione ou busque..." required autocomplete="off">
                     <datalist id="listaControladoras"></datalist>
                 </div>
                 <div>
-                    <label for="codigo_servico">Código do Serviço:</label>
-                    <input type="text" id="codigo_servico" list="listaCodigos" placeholder="Selecione o código..." required autocomplete="off">
-                    <datalist id="listaCodigos"></datalist>
+                    <label>Tipo de Serviço:</label>
+                    <div class="radio-group" style="margin-top: 10px;">
+                        <input type="radio" id="corretivo" name="tipo_servico" value="Corretivo" required>
+                        <label for="corretivo">Corretivo</label>
+                        
+                        <input type="radio" id="preventivo" name="tipo_servico" value="Preventivo">
+                        <label for="preventivo">Preventivo</label>
+                        
+                        <input type="radio" id="implantacao" name="tipo_servico" value="Implantação">
+                        <label for="implantacao">Implantação</label>
+                    </div>
                 </div>
-            </div>
-            
-            <label>Tipo de Serviço:</label>
-            <div class="radio-group">
-                <input type="radio" id="corretivo" name="tipo_servico" value="Corretivo" required>
-                <label for="corretivo">Corretivo</label>
-                
-                <input type="radio" id="preventivo" name="tipo_servico" value="Preventivo">
-                <label for="preventivo">Preventivo</label>
-                
-                <input type="radio" id="implantacao" name="tipo_servico" value="Implantação">
-                <label for="implantacao">Implantação</label>
             </div>
         </fieldset>
 
+        <!-- Datas e Horários -->
         <fieldset>
             <legend>Período de Atendimento</legend>
             <div class="grid-4">
@@ -191,24 +196,50 @@
             </div>
         </fieldset>
 
+        <!-- Detalhamento Técnico & Múltiplos Códigos -->
         <fieldset>
             <legend>Detalhamento Técnico</legend>
+            <label>Código(s) do Serviço (Selecione um ou mais):</label>
+            <div id="containerCodigos" style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px; margin-bottom: 10px; background: #fafafa;">
+                Carregando códigos...
+            </div>
+
             <label>Descrição do Serviço:</label>
             <textarea id="descricao_servico" rows="3" required></textarea>
             
-            <label>Medições de Tensão:</label>
-            <div class="grid-4">
+            <label>Medições Padrão:</label>
+            <div class="grid-2">
                 <div><label>Tensão CA:</label><input type="text" id="tensao_alternada" required></div>
-                <div><label>7.5VDC:</label><input type="text" id="tensao_75vdc" required></div>
-                <div><label>12VDC:</label><input type="text" id="tensao_12vdc" required></div>
-                <div><label>24VDC:</label><input type="text" id="tensao_24vdc" required></div>
+                <div><label>Aterramento:</label><input type="text" id="aterramento" required></div>
             </div>
         </fieldset>
 
+        <!-- Manutenção Preventiva (Modelo de Controlador e DC Condicional) -->
+        <fieldset>
+            <legend>Manutenção Preventiva / Modelo de Controlador</legend>
+            <label for="modelo_controlador">Modelo de Controlador:</label>
+            <select id="modelo_controlador" required>
+                <option value="">Selecione o modelo...</option>
+                <option value="Contransin">Contransin</option>
+                <option value="Cross">Cross</option>
+                <option value="Meng">Meng</option>
+                <option value="Dataprom">Dataprom</option>
+            </select>
+
+            <div id="secaoDC" class="hidden" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <label style="color: var(--brand-green);">Medições de Tensão CC (Exclusivo Modelo Cross):</label>
+                <div class="grid-3">
+                    <div><label>7.5VDC:</label><input type="text" id="tensao_75vdc"></div>
+                    <div><label>12VDC:</label><input type="text" id="tensao_12vdc"></div>
+                    <div><label>24VDC:</label><input type="text" id="tensao_24vdc"></div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Verificação de Infraestrutura -->
         <fieldset>
             <legend>Verificação de Infraestrutura</legend>
             <div class="grid-3">
-                <div><label>Aterramento:</label><input type="text" id="aterramento" required></div>
                 <div><label>Cabeamento:</label><input type="text" id="cabeamento" required></div>
                 <div><label>Fusível:</label><input type="text" id="fusivel" required></div>
                 <div><label>Invólucro:</label><input type="text" id="involucro" required></div>
@@ -222,6 +253,43 @@
             </div>
         </fieldset>
 
+        <!-- Análise de Risco -->
+        <fieldset>
+            <legend>Análise de Risco</legend>
+            <label>Houve trabalho em altura acima de 2 metros?</label>
+            <div class="radio-group">
+                <input type="radio" id="altura_nao" name="trabalho_altura" value="Não" checked required>
+                <label for="altura_nao">Não</label>
+                
+                <input type="radio" id="altura_sim" name="trabalho_altura" value="Sim">
+                <label for="altura_sim">Sim</label>
+            </div>
+
+            <div id="campoTrabalhadores" class="hidden" style="margin-top: 10px;">
+                <label for="trabalhadores_altura">Trabalhadores (Nomes dos colaboradores envolvidos):</label>
+                <input type="text" id="trabalhadores_altura" placeholder="Digite os nomes...">
+            </div>
+        </fieldset>
+
+        <!-- Almoxarifado -->
+        <fieldset>
+            <legend>Almoxarifado / Materiais Utilizados</legend>
+            <label>Foi utilizado algum material?</label>
+            <div class="radio-group" style="margin-bottom: 10px;">
+                <input type="radio" id="material_nao" name="usou_material" value="nao" checked required>
+                <label for="material_nao">Não</label>
+                
+                <input type="radio" id="material_sim" name="usou_material" value="sim">
+                <label for="material_sim">Sim</label>
+            </div>
+
+            <div id="listaMateriaisContainer" class="hidden" style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa;">
+                <label style="margin-bottom: 8px; color: var(--brand-green);">Selecione os materiais e informe as quantidades:</label>
+                <div id="checkboxesMateriais" class="checkbox-grid">Carregando almoxarifado...</div>
+            </div>
+        </fieldset>
+
+        <!-- Finalização -->
         <fieldset>
             <legend>Finalização</legend>
             <div class="grid-2">
@@ -248,7 +316,6 @@
             </div>
 
             <label>Pendência:</label><input type="text" id="pendencia" required>
-            <label>Material Utilizado:</label><textarea id="material" rows="2" required></textarea>
             <label>Observações:</label><textarea id="observacao" rows="2" required></textarea>
             
             <div class="grid-3">
@@ -265,13 +332,13 @@
 </div>
 
 <script>
-    // LINK ATUALIZADO DO GOOGLE APPS SCRIPT
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxD1ghsuRobUpxeHDE3VXygTvOdCElZszCWHIbvpbPkWXA6nPXIjoy99PKppolBfdSC_Q/exec";
     let tecnicoLogado = "";
     let isSupervisor = false;
-    let acaoAtual = ""; // 'form' ou 'relatorio'
-    let tipoLoginAtual = ""; // 'tecnico' ou 'supervisor'
+    let acaoAtual = ""; 
+    let tipoLoginAtual = ""; 
     let cacheOS = [];
+    let numeroOSGeradoFinal = "";
 
     function mostrarTela(idTela) {
         document.getElementById('telaMenu').classList.add('hidden');
@@ -282,8 +349,21 @@
         document.getElementById(idTela).classList.remove('hidden');
     }
 
-    document.querySelectorAll('.btnVoltarMenu').forEach(btn => {
-        btn.addEventListener('click', () => mostrarTela('telaMenu'));
+    // Alerta de confirmação ao Voltar (evita perda acidental de dados)
+    document.querySelectorAll('.btnVoltarMenuSeguro').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const formVisivel = !document.getElementById('telaForm').classList.contains('hidden');
+            if (formVisivel) {
+                if (confirm("Tem certeza que deseja voltar? Todos os dados preenchidos serão perdidos.")) {
+                    document.getElementById('formOS').reset();
+                    document.getElementById('btnWhatsApp').classList.add('hidden');
+                    document.getElementById('mensagem').innerText = "";
+                    mostrarTela('telaMenu');
+                }
+            } else {
+                mostrarTela('telaMenu');
+            }
+        });
     });
 
     document.getElementById('menuBtnForm').addEventListener('click', () => {
@@ -398,11 +478,10 @@
 
     function carregarDadosFormulario() {
         Promise.all([
-            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getProximaOS" }) }).then(r => r.json()),
             fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getControladoras" }) }).then(r => r.json()),
-            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getCodigosServico" }) }).then(r => r.json())
-        ]).then(([osData, ctrlData, codData]) => {
-            if(osData.result === "success") document.getElementById('numero_os').value = osData.numero_os;
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getCodigosServico" }) }).then(r => r.json()),
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getMateriaisAlmoxarifado" }) }).then(r => r.json())
+        ]).then(([ctrlData, codData, almoxData]) => {
             if(ctrlData.result === "success" && ctrlData.controladoras) {
                 const datalistCtrl = document.getElementById('listaControladoras');
                 datalistCtrl.innerHTML = "";
@@ -413,320 +492,41 @@
                 });
             }
             if(codData.result === "success" && codData.codigos) {
-                const datalistCod = document.getElementById('listaCodigos');
-                datalistCod.innerHTML = "";
+                const contCod = document.getElementById('containerCodigos');
+                contCod.innerHTML = "";
                 codData.codigos.forEach(cod => {
-                    const opt = document.createElement('option');
-                    opt.value = cod;
-                    datalistCod.appendChild(opt);
+                    const div = document.createElement('div');
+                    div.style.marginBottom = "5px";
+                    div.innerHTML = `<label style="font-weight:normal; display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" name="codigos_servico_chk" value="${cod}" style="width:auto; margin:0;"> ${cod}</label>`;
+                    contCod.appendChild(div);
                 });
             }
-        });
-    }
-
-    // CONSULTA / RELATÓRIO COM CHECKBOXES
-    function carregarRelatorio() {
-        const tbody = document.querySelector('#tabelaResultados tbody');
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Carregando dados...</td></tr>';
-
-        const usarOS = document.getElementById('chkOS').checked;
-        const usarData = document.getElementById('chkData').checked;
-        const usarTecnico = isSupervisor ? document.getElementById('chkTecnico').checked : true;
-        const usarEquipe = document.getElementById('chkEquipe').checked;
-
-        const payload = {
-            action: "buscarOS",
-            usuarioLogado: tecnicoLogado,
-            isSupervisor: isSupervisor,
-            usarOS: usarOS,
-            filtroOS: usarOS ? document.getElementById('filtroOS').value : "",
-            usarData: usarData,
-            filtroData: usarData ? document.getElementById('filtroData').value : "",
-            usarTecnico: usarTecnico,
-            filtroTecnico: isSupervisor ? (usarTecnico ? document.getElementById('filtroTecnicoSelect').value : "") : tecnicoLogado,
-            usarEquipe: usarEquipe,
-            filtroEquipe: usarEquipe ? document.getElementById('filtroEquipe').value : ""
-        };
-
-        fetch(URL_APPS_SCRIPT, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.result === "success") {
-                cacheOS = data.lista || [];
-                tbody.innerHTML = "";
-                if (cacheOS.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma O.S encontrada.</td></tr>';
-                    return;
-                }
-                cacheOS.forEach((os, index) => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><b>${os.numero_os}</b></td>
-                        <td>${os.data_inicial ? os.data_inicial.split('-').reverse().join('/') : ''}</td>
-                        <td>${os.controladora}</td>
-                        <td>${os.tecnico}</td>
-                        <td>${os.equipe}</td>
-                        <td>${os.status_servico}</td>
-                        <td class="actions-cell">
-                            <button type="button" class="btn-whats" onclick="enviarWhatsAppIndex(${index})">💬 Whats</button>
-                            <button type="button" class="btn-pdf" onclick="gerarPDFIndex(${index})">📄 PDF</button>
-                        </td>
+            if(almoxData.result === "success" && almoxData.materiais) {
+                const contAlmox = document.getElementById('checkboxesMateriais');
+                contAlmox.innerHTML = "";
+                almoxData.materiais.forEach(mat => {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'checkbox-item';
+                    wrap.innerHTML = `
+                        <input type="checkbox" class="chk-material" value="${mat}" id="mat_${mat}">
+                        <label for="mat_${mat}" style="margin:0; font-size:12px; flex:1; cursor:pointer;">${mat}</label>
+                        <input type="number" class="qtd-material" placeholder="Qtd" min="1" value="1" style="width:60px; padding:3px; margin:0;">
                     `;
-                    tbody.appendChild(tr);
+                    contAlmox.appendChild(wrap);
                 });
             }
-        })
-        .catch(err => {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">Erro ao buscar dados: ${err.message}</td></tr>`;
         });
     }
 
-    document.getElementById('btnFiltrarRelatorio').addEventListener('click', carregarRelatorio);
-
-    // WHATSAPP DA CONSULTA
-    function enviarWhatsAppIndex(index) {
-        const os = cacheOS[index];
-        const texto = `*Mantenção semafórica*%0A%0A` +
-                      `Data Inicial: ${os.data_inicial ? os.data_inicial.split('-').reverse().join('/') : ''}%0A` +
-                      `Horario inicial: ${os.hora_inicial || ''}%0A` +
-                      `Data final: ${os.data_final ? os.data_final.split('-').reverse().join('/') : ''}%0A` +
-                      `Horario final: ${os.hora_final || ''}%0A%0A` +
-                      `Controladora: ${os.controladora}%0A%0A` +
-                      `Código: ${os.codigo_servico || ''}%0A%0A` +
-                      `${os.tipo_servico || ''}%0A` +
-                      `Entrada de Alimentação (CA): ${os.tensao_alternada || ''}%0A` +
-                      `Aterramento: ${os.aterramento || ''}%0A` +
-                      `Nobreak: ${os.nobreak || ''}%0A` +
-                      `Fusíveis: ${os.fusivel || ''}%0A%0A` +
-                      `Saída da fonte de Alimentação (CC):%0A` +
-                      `7,5V: ${os.tensao_75vdc || ''}%0A` +
-                      `12V: ${os.tensao_12vdc || ''}%0A` +
-                      `24V: ${os.tensao_24vdc || ''}%0A%0A` +
-                      `Cabeamento: ${os.cabeamento || ''}%0A` +
-                      `Invólucro: ${os.involucro || ''}%0A` +
-                      `Gabinetes: ${os.gabinetes || ''}%0A` +
-                      `Placas de CPU e Potência: ${os.placas_cpu_potencia || ''}%0A` +
-                      `Grupos focais: ${os.blocos_semaforicos || ''}%0A` +
-                      `Colunas: ${os.colunas || ''}%0A` +
-                      `Braços: ${os.bracos || ''}%0A` +
-                      `Padronizada: ${os.padronizada || ''}%0A%0A` +
-                      `Status da Controladora: ${os.status_controlador || ''}%0A%0A` +
-                      `Material Utilizado: ${os.material || ''}%0A%0A` +
-                      `Obs.: ${os.observacao || ''}%0A%0A` +
-                      `Equipe: ${os.equipe || ''}%0A` +
-                      `Eletrotécnico Responsável: ${os.tecnico || ''}%0A%0A` +
-                      `O.S SM: ${os.numero_os}`;
-
-        window.open(`https://api.whatsapp.com/send?text=${texto}`, '_blank');
-    }
-
-    // EXPORTAR EM PDF NO FORMATO EXATO DO MODELO
-    function gerarPDFIndex(index) {
-        const os = cacheOS[index];
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(14);
-        doc.text("Kecomix", 14, 15);
-        doc.setFontSize(10);
-        doc.text("Gestão e Planejamento", 14, 20);
-
-        doc.setFontSize(16);
-        doc.text("ORDEM DE SERVIÇO", 120, 15);
-        doc.setFontSize(11);
-        doc.text(`N° SM: ${os.numero_os}`, 120, 22);
-
-        doc.setLineWidth(0.5);
-        doc.line(14, 26, 196, 26);
-
-        doc.setFontSize(10);
-        doc.text("CONTROLADORA:", 14, 33);
-        doc.setFont("helvetica", "normal");
-        doc.text(String(os.controladora || ""), 48, 33);
-
-        doc.setFont("helvetica", "bold");
-        doc.text("TIPO DO SERVIÇO:", 14, 40);
-        doc.setFont("helvetica", "normal");
-        doc.text(String(os.tipo_servico || ""), 48, 40);
-
-        doc.rect(14, 45, 182, 18);
-        doc.setFont("helvetica", "bold");
-        doc.text("PERÍODO DA ATIVIDADE", 16, 51);
-        doc.text("INÍCIO", 60, 51);
-        doc.text("TÉRMINO", 130, 51);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Data: ${os.data_inicial ? os.data_inicial.split('-').reverse().join('/') : ''}  Hora: ${os.hora_inicial || ''}`, 40, 58);
-        doc.text(`Data: ${os.data_final ? os.data_final.split('-').reverse().join('/') : ''}  Hora: ${os.hora_final || ''}`, 110, 58);
-
-        doc.setFont("helvetica", "bold");
-        doc.text(`CÓD. DO SERVIÇO: ${os.codigo_servico || ''}`, 14, 69);
-        doc.text("DESCRIÇÃO DO SERVIÇO REALIZADO:", 14, 76);
-        doc.rect(14, 79, 182, 18);
-        doc.setFont("helvetica", "normal");
-        doc.text(String(os.descricao_servico || ""), 16, 85, { maxWidth: 178 });
-
-        let y = 103;
-        doc.setFont("helvetica", "bold");
-        doc.text("MEDIDAS E VERIFICAÇÕES:", 14, y);
-        y += 6;
-
-        const itens = [
-            ["Tensão (CA):", os.tensao_alternada, "Cabeamento:", os.cabeamento],
-            ["Aterramento:", os.aterramento, "Invólucro:", os.involucro],
-            ["Tensão 7,5VCC:", os.tensao_75vdc, "Gabinetes:", os.gabinetes],
-            ["Tensão 12VCC:", os.tensao_12vdc, "Placas CPU/Potência:", os.placas_cpu_potencia],
-            ["Tensão 24VCC:", os.tensao_24vdc, "Grupos Focais:", os.blocos_semaforicos],
-            ["Fusíveis:", os.fusivel, "Colunas / Braços:", `${os.colunas || ''} / ${os.bracos || ''}`],
-            ["Nobreak:", os.nobreak, "Padronizada:", os.padronizada]
-        ];
-
-        doc.setFont("helvetica", "normal");
-        itens.forEach(row => {
-            doc.text(row[0], 16, y);
-            doc.text(String(row[1] || ""), 50, y);
-            doc.text(row[2], 105, y);
-            doc.text(String(row[3] || ""), 145, y);
-            y += 6;
-        });
-
-        y += 4;
-        doc.rect(14, y, 182, 18);
-        doc.setFont("helvetica", "bold");
-        doc.text("STATUS DO SERVIÇO:", 16, y + 6);
-        doc.text("STATUS DA CONTROLADORA:", 105, y + 6);
-        doc.setFont("helvetica", "normal");
-        doc.text(os.status_servico || "", 16, y + 13);
-        doc.text(os.status_controlador || "", 105, y + 13);
-
-        y += 22;
-        doc.text(`Pendência: ${os.pendencia || 'Nenhuma'}`, 14, y);
-        y += 6;
-        doc.text(`Material Utilizado: ${os.material || 'Nenhum'}`, 14, y);
-        y += 6;
-        doc.text(`Observação: ${os.observacao || 'Nenhuma'}`, 14, y);
-
-        y += 12;
-        doc.rect(14, y, 182, 16);
-        doc.setFont("helvetica", "bold");
-        doc.text("EQUIPE", 25, y + 6);
-        doc.text("SUPERVISOR", 85, y + 6);
-        doc.text("TÉCNICO RESPONSÁVEL", 145, y + 6);
-        doc.setFont("helvetica", "normal");
-        doc.text(String(os.equipe || ""), 25, y + 13);
-        doc.text(String(os.supervisor || ""), 85, y + 13);
-        doc.text(String(os.tecnico || ""), 145, y + 13);
-
-        doc.save(`Ordem_Servico_${os.numero_os}.pdf`);
-    }
-
-    // REGISTRAR O.S
-    document.getElementById('formOS').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnEnviar');
-        const msg = document.getElementById('mensagem');
-        const numeroOS = document.getElementById('numero_os').value;
-
-        btn.disabled = true;
-        btn.innerText = "Registrando O.S...";
-
-        const payload = {
-            numero_os: numeroOS,
-            controladora: document.getElementById('controladora').value,
-            codigo_servico: document.getElementById('codigo_servico').value,
-            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
-            data_inicial: document.getElementById('data_inicial').value,
-            hora_inicial: document.getElementById('hora_inicial').value,
-            data_final: document.getElementById('data_final').value,
-            hora_final: document.getElementById('hora_final').value,
-            descricao_servico: document.getElementById('descricao_servico').value,
-            tensao_alternada: document.getElementById('tensao_alternada').value,
-            tensao_75vdc: document.getElementById('tensao_75vdc').value,
-            tensao_12vdc: document.getElementById('tensao_12vdc').value,
-            tensao_24vdc: document.getElementById('tensao_24vdc').value,
-            aterramento: document.getElementById('aterramento').value,
-            cabeamento: document.getElementById('cabeamento').value,
-            fusivel: document.getElementById('fusivel').value,
-            involucro: document.getElementById('involucro').value,
-            gabinetes: document.getElementById('gabinetes').value,
-            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
-            padronizada: document.getElementById('padronizada').value,
-            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
-            colunas: document.getElementById('colunas').value,
-            bracos: document.getElementById('bracos').value,
-            status_servico: document.querySelector('input[name="status_servico"]:checked')?.value || "",
-            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
-            pendencia: document.getElementById('pendencia').value,
-            material: document.getElementById('material').value,
-            observacao: document.getElementById('observacao').value,
-            equipe: document.getElementById('equipe').value,
-            tecnico: tecnicoLogado,
-            supervisor: document.getElementById('supervisor').value,
-            nobreak: document.getElementById('nobreak').value
-        };
-
-        fetch(URL_APPS_SCRIPT, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.result === "success") {
-                alert(`Ordem de Serviço Nº ${numeroOS} registrada com sucesso!`);
-                msg.style.color = "green";
-                msg.innerText = `O.S Nº ${numeroOS} registrada! Você já pode enviar o relatório para o WhatsApp.`;
-                btn.innerText = "O.S Registrada com Sucesso!";
-                document.getElementById('btnWhatsApp').classList.remove('hidden');
-            } else {
-                throw new Error(data.error);
-            }
-        })
-        .catch(err => {
-            msg.style.color = "red";
-            msg.innerText = "Erro ao registrar O.S: " + err.message;
-            btn.disabled = false;
-            btn.innerText = "Registrar O.S";
-        });
-    });
-
-    document.getElementById('btnWhatsApp').addEventListener('click', function() {
-        const osTemp = {
-            numero_os: document.getElementById('numero_os').value,
-            controladora: document.getElementById('controladora').value,
-            codigo_servico: document.getElementById('codigo_servico').value,
-            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
-            data_inicial: document.getElementById('data_inicial').value,
-            hora_inicial: document.getElementById('hora_inicial').value,
-            data_final: document.getElementById('data_final').value,
-            hora_final: document.getElementById('hora_final').value,
-            tensao_alternada: document.getElementById('tensao_alternada').value,
-            aterramento: document.getElementById('aterramento').value,
-            nobreak: document.getElementById('nobreak').value,
-            fusivel: document.getElementById('fusivel').value,
-            tensao_75vdc: document.getElementById('tensao_75vdc').value,
-            tensao_12vdc: document.getElementById('tensao_12vdc').value,
-            tensao_24vdc: document.getElementById('tensao_24vdc').value,
-            cabeamento: document.getElementById('cabeamento').value,
-            involucro: document.getElementById('involucro').value,
-            gabinetes: document.getElementById('gabinetes').value,
-            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
-            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
-            colunas: document.getElementById('colunas').value,
-            bracos: document.getElementById('bracos').value,
-            padronizada: document.getElementById('padronizada').value,
-            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
-            material: document.getElementById('material').value,
-            observacao: document.getElementById('observacao').value,
-            equipe: document.getElementById('equipe').value,
-            tecnico: tecnicoLogado
-        };
-        cacheOS.push(osTemp);
-        enviarWhatsAppIndex(cacheOS.length - 1);
-    });
-</script>
-
-</body>
-</html>
+    // Condicional do Modelo Cross (Tensões DC)
+    document.getElementById('modelo_controlador').addEventListener('change', function() {
+        const secDC = document.getElementById('secaoDC');
+        if(this.value === 'Cross') {
+            secDC.classList.remove('hidden');
+            document.getElementById('tensao_75vdc').required = true;
+            document.getElementById('tensao_12vdc').required = true;
+            document.getElementById('tensao_24vdc').required = true;
+        } else {
+            secDC.classList.add('hidden');
+            document.getElementById('tensao_75vdc').required = false;
+            document.getElementById('tensao_
