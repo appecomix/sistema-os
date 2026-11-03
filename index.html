@@ -400,9 +400,8 @@
         tipoLoginAtual = 'supervisor';
         document.getElementById('tituloLogin').innerText = "Identificação de Supervisor";
         document.getElementById('subLogin').innerText = "Informe seu nome de supervisor.";
-        document.getElementById('blocoSenha').style.display = "block";
-        document.getElementById('labelSenha').innerText = "Senha / Confirmação:";
-        document.getElementById('senha').required = false; // Opcional ou livre para supervisor
+        document.getElementById('blocoSenha').style.display = "none";
+        document.getElementById('senha').required = false;
         document.getElementById('formLogin').reset();
         document.getElementById('msgLogin').innerText = "";
         mostrarTela('telaLogin');
@@ -619,10 +618,19 @@
 
     function enviarWhatsAppIndex(index) {
         const os = cacheOS[index];
-        let codigoApenasNumero = "";
+        
+        let codigosNumeros = "";
         if (os.codigo_servico) {
-            let partes = os.codigo_servico.split(' - ');
-            codigoApenasNumero = partes[0].trim();
+            let lista = os.codigo_servico.split(/\||,/);
+            let nums = lista.map(c => c.trim().split(' - ')[0]).filter(n => n !== "");
+            codigosNumeros = nums.join(', ');
+        }
+
+        let textoDC = "";
+        if (os.modelo_controlador === "Cross") {
+            textoDC = `7.5VDC: ${os.tensao_75vdc || ''}%0A` +
+                      `12VDC: ${os.tensao_12vdc || ''}%0A` +
+                      `24VDC: ${os.tensao_24vdc || ''}%0A`;
         }
 
         const texto = `*Mantenção semafórica*%0A%0A` +
@@ -631,9 +639,10 @@
                       `Data final: ${os.data_final ? os.data_final.split('-').reverse().join('/') : ''}%0A` +
                       `Horario final: ${os.hora_final || ''}%0A%0A` +
                       `Controladora: ${os.controladora}%0A%0A` +
-                      `Código: ${codigoApenasNumero}%0A%0A` +
-                      `${os.tipo_servico || ''}%0A` +
+                      `Código: ${codigosNumeros}%0A%0A` +
+                      `Tipo do serviço: ${os.tipo_servico || ''}%0A` +
                       `Entrada de Alimentação (CA): ${os.tensao_alternada || ''}%0A` +
+                      textoDC +
                       `Aterramento: ${os.aterramento || ''}%0A` +
                       `Nobreak: ${os.nobreak || ''}%0A` +
                       `Fusíveis: ${os.fusivel || ''}%0A%0A` +
@@ -786,7 +795,7 @@
 
         const payload = {
             controladora: document.getElementById('controladora').value,
-            codigos_servico: codigosSelecionados.join(' | '),
+            codigos_servico: codigosSelecionados.join(', '),
             tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
             data_inicial: document.getElementById('data_inicial').value,
             hora_inicial: document.getElementById('hora_inicial').value,
@@ -812,80 +821,3 @@
             trabalho_altura: document.querySelector('input[name="trabalho_altura"]:checked').value,
             trabalhadores_altura: document.getElementById('trabalhadores_altura').value,
             usou_material: usouMaterial,
-            materiais_utilizados: materiaisUtilizados,
-            material_texto: textoMaterialResumo,
-            status_servico: document.querySelector('input[name="status_servico"]:checked')?.value || "",
-            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
-            pendencia: document.getElementById('pendencia').value,
-            observacao: document.getElementById('observacao').value,
-            equipe: document.getElementById('equipe').value,
-            tecnico: tecnicoLogado,
-            supervisor: document.getElementById('supervisor').value
-        };
-
-        fetch(URL_APPS_SCRIPT, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.result === "success") {
-                numeroOSGeradoFinal = data.numero_os;
-                alert(`Ordem de Serviço Nº ${numeroOSGeradoFinal} registrada com sucesso!`);
-                msg.style.color = "green";
-                msg.innerText = `O.S Nº ${numeroOSGeradoFinal} gerada e registrada com sucesso!`;
-                btn.innerText = "O.S Registrada com Sucesso!";
-                document.getElementById('btnWhatsApp').classList.remove('hidden');
-            } else {
-                throw new Error(data.error);
-            }
-        })
-        .catch(err => {
-            msg.style.color = "red";
-            msg.innerText = "Erro ao registrar O.S: " + err.message;
-            btn.disabled = false;
-            btn.innerText = "Registrar O.S";
-        });
-    });
-
-    document.getElementById('btnWhatsApp').addEventListener('click', function() {
-        let codigosSelecionadosW = [];
-        document.querySelectorAll('input[name="codigos_servico_chk"]:checked').forEach(chk => {
-            codigosSelecionadosW.push(chk.value);
-        });
-
-        const osTemp = {
-            numero_os: numeroOSGeradoFinal,
-            controladora: document.getElementById('controladora').value,
-            codigo_servico: codigosSelecionadosW.join(' | '),
-            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
-            data_inicial: document.getElementById('data_inicial').value,
-            hora_inicial: document.getElementById('hora_inicial').value,
-            data_final: document.getElementById('data_final').value,
-            hora_final: document.getElementById('hora_final').value,
-            tensao_alternada: document.getElementById('tensao_alternada').value,
-            aterramento: document.getElementById('aterramento').value,
-            nobreak: document.getElementById('nobreak').value,
-            fusivel: document.getElementById('fusivel').value,
-            cabeamento: document.getElementById('cabeamento').value,
-            involucro: document.getElementById('involucro').value,
-            gabinetes: document.getElementById('gabinetes').value,
-            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
-            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
-            colunas: document.getElementById('colunas').value,
-            bracos: document.getElementById('bracos').value,
-            padronizada: document.getElementById('padronizada').value,
-            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
-            material: document.getElementById('observacao').value,
-            observacao: document.getElementById('observacao').value,
-            equipe: document.getElementById('equipe').value,
-            tecnico: tecnicoLogado,
-            supervisor: document.getElementById('supervisor').value
-        };
-        cacheOS.push(osTemp);
-        enviarWhatsAppIndex(cacheOS.length - 1);
-    });
-</script>
-
-</body>
-</html>
