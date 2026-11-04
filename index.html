@@ -474,7 +474,23 @@
                     mostrarTela('telaForm');
                 } else {
                     if(isSupervisor) {
-                        document.getElementById('infoSupervisor').innerText = `Supervisor: ${data.user}`; document.getElementById('chkTecnico').parentElement.style.display = "block"; document.getElementById('filtroTecnicoSelect').style.display = "block"; document.getElementById('filtroTecnicoInput').style.display = "none";  const sel = document.getElementById('filtroTecnicoSelect'); sel.innerHTML = '<option value="">Todos os técnicos</option>'; if(data.tecnicos) { data.tecnicos.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.innerText = t; sel.appendChild(opt); }); } } else { document.getElementById('infoSupervisor').innerText = `Técnico: ${data.user}`;
+                        document.getElementById('infoSupervisor').innerText = `Supervisor: ${data.user}`;
+                        document.getElementById('chkTecnico').parentElement.style.display = "block";
+                        document.getElementById('filtroTecnicoSelect').style.display = "block";
+                        document.getElementById('filtroTecnicoInput').style.display = "none";
+                        
+                        const sel = document.getElementById('filtroTecnicoSelect');
+                        sel.innerHTML = '<option value="">Todos os técnicos</option>';
+                        if(data.tecnicos) {
+                            data.tecnicos.forEach(t => {
+                                const opt = document.createElement('option');
+                                opt.value = t;
+                                opt.innerText = t;
+                                sel.appendChild(opt);
+                            });
+                        }
+                    } else {
+                        document.getElementById('infoSupervisor').innerText = `Técnico: ${data.user}`;
                         document.getElementById('chkTecnico').parentElement.style.display = "none";
                         document.getElementById('filtroTecnicoSelect').style.display = "none";
                         document.getElementById('filtroTecnicoInput').style.display = "none";
@@ -638,4 +654,393 @@
             }
         })
         .catch(err => {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">Erro ao buscar dados: ${err.message}</td></tr>`;
+        });
+    }
+
+    document.getElementById('btnFiltrarRelatorio').addEventListener('click', carregarRelatorio);
+
+    function enviarWhatsAppIndex(index) {
+        const os = cacheOS[index];
+        
+        let codigosNumeros = "";
+        if (os.codigo_servico) {
+            let lista = os.codigo_servico.split(/\||,/);
+            let nums = lista.map(c => c.trim().split(' - ')[0]).filter(n => n !== "");
+            codigosNumeros = nums.join(', ');
+        }
+
+        let textoDC = "";
+        if (os.modelo_controlador === "Cross") {
+            textoDC = `7.5VDC: ${os.tensao_75vdc || ''}\n` +
+                      `12VDC: ${os.tensao_12vdc || ''}\n` +
+                      `24VDC: ${os.tensao_24vdc || ''}\n`;
+        }
+
+        const texto = `*Manutenção semafórica*\n\n` +
+                      `Data Inicial: ${os.data_inicial ? os.data_inicial.split('-').reverse().join('/') : ''}\n` +
+                      `Horário inicial: ${os.hora_inicial || ''}\n` +
+                      `Data final: ${os.data_final ? os.data_final.split('-').reverse().join('/') : ''}\n` +
+                      `Horário final: ${os.hora_final || ''}\n\n` +
+                      `Controladora: ${os.controladora}\n\n` +
+                      `Código: ${codigosNumeros}\n\n` +
+                      `Tipo do serviço: ${os.tipo_servico || ''}\n` +
+                      `Entrada de Alimentação (CA): ${os.tensao_alternada || ''}\n` +
+                      textoDC +
+                      `Aterramento: ${os.aterramento || ''}\n` +
+                      `Nobreak: ${os.nobreak || ''}\n` +
+                      `Fusíveis: ${os.fusivel || ''}\n\n` +
+                      `Cabeamento: ${os.cabeamento || ''}\n` +
+                      `Invólucro: ${os.involucro || ''}\n` +
+                      `Gabinetes: ${os.gabinetes || ''}\n` +
+                      `Placas de CPU e Potência: ${os.placas_cpu_potencia || ''}\n` +
+                      `Grupos focais: ${os.blocos_semaforicos || ''}\n` +
+                      `Colunas: ${os.colunas || ''}\n` +
+                      `Braços: ${os.bracos || ''}\n` +
+                      `Padronizada: ${os.padronizada || ''}\n\n` +
+                      `Status da Controladora: ${os.status_controlador || ''}\n\n` +
+                      `Material Utilizado: ${os.material || ''}\n\n` +
+                      `Pendência: ${os.pendencia || 'Nenhuma'}\n\n` +
+                      `Obs.: ${os.observacao || ''}\n\n` +
+                      `Equipe: ${os.equipe || ''}\n` +
+                      `Eletrotécnico Responsável: ${os.tecnico || ''}\n\n` +
+                      `O.S SM: ${os.numero_os}`;
+
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+    }
+
+    function gerarPDFIndex(index) {
+        const os = cacheOS[index];
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = document.getElementById('logoEcomix').src;
+        
+        img.onload = function() {
+            montarPDFComLogo(doc, os, img);
+        };
+        img.onerror = function() {
+            montarPDFComLogo(doc, os, null);
+        };
+    }
+
+    function montarPDFComLogo(doc, os, imgLogo) {
+        const corPrimaria = [0, 137, 123];   
+        const corBorda = [200, 200, 200];
+
+        if (imgLogo) {
+            doc.addImage(imgLogo, 'PNG', 14, 8, 55, 22);
+        }
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.setTextColor(corPrimaria[0], corPrimaria[1], corPrimaria[2]);
+        doc.text("Ecomix Gestão e Planejamento", 75, 16);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text("Filial Niterói - Manutenção Semafórica", 75, 22);
+
+        doc.setDrawColor(corPrimaria[0], corPrimaria[1], corPrimaria[2]);
+        doc.setLineWidth(0.8);
+        doc.setFillColor(240, 249, 248);
+        doc.roundedRect(135, 10, 65, 18, 2, 2, 'FD');
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(corPrimaria[0], corPrimaria[1], corPrimaria[2]);
+        doc.text("ORDEM DE SERVIÇO", 138, 17);
+        doc.setFontSize(10);
+        doc.setTextColor(50, 50, 50);
+        doc.text(`N°: ${os.numero_os}`, 138, 24);
+
+        doc.setDrawColor(corBorda[0], corBorda[1], corBorda[2]);
+        doc.setLineWidth(0.5);
+        doc.line(14, 32, 196, 32);
+
+        doc.autoTable({
+            startY: 36,
+            theme: 'grid',
+            headStyles: { fillColor: corPrimaria, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+            bodyStyles: { fontSize: 9, textColor: [50, 50, 50] },
+            columns: [
+                { header: 'Controladora / Local', dataKey: 'ctrl' },
+                { header: 'Tipo de Serviço', dataKey: 'tipo' }
+            ],
+            body: [
+                { ctrl: os.controladora || '', tipo: os.tipo_servico || '' }
+            ],
+            margin: { left: 14, right: 14 }
+        });
+
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 4,
+            theme: 'grid',
+            headStyles: { fillColor: [108, 117, 125], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+            bodyStyles: { fontSize: 9 },
+            columns: [
+                { header: 'Início do Atendimento', dataKey: 'inicio' },
+                { header: 'Término do Atendimento', dataKey: 'fim' }
+            ],
+            body: [
+                { 
+                    inicio: `Data: ${os.data_inicial ? os.data_inicial.split('-').reverse().join('/') : ''}  |  Hora: ${os.hora_inicial || ''}`, 
+                    fim: `Data: ${os.data_final ? os.data_final.split('-').reverse().join('/') : ''}  |  Hora: ${os.hora_final || ''}` 
+                }
+            ],
+            margin: { left: 14, right: 14 }
+        });
+
+        let yPos = doc.lastAutoTable.finalY + 6;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(corPrimaria[0], corPrimaria[1], corPrimaria[2]);
+        doc.text("DETALHAMENTO DO SERVIÇO", 14, yPos);
+
+        doc.autoTable({
+            startY: yPos + 2,
+            theme: 'grid',
+            bodyStyles: { fontSize: 9, textColor: [50, 50, 50] },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 45 }, 1: { cellWidth: 137 } },
+            body: [
+                ['Códigos do Serviço', os.codigo_servico || 'Nenhum código selecionado'],
+                ['Descrição Realizada', os.descricao_servico || 'Nenhuma descrição informada.']
+            ],
+            margin: { left: 14, right: 14 }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 6;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text("MEDIÇÕES E VERIFICAÇÕES TÉCNICAS", 14, yPos);
+
+        let t75 = "N/A", t12 = "N/A", t24 = "N/A";
+        if (os.modelo_controlador === "Cross") {
+            t75 = os.tensao_75vdc || "N/A";
+            t12 = os.tensao_12vdc || "N/A";
+            t24 = os.tensao_24vdc || "N/A";
+        }
+
+        let dadosMedicoes = [
+            ['Tensão (CA):', os.tensao_alternada || '-', 'Cabeamento:', os.cabeamento || '-'],
+            ['Aterramento:', os.aterramento || '-', 'Invólucro:', os.involucro || '-'],
+            ['Fusíveis:', os.fusivel || '-', 'Gabinetes:', os.gabinetes || '-'],
+            ['Placas CPU/Pot.:', os.placas_cpu_potencia || '-', 'Padronizada:', os.padronizada || '-'],
+            ['Grupos Focais:', os.blocos_semaforicos || '-', 'Colunas/Braços:', `${os.colunas || ''} / ${os.bracos || ''}`],
+            ['Nobreak:', os.nobreak || '-', 'Tensão 7.5VDC:', t75],
+            ['Tensão 12VDC:', t12, 'Tensão 24VDC:', t24]
+        ];
+
+        doc.autoTable({
+            startY: yPos + 2,
+            theme: 'grid',
+            headStyles: { fillColor: [80, 80, 80], fontSize: 9 },
+            bodyStyles: { fontSize: 8.5 },
+            columns: [
+                { header: 'Item Verificado', dataKey: 'it1' },
+                { header: 'Resultado / Condição', dataKey: 'res1' },
+                { header: 'Item Verificado', dataKey: 'it2' },
+                { header: 'Resultado / Condição', dataKey: 'res2' }
+            ],
+            body: dadosMedicoes.map(row => ({ it1: row[0], res1: row[1], it2: row[2], res2: row[3] })),
+            margin: { left: 14, right: 14 }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 6;
+        doc.autoTable({
+            startY: yPos,
+            theme: 'grid',
+            bodyStyles: { fontSize: 9, textColor: [50, 50, 50] },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 45 }, 1: { cellWidth: 137 } },
+            body: [
+                ['Status da Controladora', os.status_controlador || 'N/A'],
+                ['Status do Serviço', os.status_servico || 'N/A'],
+                ['Materiais Utilizados', os.material || 'Nenhum material registrado'],
+                ['Pendências', os.pendencia || 'Nenhuma'],
+                ['Observações', os.observacao || 'Nenhuma']
+            ],
+            margin: { left: 14, right: 14 }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 6;
+        doc.autoTable({
+            startY: yPos,
+            theme: 'grid',
+            headStyles: { fillColor: corPrimaria, fontSize: 9 },
+            bodyStyles: { fontSize: 9, halign: 'center' },
+            columns: [
+                { header: 'Equipe', dataKey: 'eq' },
+                { header: 'Supervisor', dataKey: 'sup' },
+                { header: 'Eletrotécnico Responsável', dataKey: 'tec' }
+            ],
+            body: [
+                { 
+                    eq: os.equipe || '-', 
+                    sup: os.supervisor || 'Não informado', 
+                    tec: os.tecnico || '-' 
+                }
+            ],
+            margin: { left: 14, right: 14 }
+        });
+
+        doc.save(`Ordem_Servico_${os.numero_os}.pdf`);
+    }
+
+    document.getElementById('formOS').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnEnviar');
+        const msg = document.getElementById('mensagem');
+
+        btn.disabled = true;
+        btn.innerText = "Gerando Nº OS e Registrando...";
+
+        let codigosSelecionados = [];
+        document.querySelectorAll('input[name="codigos_servico_chk"]:checked').forEach(chk => {
+            codigosSelecionados.push(chk.value);
+        });
+
+        let usouMaterial = document.querySelector('input[name="usou_material"]:checked').value === 'sim';
+        let materiaisUtilizados = [];
+        let materiaisEstoque = [];
+        let textoMaterialResumo = "";
+        
+        if(usouMaterial) {
+            document.querySelectorAll('.checkbox-item').forEach(item => {
+                const chk = item.querySelector('.chk-material');
+                if(chk && chk.checked) {
+                    const qtd = item.querySelector('.qtd-material').value || "1";
+                    const nomeMat = chk.value;
+                    
+                    textoMaterialResumo += `${nomeMat} (Qtd: ${qtd}), `;
+                    
+                    if (nomeMat !== "Fita Isolante" && nomeMat !== "Fita de Auto Fusão") {
+                        materiaisEstoque.push({ nome: nomeMat, qtd: qtd });
+                    }
+                    materiaisUtilizados.push({ nome: nomeMat, qtd: qtd });
+                }
+            });
+        }
+
+        const payload = {
+            controladora: document.getElementById('controladora').value,
+            codigos_servico: codigosSelecionados.join(', '),
+            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
+            data_inicial: document.getElementById('data_inicial').value,
+            hora_inicial: document.getElementById('hora_inicial').value,
+            data_final: document.getElementById('data_final').value,
+            hora_final: document.getElementById('hora_final').value,
+            descricao_servico: document.getElementById('descricao_servico').value,
+            tensao_alternada: document.getElementById('tensao_alternada').value,
+            aterramento: document.getElementById('aterramento').value,
+            modelo_controlador: document.getElementById('modelo_controlador').value,
+            tensao_75vdc: document.getElementById('tensao_75vdc').value,
+            tensao_12vdc: document.getElementById('tensao_12vdc').value,
+            tensao_24vdc: document.getElementById('tensao_24vdc').value,
+            cabeamento: document.getElementById('cabeamento').value,
+            fusivel: document.getElementById('fusivel').value,
+            involucro: document.getElementById('involucro').value,
+            gabinetes: document.getElementById('gabinetes').value,
+            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
+            padronizada: document.getElementById('padronizada').value,
+            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
+            colunas: document.getElementById('colunas').value,
+            bracos: document.getElementById('bracos').value,
+            nobreak: document.getElementById('nobreak').value,
+            trabalho_altura: document.querySelector('input[name="trabalho_altura"]:checked').value,
+            trabalhadores_altura: document.getElementById('trabalhadores_altura').value,
+            usou_material: usouMaterial,
+            materiais_utilizados: materiaisEstoque,
+            material_texto: textoMaterialResumo,
+            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
+            status_servico: document.querySelector('input[name="status_servico"]:checked')?.value || "",
+            pendencia: document.getElementById('pendencia').value,
+            observacao: document.getElementById('observacao').value,
+            equipe: document.getElementById('equipe').value,
+            tecnico: tecnicoLogado,
+            supervisor: document.getElementById('supervisor').value
+        };
+
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === "success") {
+                numeroOSGeradoFinal = data.numero_os;
+                alert(`Ordem de Serviço Nº ${numeroOSGeradoFinal} registrada com sucesso!`);
+                msg.style.color = "green";
+                msg.innerText = `O.S Nº ${numeroOSGeradoFinal} gerada e registrada com sucesso!`;
+                btn.innerText = "O.S Registrada com Sucesso!";
+                document.getElementById('btnWhatsApp').classList.remove('hidden');
+            } else {
+                throw new Error(data.error);
+            }
+        })
+        .catch(err => {
+            msg.style.color = "red";
+            msg.innerText = "Erro ao registrar O.S: " + err.message;
+            btn.disabled = false;
+            btn.innerText = "Registrar O.S";
+        });
+    });
+
+    document.getElementById('btnWhatsApp').addEventListener('click', function() {
+        let codigosSelecionadosW = [];
+        document.querySelectorAll('input[name="codigos_servico_chk"]:checked').forEach(chk => {
+            codigosSelecionadosW.push(chk.value);
+        });
+
+        let resumoMatW = "";
+        document.querySelectorAll('.checkbox-item').forEach(item => {
+            const chk = item.querySelector('.chk-material');
+            if(chk && chk.checked) {
+                const qtd = item.querySelector('.qtd-material').value || "1";
+                resumoMatW += `${chk.value} (Qtd: ${qtd}), `;
+            }
+        });
+
+        const osTemp = {
+            numero_os: numeroOSGeradoFinal,
+            controladora: document.getElementById('controladora').value,
+            codigo_servico: codigosSelecionadosW.join(', '),
+            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
+            data_inicial: document.getElementById('data_inicial').value,
+            hora_inicial: document.getElementById('hora_inicial').value,
+            data_final: document.getElementById('data_final').value,
+            hora_final: document.getElementById('hora_final').value,
+            tensao_alternada: document.getElementById('tensao_alternada').value,
+            modelo_controlador: document.getElementById('modelo_controlador').value,
+            tensao_75vdc: document.getElementById('tensao_75vdc').value,
+            tensao_12vdc: document.getElementById('tensao_12vdc').value,
+            tensao_24vdc: document.getElementById('tensao_24vdc').value,
+            aterramento: document.getElementById('aterramento').value,
+            nobreak: document.getElementById('nobreak').value,
+            fusivel: document.getElementById('fusivel').value,
+            cabeamento: document.getElementById('cabeamento').value,
+            involucro: document.getElementById('involucro').value,
+            gabinetes: document.getElementById('gabinetes').value,
+            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
+            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
+            colunas: document.getElementById('colunas').value,
+            bracos: document.getElementById('bracos').value,
+            padronizada: document.getElementById('padronizada').value,
+            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
+            status_servico: document.querySelector('input[name="status_servico"]:checked')?.value || "",
+            material: resumoMatW || 'Nenhum',
+            pendencia: document.getElementById('pendencia').value,
+            observacao: document.getElementById('observacao').value,
+            equipe: document.getElementById('equipe').value,
+            tecnico: tecnicoLogado,
+            supervisor: document.getElementById('supervisor').value
+        };
+        cacheOS.push(osTemp);
+        enviarWhatsAppIndex(cacheOS.length - 1);
+    });
+</script>
+
+</body>
+</html>
