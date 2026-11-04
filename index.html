@@ -72,7 +72,7 @@
     <button type="button" id="menuBtnForm" class="btn-menu" style="background-color: var(--brand-green);">📝 Nova Ordem de Serviço</button>
     <button type="button" id="menuBtnRelatorio" class="btn-menu" style="background-color: #007bff;">📊 Consultar Ordem de Serviço</button>
     <button type="button" id="menuBtnEstoque" class="btn-menu" style="background-color: #ff9800;">📦 Controle de Estoque</button>
-    <a href="https://www.google.com/maps/d/viewer?mid=1VhFRzI_GfxmRoRvVWv7RzN6_8GbJYk0&ll=-22.91169477718409%2C-43.05790850000001&z=12" target="_blank" class="btn-menu btn-secondary" style="background-color: #17a2b8; box-sizing: border-box; line-height: normal;">🗺️ Mapa das Controladoras</a>
+    <a href="https://www.google.com/maps/d/viewer?mid=1VhFRzI_GfxmRoRvVWv7RzN6_8GbJYk0&ll=-22.91169477718409%2C-43.05790850000001&z=12" target="_blank" class="btn-menu btn-secondary" style="background-color: #17a2b8; box-sizing: border-box; line-height: normal; text-decoration: none;">🗺️ Mapa das Controladoras</a>
 </div>
 
 <!-- TELA 2: ESCOLHA DE PERFIL PARA CONSULTA -->
@@ -430,7 +430,6 @@
             mostrarTela('telaLogin');
         });
 
-        // CORREÇÃO AQUI: Garante que o tipo de login mude para 'supervisor' ao clicar no perfil de supervisor
         document.getElementById('btnPerfilSupervisor').addEventListener('click', () => {
             tipoLoginAtual = 'supervisor';
             document.getElementById('tituloLogin').innerText = "Login de Supervisor";
@@ -891,4 +890,164 @@
                     tec: os.tecnico || '-' 
                 }
             ],
-            margin: { left
+            margin: { left: 14, right: 14 }
+        });
+
+        doc.save(`Ordem_Servico_${os.numero_os}.pdf`);
+    }
+
+    document.getElementById('formOS').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnEnviar');
+        const msg = document.getElementById('mensagem');
+
+        btn.disabled = true;
+        btn.innerText = "Gerando Nº OS e Registrando...";
+
+        let codigosSelecionados = [];
+        document.querySelectorAll('input[name="codigos_servico_chk"]:checked').forEach(chk => {
+            codigosSelecionados.push(chk.value);
+        });
+
+        let usouMaterial = document.querySelector('input[name="usou_material"]:checked').value === 'sim';
+        let materiaisUtilizados = [];
+        let materiaisEstoque = [];
+        let textoMaterialResumo = "";
+        
+        if(usouMaterial) {
+            document.querySelectorAll('.checkbox-item').forEach(item => {
+                const chk = item.querySelector('.chk-material');
+                if(chk && chk.checked) {
+                    const qtd = item.querySelector('.qtd-material').value || "1";
+                    const nomeMat = chk.value;
+                    
+                    textoMaterialResumo += `${nomeMat} (Qtd: ${qtd}), `;
+                    
+                    if (!["FITA ISOLANTE", "FITA DE AUTO FUSÃO"].includes(nomeMat.toUpperCase())) {
+                        materiaisEstoque.push({ nome: nomeMat, qtd: qtd });
+                    }
+                    materiaisUtilizados.push({ nome: nomeMat, qtd: qtd });
+                }
+            });
+        }
+
+        const payload = {
+            controladora: document.getElementById('controladora').value,
+            codigos_servico: codigosSelecionados.join(', '),
+            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
+            data_inicial: document.getElementById('data_inicial').value,
+            hora_inicial: document.getElementById('hora_inicial').value,
+            data_final: document.getElementById('data_final').value,
+            hora_final: document.getElementById('hora_final').value,
+            descricao_servico: document.getElementById('descricao_servico').value,
+            tensao_alternada: document.getElementById('tensao_alternada').value,
+            aterramento: document.getElementById('aterramento').value,
+            modelo_controlador: document.getElementById('modelo_controlador').value,
+            tensao_75vdc: document.getElementById('tensao_75vdc').value,
+            tensao_12vdc: document.getElementById('tensao_12vdc').value,
+            tensao_24vdc: document.getElementById('tensao_24vdc').value,
+            cabeamento: document.getElementById('cabeamento').value,
+            fusivel: document.getElementById('fusivel').value,
+            involucro: document.getElementById('involucro').value,
+            gabinetes: document.getElementById('gabinetes').value,
+            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
+            padronizada: document.getElementById('padronizada').value,
+            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
+            colunas: document.getElementById('colunas').value,
+            bracos: document.getElementById('bracos').value,
+            nobreak: document.getElementById('nobreak').value,
+            trabalho_altura: document.querySelector('input[name="trabalho_altura"]:checked').value,
+            trabalhadores_altura: document.getElementById('trabalhadores_altura').value,
+            usou_material: usouMaterial,
+            materiais_utilizados: materiaisEstoque,
+            material_texto: textoMaterialResumo,
+            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
+            status_servico: document.querySelector('input[name="status_servico"]:checked')?.value || "",
+            pendencia: document.getElementById('pendencia').value,
+            observacao: document.getElementById('observacao').value,
+            equipe: document.getElementById('equipe').value,
+            tecnico: tecnicoLogado,
+            supervisor: document.getElementById('supervisor').value
+        };
+
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === "success") {
+                numeroOSGeradoFinal = data.numero_os;
+                alert(`Ordem de Serviço Nº ${numeroOSGeradoFinal} registrada com sucesso!`);
+                msg.style.color = "green";
+                msg.innerText = `O.S Nº ${numeroOSGeradoFinal} gerada e registrada com sucesso!`;
+                btn.innerText = "O.S Registrada com Sucesso!";
+                document.getElementById('btnWhatsApp').classList.remove('hidden');
+            } else {
+                throw new Error(data.error);
+            }
+        })
+        .catch(err => {
+            msg.style.color = "red";
+            msg.innerText = "Erro ao registrar O.S: " + err.message;
+            btn.disabled = false;
+            btn.innerText = "Registrar O.S";
+        });
+    });
+
+    document.getElementById('btnWhatsApp').addEventListener('click', function() {
+        let codigosSelecionadosW = [];
+        document.querySelectorAll('input[name="codigos_servico_chk"]:checked').forEach(chk => {
+            codigosSelecionadosW.push(chk.value);
+        });
+
+        let resumoMatW = "";
+        document.querySelectorAll('.checkbox-item').forEach(item => {
+            const chk = item.querySelector('.chk-material');
+            if(chk && chk.checked) {
+                const qtd = item.querySelector('.qtd-material').value || "1";
+                resumoMatW += `${chk.value} (Qtd: ${qtd}), `;
+            }
+        });
+
+        const osTemp = {
+            numero_os: numeroOSGeradoFinal,
+            controladora: document.getElementById('controladora').value,
+            codigo_servico: codigosSelecionadosW.join(', '),
+            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
+            data_inicial: document.getElementById('data_inicial').value,
+            hora_inicial: document.getElementById('hora_inicial').value,
+            data_final: document.getElementById('data_final').value,
+            hora_final: document.getElementById('hora_final').value,
+            tensao_alternada: document.getElementById('tensao_alternada').value,
+            modelo_controlador: document.getElementById('modelo_controlador').value,
+            tensao_75vdc: document.getElementById('tensao_75vdc').value,
+            tensao_12vdc: document.getElementById('tensao_12vdc').value,
+            tensao_24vdc: document.getElementById('tensao_24vdc').value,
+            aterramento: document.getElementById('aterramento').value,
+            nobreak: document.getElementById('nobreak').value,
+            fusivel: document.getElementById('fusivel').value,
+            cabeamento: document.getElementById('cabeamento').value,
+            involucro: document.getElementById('involucro').value,
+            gabinetes: document.getElementById('gabinetes').value,
+            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
+            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
+            colunas: document.getElementById('colunas').value,
+            bracos: document.getElementById('bracos').value,
+            padronizada: document.getElementById('padronizada').value,
+            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
+            status_servico: document.querySelector('input[name="status_servico"]:checked')?.value || "",
+            material: resumoMatW || 'Nenhum',
+            pendencia: document.getElementById('pendencia').value,
+            observacao: document.getElementById('observacao').value,
+            equipe: document.getElementById('equipe').value,
+            tecnico: tecnicoLogado,
+            supervisor: document.getElementById('supervisor').value
+        };
+        cacheOS.push(osTemp);
+        enviarWhatsAppIndex(cacheOS.length - 1);
+    });
+</script>
+
+</body>
+</html>
