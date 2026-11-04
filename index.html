@@ -28,8 +28,8 @@
     .btn-secondary:hover { background-color: #334155; }
     .error-msg { color: var(--error); text-align: center; font-size: 14px; margin-top: 12px; font-weight: bold; }
     .hidden { display: none !important; }
-  style>
-head>
+  </style>
+</head>
 <body>
 
   <div class="container">
@@ -55,7 +55,7 @@ head>
       </div>
       <button class="btn-primary" onclick="fazerLogin('Técnico')">Entrar</button>
       <button class="btn-secondary" onclick="mostrarTela('telaMenu')">Voltar ao Menu</button>
-      <div id="erroTecnico" class="error-msg">div>
+      <div id="erroTecnico" class="error-msg"></div>
     </div>
 
     <!-- TELA 3: LOGIN DE SUPERVISOR -->
@@ -71,20 +71,19 @@ head>
       </div>
       <button class="btn-primary" onclick="fazerLogin('Supervisor')">Entrar</button>
       <button class="btn-secondary" onclick="mostrarTela('telaMenu')">Voltar ao Menu</button>
-      <div id="erroSupervisor" class="error-msg">div>
+      <div id="erroSupervisor" class="error-msg"></div>
     </div>
 
-    <!-- TELA 4: PAINEL APÓS LOGIN (EXEMPLO) -->
+    <!-- TELA 4: PAINEL APÓS LOGIN -->
     <div id="telaPainel" class="hidden">
       <h2 id="tituloPainel">Painel de Operações</h2>
-      <p style="text-align: center;" id="saudacaoUsuario">p>
+      <p style="text-align: center;" id="saudacaoUsuario"></p>
       <button class="btn-secondary" onclick="mostrarTela('telaMenu')">Sair / Trocar Usuário</button>
     </div>
 
   </div>
 
   <script>
-    // URL CSV Publicada da Planilha "Usuários Niterói"
     const URL_CSV_USUARIOS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vShNmQk5PSg_VscyPKrkzGneUz7s_sFvfAZXRk_iIKc2dL4rjTvt3cQ-AIXresDBSQiKUSUV6QbvRb3/pub?output=csv";
 
     function mostrarTela(idTela) {
@@ -95,12 +94,10 @@ head>
 
       document.getElementById(idTela).classList.remove('hidden');
 
-      // Limpar campos de erro ao navegar
       document.getElementById('erroTecnico').innerText = '';
       document.getElementById('erroSupervisor').innerText = '';
     }
 
-    // Leitor e conversor de CSV do Google Sheets
     function parseCSV(text) {
       const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
       if (lines.length < 2) return [];
@@ -119,7 +116,6 @@ head>
       return data;
     }
 
-    // Função de Autenticação Direta via CSV (Sem depender do Apps Script)
     async function fazerLogin(nivelRequerido) {
       const isSup = nivelRequerido === 'Supervisor';
       const inputUser = document.getElementById(isSup ? 'userSupervisor' : 'userTecnico').value.trim();
@@ -134,7 +130,6 @@ head>
       divErro.innerText = "A validar acesso...";
 
       try {
-        // Adiciona timestamp para ignorar o cache do navegador
         const response = await fetch(URL_CSV_USUARIOS + "&t=" + new Date().getTime());
         if (!response.ok) throw new Error("Falha ao contactar base de dados.");
 
@@ -145,7 +140,6 @@ head>
         const passClean = inputPass;
         const reqNorm = nivelRequerido.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-        // Procura correspondência exata na planilha
         const encontrado = usuarios.find(u => {
           const uNome = u.usuario.toLowerCase();
           const uSenha = u.senha;
@@ -166,7 +160,6 @@ head>
 
         if (encontrado) {
           divErro.innerText = "";
-          // Sucesso no Login -> Abre o Painel
           document.getElementById('telaLoginTecnico').classList.add('hidden');
           document.getElementById('telaLoginSupervisor').classList.add('hidden');
           document.getElementById('telaPainel').classList.remove('hidden');
@@ -182,7 +175,6 @@ head>
         divErro.innerText = "Erro de conexão ao verificar credenciais.";
       }
     }
-  script>
-
-body>
-html>
+  </script>
+</body>
+</html>
