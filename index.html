@@ -1,5 +1,5 @@
-var SPREADSHEET_ID_USUARIOS = "1rSoR4SlRcJjgmKUEYPB6JP59D0bQOeHgIQBAB-Np18w"; // Planilha Usuários Niterói
-var SPREADSHEET_ID_ALMOX = "1RXvLOSMnhFRIZMvslt9npmZTbqZrLa9lBeOxL8o1lEA";    // Planilha de Dados / Almoxarifado
+var SPREADSHEET_ID_OS = "1ATknNAY8uWYaEbJw4CLdSSB_RW-GSxD9Es9OrI_RsZQ"; // ID da planilha Usuários Niterói
+var SPREADSHEET_ID_ALMOX = "1RXvLOSMnhFRIZMvslt9npmZTbqZrLa9lBeOxL8o1lEA"; // ID do Almoxarifado/Dados
 
 function doPost(e) {
   try {
@@ -7,9 +7,9 @@ function doPost(e) {
     var action = data.action;
 
     if (action === "loginTecnico") {
-      return autenticarUsuario(data.usuario, data.senha, "Técnico");
+      return loginTecnico(data.usuario, data.senha);
     } else if (action === "loginSupervisor" || action === "verificarAcessoEstoque") {
-      return autenticarUsuario(data.usuario, data.senha, "Supervisor");
+      return loginSupervisor(data.usuario, data.senha);
     } else if (action === "getControladoras") {
       return getControladoras();
     } else if (action === "getCodigosServico") {
@@ -29,43 +29,59 @@ function doPost(e) {
   }
 }
 
-// Função unificada para validar Técnico e Supervisor na mesma planilha
-function autenticarUsuario(usuario, senha, nivelRequerido) {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID_USUARIOS);
-  var sheet = ss.getSheetByName("Página1") || ss.getSheets()[0];
+function loginTecnico(usuario, senha) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID_OS);
+  var sheet = ss.getSheetByName("Respostas ao formulário 1") || ss.getSheets()[0];
   var rows = sheet.getDataRange().getValues();
   
   var userClean = usuario ? usuario.toString().trim().toLowerCase() : "";
   var passClean = senha ? senha.toString().trim() : "";
-  var nivelReqClean = nivelRequerido.toLowerCase();
   
   for (var i = 1; i < rows.length; i++) {
-    var nomeCell = rows[i][0] ? rows[i][0].toString().trim() : "";  // Coluna A (USUÁRIO)
-    var passCell = rows[i][1] ? rows[i][1].toString().trim() : "";  // Coluna B (SENHA)
-    var nivelCell = rows[i][2] ? rows[i][2].toString().trim() : ""; // Coluna C (NÍVEL)
+    var nome = rows[i][1] ? rows[i][1].toString().trim() : ""; // Coluna B (Técnico)
+    var psw = rows[i][2] ? rows[i][2].toString().trim() : "";  // Coluna C (Senha)
     
-    if (!nomeCell) continue;
-
-    if (nomeCell.toLowerCase() === userClean && 
-        passCell === passClean && 
-        nivelCell.toLowerCase() === nivelReqClean) {
-      
+    if (nome.toLowerCase() === userClean && psw === passClean) {
       return ContentService.createTextOutput(JSON.stringify({
         result: "success",
-        autorizado: true,
-        user: nomeCell
+        user: nome
       })).setMimeType(ContentService.MimeType.JSON);
     }
   }
   
-  var erroMsg = (nivelRequerido === "Supervisor") 
-    ? "Supervisor não cadastrado ou senha incorreta." 
-    : "Usuário ou senha incorretos.";
+  return ContentService.createTextOutput(JSON.stringify({
+    result: "error",
+    error: "Usuário ou senha incorretos."
+  })).setMimeType(ContentService.MimeType.JSON);
+}
 
+function loginSupervisor(usuario, senha) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID_OS);
+  var sheet = ss.getSheetByName("Respostas ao formulário 1") || ss.getSheets()[0];
+  var rows = sheet.getDataRange().getValues();
+  
+  var userClean = usuario ? usuario.toString().trim().toLowerCase() : "";
+  var passClean = senha ? senha.toString().trim() : "";
+  
+  for (var i = 1; i < rows.length; i++) {
+    var encarregado = rows[i][3] ? rows[i][3].toString().trim() : ""; // Coluna D (Encarregado)
+    var psw = rows[i][4] ? rows[i][4].toString().trim() : "";         // Coluna E (Senha)
+    
+    if (!encarregado) continue;
+
+    if (encarregado.toLowerCase() === userClean && psw === passClean) {
+      return ContentService.createTextOutput(JSON.stringify({
+        result: "success",
+        autorizado: true,
+        user: encarregado
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
   return ContentService.createTextOutput(JSON.stringify({
     result: "error",
     autorizado: false,
-    error: erroMsg
+    error: "Supervisor não cadastrado ou senha incorreta."
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
