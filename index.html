@@ -1,5 +1,5 @@
-var SPREADSHEET_ID_USUARIOS = "1rSoR4SlRcJjgmKUEYPB6JP59D0bQOeHgIQBAB-Np18w"; // ID exato da planilha Usuários Niterói
-var SPREADSHEET_ID_ALMOX = "1RXvLOSMnhFRIZMvslt9npmZTbqZrLa9lBeOxL8o1lEA";    // ID da planilha de Ordens de Serviço / Almoxarifado
+var SPREADSHEET_ID_USUARIOS = "1rSoR4SlRcJjgmKUEYPB6JP59D0bQOeHgIQBAB-Np18w"; // Planilha Usuários Niterói
+var SPREADSHEET_ID_ALMOX = "1RXvLOSMnhFRIZMvslt9npmZTbqZrLa9lBeOxL8o1lEA";    // Planilha de Dados / Almoxarifado
 
 function doPost(e) {
   try {
@@ -29,6 +29,7 @@ function doPost(e) {
   }
 }
 
+// Função unificada para validar Técnico e Supervisor na mesma planilha
 function autenticarUsuario(usuario, senha, nivelRequerido) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID_USUARIOS);
   var sheet = ss.getSheetByName("Página1") || ss.getSheets()[0];
@@ -36,40 +37,35 @@ function autenticarUsuario(usuario, senha, nivelRequerido) {
   
   var userClean = usuario ? usuario.toString().trim().toLowerCase() : "";
   var passClean = senha ? senha.toString().trim() : "";
-  var nivelReqClean = nivelRequerido ? nivelRequerido.toString().trim().toLowerCase() : "";
+  var nivelReqClean = nivelRequerido.toLowerCase();
   
   for (var i = 1; i < rows.length; i++) {
-    var nomeCell = rows[i][0] ? rows[i][0].toString().trim() : "";  // Coluna A
-    var passCell = rows[i][1] ? rows[i][1].toString().trim() : "";  // Coluna B
-    var nivelCell = rows[i][2] ? rows[i][2].toString().trim() : ""; // Coluna C
+    var nomeCell = rows[i][0] ? rows[i][0].toString().trim() : "";  // Coluna A (USUÁRIO)
+    var passCell = rows[i][1] ? rows[i][1].toString().trim() : "";  // Coluna B (SENHA)
+    var nivelCell = rows[i][2] ? rows[i][2].toString().trim() : ""; // Coluna C (NÍVEL)
     
     if (!nomeCell) continue;
 
-    var nomeClean = nomeCell.toLowerCase();
-    var nivelCellClean = nivelCell.toLowerCase();
-
-    if (nomeClean === userClean && passCell === passClean) {
-      if (nivelReqClean === "supervisor" && (nivelCellClean.includes("superv") || nivelCellClean.includes("encarregado"))) {
-        return ContentService.createTextOutput(JSON.stringify({
-          result: "success",
-          autorizado: true,
-          user: nomeCell
-        })).setMimeType(ContentService.MimeType.JSON);
-      }
-      if (nivelReqClean === "tecnico" && nivelCellClean.includes("tecnico")) {
-        return ContentService.createTextOutput(JSON.stringify({
-          result: "success",
-          autorizado: true,
-          user: nomeCell
-        })).setMimeType(ContentService.MimeType.JSON);
-      }
+    if (nomeCell.toLowerCase() === userClean && 
+        passCell === passClean && 
+        nivelCell.toLowerCase() === nivelReqClean) {
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        result: "success",
+        autorizado: true,
+        user: nomeCell
+      })).setMimeType(ContentService.MimeType.JSON);
     }
   }
   
+  var erroMsg = (nivelRequerido === "Supervisor") 
+    ? "Supervisor não cadastrado ou senha incorreta." 
+    : "Usuário ou senha incorretos.";
+
   return ContentService.createTextOutput(JSON.stringify({
     result: "error",
     autorizado: false,
-    error: "Utilizador não cadastrado ou senha incorreta."
+    error: erroMsg
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
