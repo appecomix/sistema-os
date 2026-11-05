@@ -562,4 +562,440 @@
 
     function carregarDadosFormulario() {
         Promise.all([
-            fetch(URL_APPS
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getControladoras" }) }).then(r => r.json()),
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getCodigosServico" }) }).then(r => r.json()),
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getMateriaisAlmoxarifado" }) }).then(r => r.json())
+        ]).then(([ctrlData, codData, almoxData]) => {
+            if(ctrlData.result === "success" && ctrlData.controladoras) {
+                const datalistCtrl = document.getElementById('listaControladoras');
+                datalistCtrl.innerHTML = "";
+                ctrlData.controladoras.forEach(ctrl => {
+                    const opt = document.createElement('option');
+                    opt.value = ctrl;
+                    datalistCtrl.appendChild(opt);
+                });
+            }
+            if(codData.result === "success" && codData.codigos) {
+                const contCod = document.getElementById('containerCodigos');
+                contCod.innerHTML = "";
+                codData.codigos.forEach(cod => {
+                    const div = document.createElement('div');
+                    div.style.marginBottom = "5px";
+                    div.innerHTML = `<label style="font-weight:normal; display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" name="codigos_servico_chk" value="${cod}" style="width:auto; margin:0;"> ${cod}</label>`;
+                    contCod.appendChild(div);
+                });
+            }
+            if(almoxData.result === "success" && almoxData.materiais) {
+                let listaMat = almoxData.materiais;
+                const contAlmox = document.getElementById('checkboxesMateriais');
+                contAlmox.innerHTML = "";
+                listaMat.forEach(mat => {
+                    let matFormatado = formatarTextoUnidades(mat);
+                    let isCabo = matFormatado.includes("CABO");
+                    let placeholderQtd = isCabo ? "Metros" : "Qtd";
+                    const wrap = document.createElement('div');
+                    wrap.className = 'checkbox-item';
+                    wrap.innerHTML = `
+                        <input type="checkbox" class="chk-material" value="${matFormatado}" id="mat_${matFormatado.replace(/\s+/g, '_')}">
+                        <label for="mat_${matFormatado.replace(/\s+/g, '_')}" style="margin:0; font-size:12px; flex:1; cursor:pointer;">${matFormatado}</label>
+                        <input type="number" class="qtd-material" placeholder="${placeholderQtd}" min="1" value="1" style="width:65px; padding:3px; margin:0;">
+                    `;
+                    contAlmox.appendChild(wrap);
+                });
+            }
+        });
+    }
+
+    document.getElementById('modelo_controlador').addEventListener('change', function() {
+        const secDC = document.getElementById('secaoDC');
+        if(this.value === 'Cross') {
+            secDC.classList.remove('hidden');
+            document.getElementById('tensao_75vdc').required = true;
+            document.getElementById('tensao_12vdc').required = true;
+            document.getElementById('tensao_24vdc').required = true;
+        } else {
+            secDC.classList.add('hidden');
+            document.getElementById('tensao_75vdc').required = false;
+            document.getElementById('tensao_12vdc').required = false;
+            document.getElementById('tensao_24vdc').required = false;
+        }
+    });
+
+    document.querySelectorAll('input[name="trabalho_altura"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const campoTrab = document.getElementById('campoTrabalhadores');
+            if(this.value === 'Sim') {
+                campoTrab.classList.remove('hidden');
+                document.getElementById('trabalhadores_altura').required = true;
+            } else {
+                campoTrab.classList.add('hidden');
+                document.getElementById('trabalhadores_altura').required = false;
+                document.getElementById('trabalhadores_altura').value = "";
+            }
+        });
+    });
+
+    document.querySelectorAll('input[name="usou_material"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const containerMat = document.getElementById('listaMateriaisContainer');
+            if(this.value === 'sim') {
+                containerMat.classList.remove('hidden');
+            } else {
+                containerMat.classList.add('hidden');
+                document.querySelectorAll('.chk-material').forEach(c => c.checked = false);
+            }
+        });
+    });
+
+    document.getElementById('formOS').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnEnviar');
+        const msg = document.getElementById('mensagem');
+        
+        btn.disabled = true;
+        btn.innerText = "Registrando O.S...";
+        msg.innerText = "";
+
+        const codigosSel = Array.from(document.querySelectorAll('input[name="codigos_servico_chk"]:checked')).map(c => c.value).join(", ");
+        
+        const materiaisSel = [];
+        let textoMateriais = "";
+        if (document.querySelector('input[name="usou_material"]:checked').value === 'sim') {
+            document.querySelectorAll('.checkbox-item').forEach(item => {
+                const chk = item.querySelector('.chk-material');
+                let qtd = item.querySelector('.qtd-material').value;
+                if(chk && chk.checked) {
+                    let nomeMat = formatarTextoUnidades(chk.value);
+                    if (nomeMat.includes("CABO")) {
+                        qtd = `${qtd}m`;
+                    }
+                    materiaisSel.push({ nome: nomeMat, qtd: qtd });
+                    textoMateriais += `${nomeMat} (${qtd}), `;
+                }
+            });
+            textoMateriais = textoMateriais.replace(/,\s*$/, "");
+        } else {
+            textoMateriais = "Nenhum material utilizado";
+        }
+
+        const payload = {
+            data_inicial: document.getElementById('data_inicial').value,
+            hora_inicial: document.getElementById('hora_inicial').value,
+            data_final: document.getElementById('data_final').value,
+            hora_final: document.getElementById('hora_final').value,
+            controladora: document.getElementById('controladora').value,
+            codigos_servico: codigosSel,
+            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
+            descricao_servico: document.getElementById('descricao_servico').value,
+            modelo_controlador: document.getElementById('modelo_controlador').value,
+            tensao_alternada: document.getElementById('tensao_alternada').value,
+            tensao_75vdc: document.getElementById('tensao_75vdc').value,
+            tensao_12vdc: document.getElementById('tensao_12vdc').value,
+            tensao_24vdc: document.getElementById('tensao_24vdc').value,
+            aterramento: document.getElementById('aterramento').value,
+            cabeamento: document.getElementById('cabeamento').value,
+            fusivel: document.getElementById('fusivel').value,
+            involucro: document.getElementById('involucro').value,
+            gabinetes: document.getElementById('gabinetes').value,
+            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
+            padronizada: document.getElementById('padronizada').value,
+            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
+            colunas: document.getElementById('colunas').value,
+            bracos: document.getElementById('bracos').value,
+            nobreak: document.getElementById('nobreak').value,
+            trabalho_altura: document.querySelector('input[name="trabalho_altura"]:checked')?.value || "Não",
+            trabalhadores_altura: document.getElementById('trabalhadores_altura').value,
+            material_texto: textoMateriais,
+            materiais_utilizados: materiaisSel,
+            status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value || "",
+            status_servico: document.querySelector('input[name="status_servico"]:checked')?.value || "",
+            pendencia: document.getElementById('pendencia').value,
+            observacao: document.getElementById('observacao').value,
+            equipe: document.getElementById('equipe').value,
+            tecnico: document.getElementById('tecnico').value,
+            supervisor: document.getElementById('supervisor').value
+        };
+
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(res => {
+            btn.disabled = false;
+            btn.innerText = "Registrar O.S";
+            if(res.result === "success") {
+                numeroOSGeradoFinal = res.numero_os;
+                msg.style.color = "green";
+                msg.innerText = `O.S ${res.numero_os} registrada com sucesso!`;
+                document.getElementById('btnWhatsApp').classList.remove('hidden');
+            } else {
+                throw new Error(res.error || "Erro ao salvar O.S.");
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerText = "Registrar O.S";
+            msg.style.color = "red";
+            msg.innerText = err.message;
+        });
+    });
+
+    document.getElementById('btnWhatsApp').addEventListener('click', function() {
+        const ctrl = document.getElementById('controladora').value;
+        const dtIni = document.getElementById('data_inicial').value;
+        const hrIni = document.getElementById('hora_inicial').value;
+        const dtFim = document.getElementById('data_final').value;
+        const hrFim = document.getElementById('hora_final').value;
+        const desc = document.getElementById('descricao_servico').value;
+        const tec = document.getElementById('tecnico').value;
+        const eqp = document.getElementById('equipe').value;
+
+        const texto = `*ORDEM DE SERVIÇO REGISTRADA*\n\n` +
+                      `*Nº OS:* ${numeroOSGeradoFinal}\n` +
+                      `*Controladora:* ${ctrl}\n` +
+                      `*Período:* ${dtIni} ${hrIni} até ${dtFim} ${hrFim}\n` +
+                      `*Descrição:* ${desc}\n` +
+                      `*Técnico:* ${tec}\n` +
+                      `*Equipe:* ${eqp}`;
+
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+    });
+
+    function enviarWhatsAppTabela(numOS) {
+        const os = cacheOS.find(o => o.numero_os === numOS);
+        if(!os) return alert("Erro ao carregar dados da OS.");
+
+        const texto = `*ORDEM DE SERVIÇO REGISTRADA*\n\n` +
+                      `*Nº OS:* ${os.numero_os}\n` +
+                      `*Controladora:* ${os.controladora}\n` +
+                      `*Período:* ${os.data_inicial || ''} ${os.hora_inicial || ''}\n` +
+                      `*Descrição:* ${os.descricao_servico}\n` +
+                      `*Técnico:* ${os.tecnico}\n` +
+                      `*Equipe:* ${os.equipe}`;
+
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+    }
+
+    function carregarRelatorio() {
+        const btn = document.getElementById('btnFiltrarRelatorio');
+        btn.innerText = "Pesquisando...";
+        btn.disabled = true;
+
+        let tecnicoFiltroFinal = isSupervisor ? document.getElementById('filtroTecnicoSelect').value : tecnicoLogado;
+
+        const payload = {
+            action: "buscarOS",
+            usarOS: document.getElementById('chkOS').checked,
+            filtroOS: document.getElementById('filtroOS').value,
+            usarData: document.getElementById('chkData').checked,
+            filtroData: document.getElementById('filtroData').value,
+            usarTecnico: true,
+            filtroTecnico: tecnicoFiltroFinal,
+            usarEquipe: document.getElementById('chkEquipe').checked,
+            filtroEquipe: document.getElementById('filtroEquipe').value
+        };
+
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.innerText = "Pesquisar";
+            btn.disabled = false;
+            if(data.result === "success") {
+                cacheOS = data.lista || [];
+                renderTabelaRelatorio(cacheOS);
+            }
+        })
+        .catch(err => {
+            btn.innerText = "Pesquisar";
+            btn.disabled = false;
+            console.error(err);
+        });
+    }
+
+    document.getElementById('btnFiltrarRelatorio').addEventListener('click', carregarRelatorio);
+
+    function renderTabelaRelatorio(lista) {
+        const tbody = document.querySelector('#tabelaResultados tbody');
+        tbody.innerHTML = "";
+
+        if(lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma O.S. encontrada.</td></tr>';
+            return;
+        }
+
+        lista.forEach(os => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${os.numero_os}</b></td>
+                <td>${os.data_inicial || ''}</td>
+                <td>${os.controladora || ''}</td>
+                <td>${os.tecnico || ''}</td>
+                <td>${os.equipe || ''}</td>
+                <td>${os.status_servico || ''}</td>
+                <td class="actions-cell">
+                    <button type="button" class="btn-pdf" onclick="gerarPDFLocal('${os.numero_os}')">PDF</button>
+                    <button type="button" class="btn-whats" onclick="enviarWhatsAppTabela('${os.numero_os}')">WhatsApp</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function gerarPDFLocal(numOS) {
+        const os = cacheOS.find(o => o.numero_os === numOS);
+        if(!os) return alert("Erro ao carregar dados da OS para PDF.");
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(14);
+        doc.setTextColor(0, 137, 123);
+        doc.setFont("helvetica", "bold");
+        doc.text("Ecomix Gestão e Planeamento", 14, 15);
+
+        doc.setFontSize(9);
+        doc.setTextColor(80, 80, 80);
+        doc.setFont("helvetica", "normal");
+        doc.text("Filial Niterói - Manutenção Semafórica", 14, 21);
+
+        doc.setDrawColor(0, 137, 123);
+        doc.setFillColor(240, 253, 244);
+        doc.roundedRect(150, 10, 50, 16, 2, 2, 'FD');
+
+        doc.setFontSize(9);
+        doc.setTextColor(0, 137, 123);
+        doc.setFont("helvetica", "bold");
+        doc.text("ORDEM DE SERVIÇO", 175, 16, { align: "center" });
+
+        doc.setFontSize(10);
+        doc.setTextColor(30, 30, 30);
+        doc.text(`Nº: ${os.numero_os}`, 175, 23, { align: "center" });
+
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, 30, 200, 30);
+
+        const dadosTabela = [
+            ["Controladora", os.controladora || "-"],
+            ["Data/Hora Início", `${os.data_inicial || ''} ${os.hora_inicial || ''}`],
+            ["Data/Hora Fim", `${os.data_final || ''} ${os.hora_final || ''}`],
+            ["Tipo de Serviço", os.tipo_servico || "-"],
+            ["Código do Serviço", os.codigo_servico || "-"],
+            ["Descrição", os.descricao_servico || "-"],
+            ["Materiais Utilizados", formatarTextoUnidades(os.material_texto) || "-"],
+            ["Modelo Controlador", os.modelo_controlador || "-"],
+            ["Status Controlador", os.status_controlador || "-"],
+            ["Status Serviço", os.status_servico || "-"],
+            ["Pendências", os.pendencia || "-"],
+            ["Observações", os.observacao || "-"],
+            ["Equipe", os.equipe || "-"],
+            ["Técnico", os.tecnico || "-"],
+            ["Supervisor", os.supervisor || "-"]
+        ];
+
+        doc.autoTable({
+            startY: 34,
+            head: [["Campo", "Informação"]],
+            body: dadosTabela,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 137, 123] },
+            styles: { fontSize: 9, cellPadding: 3 }
+        });
+
+        doc.save(`OS_${os.numero_os}.pdf`);
+    }
+
+    function carregarEstoque() {
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify({ action: "getEstoque" })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.result === "success") {
+                cacheEstoque = data.estoque || [];
+                renderTabelaEstoque(cacheEstoque);
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    function renderTabelaEstoque(lista) {
+        const tbody = document.querySelector('#tabelaEstoqueResultados tbody');
+        tbody.innerHTML = "";
+
+        if(lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhum material encontrado no estoque.</td></tr>';
+            return;
+        }
+
+        lista.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${formatarTextoUnidades(item.material)}</b></td>
+                <td>${item.ultima_data}</td>
+                <td>${item.entrada}</td>
+                <td><b>${item.estoque}</b></td>
+                <td>${item.data_movimentacao}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    document.getElementById('btnPDFEstoque').addEventListener('click', function() {
+        if(!cacheEstoque || cacheEstoque.length === 0) return alert("Sem dados de estoque para exportar.");
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(14);
+        doc.setTextColor(0, 137, 123);
+        doc.setFont("helvetica", "bold");
+        doc.text("Ecomix Gestão e Planeamento", 14, 15);
+
+        doc.setFontSize(9);
+        doc.setTextColor(80, 80, 80);
+        doc.setFont("helvetica", "normal");
+        doc.text("Filial Niterói - Controle de Estoque (Setor Semafórico)", 14, 21);
+
+        doc.setDrawColor(0, 137, 123);
+        doc.setFillColor(240, 253, 244);
+        doc.roundedRect(140, 10, 60, 16, 2, 2, 'FD');
+
+        doc.setFontSize(9);
+        doc.setTextColor(0, 137, 123);
+        doc.setFont("helvetica", "bold");
+        doc.text("RELATÓRIO DE ESTOQUE", 170, 16, { align: "center" });
+
+        doc.setFontSize(8);
+        doc.setTextColor(30, 30, 30);
+        doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-BR')}`, 170, 23, { align: "center" });
+
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, 30, 200, 30);
+
+        const dadosEstoqueTabela = cacheEstoque.map(i => [
+            formatarTextoUnidades(i.material),
+            i.ultima_data,
+            i.entrada,
+            i.estoque,
+            i.data_movimentacao
+        ]);
+
+        doc.autoTable({
+            startY: 34,
+            head: [["Material", "Última Data", "Entrada", "Estoque", "Data Última Movimentação"]],
+            body: dadosEstoqueTabela,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 137, 123] },
+            styles: { fontSize: 9, cellPadding: 3 }
+        });
+
+        doc.save(`Relatorio_Estoque_Niteroi.pdf`);
+    });
+</script>
+</body>
+</html>
