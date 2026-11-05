@@ -178,11 +178,11 @@
         <table id="tabelaEstoqueResultados">
             <thead>
                 <tr>
-                    <th>Material</th>
-                    <th>Última Data</th>
-                    <th>Entrada</th>
-                    <th>Estoque</th>
-                    <th>Data Última Movimentação</th>
+                    <th>Descrição</th>
+                    <th>Data de compra</th>
+                    <th>Quantidade comprada</th>
+                    <th>Data de movimentação ou uso</th>
+                    <th>Quantidade em estoque</th>
                 </tr>
             </thead>
             <tbody>
@@ -750,29 +750,118 @@
         const desc = document.getElementById('descricao_servico').value;
         const tec = document.getElementById('tecnico').value;
         const eqp = document.getElementById('equipe').value;
+        const mod = document.getElementById('modelo_controlador').value;
+        const cod = Array.from(document.querySelectorAll('input[name="codigos_servico_chk"]:checked')).map(c => c.value).join(", ");
+        const tipoServ = document.querySelector('input[name="tipo_servico"]:checked')?.value || "";
+        const tCA = document.getElementById('tensao_alternada').value;
+        const at = document.getElementById('aterramento').value;
+        const nob = document.getElementById('nobreak').value;
+        const fus = document.getElementById('fusivel').value;
+        const cab = document.getElementById('cabeamento').value;
+        const inv = document.getElementById('involucro').value;
+        const gab = document.getElementById('gabinetes').value;
+        const cpu = document.getElementById('placas_cpu_potencia').value;
+        const bloc = document.getElementById('blocos_semaforicos').value;
+        const col = document.getElementById('colunas').value;
+        const bra = document.getElementById('bracos').value;
+        const pad = document.getElementById('padronizada').value;
+        const stCtrl = document.querySelector('input[name="status_controlador"]:checked')?.value || "";
+        const obs = document.getElementById('observacao').value;
 
-        const texto = `*ORDEM DE SERVIÇO REGISTRADA*\n\n` +
-                      `*Nº OS:* ${numeroOSGeradoFinal}\n` +
-                      `*Controladora:* ${ctrl}\n` +
-                      `*Período:* ${dtIni} ${hrIni} até ${dtFim} ${hrFim}\n` +
-                      `*Descrição:* ${desc}\n` +
-                      `*Técnico:* ${tec}\n` +
-                      `*Equipe:* ${eqp}`;
+        let matTxt = "Nenhum material utilizado";
+        document.querySelectorAll('.checkbox-item').forEach(item => {
+            const chk = item.querySelector('.chk-material');
+            let q = item.querySelector('.qtd-material').value;
+            if(chk && chk.checked) {
+                if(matTxt === "Nenhum material utilizado") matTxt = "";
+                matTxt += `${chk.value} (${q}), `;
+            }
+        });
+        matTxt = matTxt.replace(/,\s*$/, "");
+
+        let texto = `Manutenção semafórica\n\n` +
+                      `Data Inicial: ${dtIni}\n` +
+                      `Horario inicial: ${hrIni}\n` +
+                      `Data final: ${dtFim}\n` +
+                      `Horario final: ${hrFim}\n\n` +
+                      `Controladora: ${ctrl}\n\n` +
+                      `Código: ${cod}\n\n` +
+                      `${tipoServ}\n` +
+                      `Entrada de Alimentação (CA): ${tCA}\n` +
+                      `Aterramento: ${at}\n` +
+                      `Nobreak: ${nob}\n\n` +
+                      `Fusíveis: ${fus}\n\n`;
+
+        if (mod === 'Cross') {
+            let t75 = document.getElementById('tensao_75vdc').value;
+            let t12 = document.getElementById('tensao_12vdc').value;
+            let t24 = document.getElementById('tensao_24vdc').value;
+            texto += `Saída da fonte de Alimentação (CC):\n` +
+                     `7,5V: ${t75}\n` +
+                     `12V: ${t12}\n` +
+                     `24V: ${t24}\n\n`;
+        } else {
+            texto += `Saída da fonte de Alimentação (CC):\n\n`;
+        }
+
+        texto += `Cabeamento: ${cab}\n\n` +
+                 `Invólucro: ${inv}\n\n` +
+                 `Gabinetes: ${gab}\n\n` +
+                 `Placas de CPU e Potência: ${cpu}\n\n` +
+                 `Grupos focais: ${bloc}\n\n` +
+                 `Colunas: ${col}\n\n` +
+                 `Braços: ${bra}\n\n` +
+                 `Padronizada: ${pad}\n\n` +
+                 `Status da Controladora: ${stCtrl}\n\n` +
+                 `Material Utilizado: ${matTxt}\n\n` +
+                 `Obs.: ${obs}\n\n\n` +
+                 `Equipe: ${eqp}\n` +
+                 `Eletrotécnico Responsável: ${tec}\n\n` +
+                 `O.S SM: ${numeroOSGeradoFinal}`;
 
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
     });
 
     function enviarWhatsAppTabela(numOS) {
-        const os = cacheOS.find(o => o.numero_os === numOS);
+        const os = cacheOS.find(o => String(o.numero_os) === String(numOS));
         if(!os) return alert("Erro ao carregar dados da OS.");
 
-        const texto = `*ORDEM DE SERVIÇO REGISTRADA*\n\n` +
-                      `*Nº OS:* ${os.numero_os}\n` +
-                      `*Controladora:* ${os.controladora}\n` +
-                      `*Período:* ${os.data_inicial || ''} ${os.hora_inicial || ''}\n` +
-                      `*Descrição:* ${os.descricao_servico}\n` +
-                      `*Técnico:* ${os.tecnico}\n` +
-                      `*Equipe:* ${os.equipe}`;
+        let texto = `Manutenção semafórica\n\n` +
+                      `Data Inicial: ${os.data_inicial}\n` +
+                      `Horario inicial: ${os.hora_inicial}\n` +
+                      `Data final: ${os.data_final}\n` +
+                      `Horario final: ${os.hora_final}\n\n` +
+                      `Controladora: ${os.controladora}\n\n` +
+                      `Código: ${os.codigo_servico}\n\n` +
+                      `${os.tipo_servico}\n` +
+                      `Entrada de Alimentação (CA): ${os.tensao_alternada}\n` +
+                      `Aterramento: ${os.aterramento}\n` +
+                      `Nobreak: ${os.nobreak}\n\n` +
+                      `Fusíveis: ${os.fusivel}\n\n`;
+
+        if (os.modelo_controlador === 'Cross') {
+            texto += `Saída da fonte de Alimentação (CC):\n` +
+                     `7,5V: ${os.tensao_75vdc}\n` +
+                     `12V: ${os.tensao_12vdc}\n` +
+                     `24V: ${os.tensao_24vdc}\n\n`;
+        } else {
+            texto += `Saída da fonte de Alimentação (CC):\n\n`;
+        }
+
+        texto += `Cabeamento: ${os.cabeamento}\n\n` +
+                 `Invólucro: ${os.involucro}\n\n` +
+                 `Gabinetes: ${os.gabinetes}\n\n` +
+                 `Placas de CPU e Potência: ${os.placas_cpu_potencia}\n\n` +
+                 `Grupos focais: ${os.blocos_semaforicos}\n\n` +
+                 `Colunas: ${os.colunas}\n\n` +
+                 `Braços: ${os.bracos}\n\n` +
+                 `Padronizada: ${os.padronizada}\n\n` +
+                 `Status da Controladora: ${os.status_controlador}\n\n` +
+                 `Material Utilizado: ${os.material_texto}\n\n` +
+                 `Obs.: ${os.observacao}\n\n\n` +
+                 `Equipe: ${os.equipe}\n` +
+                 `Eletrotécnico Responsável: ${os.tecnico}\n\n` +
+                 `O.S SM: ${os.numero_os}`;
 
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
     }
@@ -846,7 +935,7 @@
     }
 
     function gerarPDFLocal(numOS) {
-        const os = cacheOS.find(o => o.numero_os === numOS);
+        const os = cacheOS.find(o => String(o.numero_os) === String(numOS));
         if(!os) return alert("Erro ao carregar dados da OS para PDF.");
 
         const { jsPDF } = window.jspdf;
@@ -878,13 +967,36 @@
         doc.setDrawColor(200, 200, 200);
         doc.line(14, 30, 200, 30);
 
-        const dadosTabela = [
+        let dadosTabela = [
             ["Controladora", os.controladora || "-"],
             ["Data/Hora Início", `${os.data_inicial || ''} ${os.hora_inicial || ''}`],
             ["Data/Hora Fim", `${os.data_final || ''} ${os.hora_final || ''}`],
             ["Tipo de Serviço", os.tipo_servico || "-"],
             ["Código do Serviço", os.codigo_servico || "-"],
             ["Descrição", os.descricao_servico || "-"],
+            ["Tensão CA", os.tensao_alternada || "-"]
+        ];
+
+        if (os.modelo_controlador === 'Cross') {
+            dadosTabela.push(
+                ["Tensão 7.5VDC", os.tensao_75vdc || "-"],
+                ["Tensão 12VDC", os.tensao_12vdc || "-"],
+                ["Tensão 24VDC", os.tensao_24vdc || "-"]
+            );
+        }
+
+        dadosTabela.push(
+            ["Aterramento", os.aterramento || "-"],
+            ["Cabeamento", os.cabeamento || "-"],
+            ["Fusível", os.fusivel || "-"],
+            ["Invólucro", os.involucro || "-"],
+            ["Gabinetes", os.gabinetes || "-"],
+            ["Placas CPU/Potência", os.placas_cpu_potencia || "-"],
+            ["Padronizada", os.padronizada || "-"],
+            ["Blocos Semafóricos", os.blocos_semaforicos || "-"],
+            ["Colunas", os.colunas || "-"],
+            ["Braços", os.bracos || "-"],
+            ["Nobreak", os.nobreak || "-"],
             ["Materiais Utilizados", formatarTextoUnidades(os.material_texto) || "-"],
             ["Modelo Controlador", os.modelo_controlador || "-"],
             ["Status Controlador", os.status_controlador || "-"],
@@ -894,7 +1006,7 @@
             ["Equipe", os.equipe || "-"],
             ["Técnico", os.tecnico || "-"],
             ["Supervisor", os.supervisor || "-"]
-        ];
+        );
 
         doc.autoTable({
             startY: 34,
@@ -936,10 +1048,10 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><b>${formatarTextoUnidades(item.material)}</b></td>
-                <td>${item.ultima_data}</td>
-                <td>${item.entrada}</td>
-                <td><b>${item.estoque}</b></td>
+                <td>${item.data_compra}</td>
+                <td>${item.quantidade_comprada}</td>
                 <td>${item.data_movimentacao}</td>
+                <td><b>${item.estoque}</b></td>
             `;
             tbody.appendChild(tr);
         });
@@ -979,15 +1091,15 @@
 
         const dadosEstoqueTabela = cacheEstoque.map(i => [
             formatarTextoUnidades(i.material),
-            i.ultima_data,
-            i.entrada,
-            i.estoque,
-            i.data_movimentacao
+            i.data_compra,
+            i.quantidade_comprada,
+            i.data_movimentacao,
+            i.estoque
         ]);
 
         doc.autoTable({
             startY: 34,
-            head: [["Material", "Última Data", "Entrada", "Estoque", "Data Última Movimentação"]],
+            head: [["Descrição", "Data de compra", "Quantidade comprada", "Data de movimentação ou uso", "Quantidade em estoque"]],
             body: dadosEstoqueTabela,
             theme: 'grid',
             headStyles: { fillColor: [0, 137, 123] },
