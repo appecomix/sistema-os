@@ -43,9 +43,9 @@
         .btn-whats:hover { background-color: #1ebd59; }
         .btn-pdf { background-color: #dc3545; }
         .btn-pdf:hover { background-color: #c82333; }
-        .btn-menu { height: 55px; font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; border-radius: 6px; width: 100%; border: none; color: white; cursor: pointer; font-weight: bold; position: relative; z-index: 10; }
+        .btn-menu { height: 55px; font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; border-radius: 6px; width: 100%; border: none; color: white; cursor: pointer; font-weight: bold; }
         #msgLogin, #mensagem { margin-top: 15px; text-align: center; font-weight: bold; }
-        .menu-box, .login-box { width: 100%; max-width: 450px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid var(--brand-green); position: relative; z-index: 5; }
+        .menu-box, .login-box { width: 100%; max-width: 450px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid var(--brand-green); }
         
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
@@ -480,7 +480,23 @@
                     mostrarTela('telaForm');
                 } else {
                     if(isSupervisor) {
-                        document.getElementById('infoSupervisor').innerText = `Supervisor: ${data.user}`; document.getElementById('chkTecnico').parentElement.style.display = "block"; document.getElementById('filtroTecnicoSelect').style.display = "block"; document.getElementById('filtroTecnicoInput').style.display = "none";  const sel = document.getElementById('filtroTecnicoSelect'); sel.innerHTML = '<option value="">Todos os técnicos</option>'; if(data.tecnicos) { data.tecnicos.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.innerText = t; sel.appendChild(opt); }); } } else { document.getElementById('infoSupervisor').innerText = `Técnico: ${data.user}`;
+                        document.getElementById('infoSupervisor').innerText = `Supervisor: ${data.user}`;
+                        document.getElementById('chkTecnico').parentElement.style.display = "block";
+                        document.getElementById('filtroTecnicoSelect').style.display = "block";
+                        document.getElementById('filtroTecnicoInput').style.display = "none";
+                        
+                        const sel = document.getElementById('filtroTecnicoSelect');
+                        sel.innerHTML = '<option value="">Todos os técnicos</option>';
+                        if(data.tecnicos) {
+                            data.tecnicos.forEach(t => {
+                                const opt = document.createElement('option');
+                                opt.value = t;
+                                opt.innerText = t;
+                                sel.appendChild(opt);
+                            });
+                        }
+                    } else {
+                        document.getElementById('infoSupervisor').innerText = `Técnico: ${data.user}`;
                         document.getElementById('chkTecnico').parentElement.style.display = "none";
                         document.getElementById('filtroTecnicoSelect').style.display = "none";
                         document.getElementById('filtroTecnicoInput').style.display = "none";
@@ -616,89 +632,34 @@
                 const qtd = item.querySelector('.qtd-material').value;
                 if(chk && chk.checked) {
                     materiaisSel.push({ nome: chk.value, qtd: qtd });
-                    textoMateriais += `${chk.value} (${qtd}), `; } }); textoMateriais = textoMateriais.replace(/,\s*$/, ""); } else { textoMateriais = "Nenhum material utilizado"; }  const payload = { data_inicial: document.getElementById('data_inicial').value, hora_inicial: document.getElementById('hora_inicial').value, data_final: document.getElementById('data_final').value, hora_final: document.getElementById('hora_final').value, controladora: document.getElementById('controladora').value, codigos_servico: codigosSel, tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value \vert{}\vert{} "", descricao_servico: document.getElementById('descricao_servico').value, modelo_controlador: document.getElementById('modelo_controlador').value, tensao_alternada: document.getElementById('tensao_alternada').value, tensao_75vdc: document.getElementById('tensao_75vdc').value, tensao_12vdc: document.getElementById('tensao_12vdc').value, tensao_24vdc: document.getElementById('tensao_24vdc').value, aterramento: document.getElementById('aterramento').value, cabeamento: document.getElementById('cabeamento').value, fusivel: document.getElementById('fusivel').value, involucro: document.getElementById('involucro').value, gabinetes: document.getElementById('gabinetes').value, placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value, padronizada: document.getElementById('padronizada').value, blocos_semaforicos: document.getElementById('blocos_semaforicos').value, colunas: document.getElementById('colunas').value, bracos: document.getElementById('bracos').value, nobreak: document.getElementById('nobreak').value, trabalho_altura: document.querySelector('input[name="trabalho_altura"]:checked')?.value \vert{}\vert{} "Não", trabalhadores_altura: document.getElementById('trabalhadores_altura').value, material_texto: textoMateriais, materiais_utilizados: materiaisSel, status_controlador: document.querySelector('input[name="status_controlador"]:checked')?.value \vert{}\vert{} "", status_servico: document.querySelector('input[name="status_servico"]:checked')?.value \vert{}\vert{} "", pendencia: document.getElementById('pendencia').value, observacao: document.getElementById('observacao').value, equipe: document.getElementById('equipe').value, tecnico: document.getElementById('tecnico').value, supervisor: document.getElementById('supervisor').value };  fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify(payload) }) .then(r => r.json()) .then(res => { btn.disabled = false; btn.innerText = "Registrar O.S"; if(res.result === "success") { numeroOSGeradoFinal = res.numero_os; msg.style.color = "green"; msg.innerText = `O.S ${res.numero_os} registrada com sucesso!`;
-                document.getElementById('btnWhatsApp').classList.remove('hidden');
-            } else {
-                throw new Error(res.error || "Erro ao salvar O.S.");
-            }
-        })
-        .catch(err => {
-            btn.disabled = false;
-            btn.innerText = "Registrar O.S";
-            msg.style.color = "red";
-            msg.innerText = err.message;
-        });
-    });
-
-    // Envio do Relatório para o WhatsApp
-    document.getElementById('btnWhatsApp').addEventListener('click', function() {
-        const ctrl = document.getElementById('controladora').value;
-        const dtIni = document.getElementById('data_inicial').value;
-        const hrIni = document.getElementById('hora_inicial').value;
-        const dtFim = document.getElementById('data_final').value;
-        const hrFim = document.getElementById('hora_final').value;
-        const desc = document.getElementById('descricao_servico').value;
-        const tec = document.getElementById('tecnico').value;
-        const eqp = document.getElementById('equipe').value;
-
-        const texto = `*ORDEM DE SERVIÇO REGISTRADA*\n\n` +
-                      `*Nº OS:* ${numeroOSGeradoFinal}\n` + `*Controladora:* ${ctrl}\n` +
-                      `*Período:* ${dtIni}${hrIni} até ${dtFim}${hrFim}\n` +
-                      `*Descrição:* ${desc}\n` + `*Técnico:* ${tec}\n` +
-                      `*Equipe:* ${eqp}`;  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
-    });
-
-    // Carregamento de Consulta/Relatório
-    function carregarRelatorio() {
-        const btn = document.getElementById('btnFiltrarRelatorio');
-        btn.innerText = "Pesquisando...";
-        btn.disabled = true;
-
-        const payload = {
-            action: "buscarOS",
-            usarOS: document.getElementById('chkOS').checked,
-            filtroOS: document.getElementById('filtroOS').value,
-            usarData: document.getElementById('chkData').checked,
-            filtroData: document.getElementById('filtroData').value,
-            usarTecnico: document.getElementById('chkTecnico').checked,
-            filtroTecnico: isSupervisor ? document.getElementById('filtroTecnicoSelect').value : tecnicoLogado,
-            usarEquipe: document.getElementById('chkEquipe').checked,
-            filtroEquipe: document.getElementById('filtroEquipe').value
-        };
-
-        fetch(URL_APPS_SCRIPT, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        })
-        .then(r => r.json())
-        .then(data => {
-            btn.innerText = "Pesquisar";
-            btn.disabled = false;
-            if(data.result === "success") {
-                cacheOS = data.lista || [];
-                renderTabelaRelatorio(cacheOS);
-            }
-        })
-        .catch(err => {
-            btn.innerText = "Pesquisar";
-            btn.disabled = false;
-            console.error(err);
-        });
-    }
-
-    document.getElementById('btnFiltrarRelatorio').addEventListener('click', carregarRelatorio);
-
-    function renderTabelaRelatorio(lista) {
-        const tbody = document.querySelector('#tabelaResultados tbody');
-        tbody.innerHTML = "";
-
-        if(lista.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma O.S. encontrada.</td></tr>';
-            return;
+                    textoMateriais += `${chk.value} (${qtd}), `;
+                }
+            });
+            textoMateriais = textoMateriais.replace(/,\s*$/, "");
+        } else {
+            textoMateriais = "Nenhum material utilizado";
         }
 
-        lista.forEach(os => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><b>${os.numero_os}</b></td>
-                <td>${os
+        const payload = {
+            data_inicial: document.getElementById('data_inicial').value,
+            hora_inicial: document.getElementById('hora_inicial').value,
+            data_final: document.getElementById('data_final').value,
+            hora_final: document.getElementById('hora_final').value,
+            controladora: document.getElementById('controladora').value,
+            codigos_servico: codigosSel,
+            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked')?.value || "",
+            descricao_servico: document.getElementById('descricao_servico').value,
+            modelo_controlador: document.getElementById('modelo_controlador').value,
+            tensao_alternada: document.getElementById('tensao_alternada').value,
+            tensao_75vdc: document.getElementById('tensao_75vdc').value,
+            tensao_12vdc: document.getElementById('tensao_12vdc').value,
+            tensao_24vdc: document.getElementById('tensao_24vdc').value,
+            aterramento: document.getElementById('aterramento').value,
+            cabeamento: document.getElementById('cabeamento').value,
+            fusivel: document.getElementById('fusivel').value,
+            involucro: document.getElementById('involucro').value,
+            gabinetes: document.getElementById('gabinetes').value,
+            placas_cpu_potencia: document.getElementById('placas_cpu_potencia').value,
+            padronizada: document.getElementById('padronizada').value,
+            blocos_semaforicos: document.getElementById('blocos_semaforicos').value,
+            colunas: document.getElementById('colunas
