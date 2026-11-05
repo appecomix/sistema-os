@@ -69,18 +69,18 @@
         <div style="font-size: 13px; color: #555; font-weight: bold; margin-top: 5px;">Filial Niterói</div>
     </div>
     
-    <button type="button" onclick="clicarMenu('form')" class="btn-menu" style="background-color: var(--brand-green);">📝 Nova Ordem de Serviço</button>
-    <button type="button" onclick="clicarMenu('relatorio')" class="btn-menu" style="background-color: #007bff;">📊 Consultar Ordem de Serviço</button>
-    <button type="button" onclick="clicarMenu('estoque')" class="btn-menu" style="background-color: #ff9800;">📦 Controle de Estoque</button>
-    <a href="https://www.google.com/maps/d/viewer?mid=1VhFRzI_GfxmRoRvVWv7RzN6_8GbJYk0&ll=-22.91169477718409%2C-43.05790850000001&z=12" target="_blank" class="btn-menu" style="background-color: #17a2b8; display: flex;">🗺️ Mapa das Controladoras</a>
+    <button type="button" onclick="abrirTelaLogin('form')" class="btn-menu" style="background-color: var(--brand-green);">📝 Nova Ordem de Serviço</button>
+    <button type="button" onclick="abrirTelaLogin('relatorio')" class="btn-menu" style="background-color: #007bff;">📊 Consultar Ordem de Serviço</button>
+    <button type="button" onclick="abrirTelaLogin('estoque')" class="btn-menu" style="background-color: #ff9800;">📦 Controle de Estoque</button>
+    <a href="https://www.google.com/maps/d/viewer?mid=1VhFRzI_GfxmRoRvVWv7RzN6_8GbJYk0&ll=-22.91169477718409%2C-43.05790850000001&z=12" target="_blank" class="btn-menu" style="background-color: #17a2b8;">🗺️ Mapa das Controladoras</a>
 </div>
 
 <!-- TELA 2: ESCOLHA DE PERFIL PARA CONSULTA -->
 <div id="telaEscolhaPerfil" class="login-box hidden">
     <h2>Tipo de Consulta</h2>
     <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Selecione o seu perfil de acesso:</p>
-    <button type="button" onclick="escolherPerfil('tecnico')" class="btn-menu" style="background-color: #007bff; height: 50px; font-size: 16px;">Técnico (Consulta Limitada)</button>
-    <button type="button" onclick="escolherPerfil('supervisor')" class="btn-menu" style="background-color: #6c757d; height: 50px; font-size: 16px;">Supervisor (Consulta Completa)</button>
+    <button type="button" onclick="selecionarPerfilConsulta('tecnico')" class="btn-menu" style="background-color: #007bff; height: 50px; font-size: 16px;">Técnico (Consulta Limitada)</button>
+    <button type="button" onclick="selecionarPerfilConsulta('supervisor')" class="btn-menu" style="background-color: #6c757d; height: 50px; font-size: 16px;">Supervisor (Consulta Completa)</button>
     <button type="button" class="btnVoltarMenuSeguro btn-secondary" style="margin-top: 15px;">Voltar ao Menu</button>
 </div>
 
@@ -373,35 +373,29 @@
         document.getElementById(idTela).classList.remove('hidden');
     }
 
-    // Ações diretas dos botões do menu principal
-    function clicarMenu(destino) {
+    // Funções globais diretas (sem depender de DOMContentLoaded para o menu)
+    function abrirTelaLogin(destino) {
+        acaoAtual = destino;
         if (destino === 'form') {
-            acaoAtual = 'form';
             tipoLoginAtual = 'tecnico';
             document.getElementById('tituloLogin').innerText = "Login do Técnico";
             document.getElementById('subLogin').innerText = "Informe seu usuário e senha.";
-            document.getElementById('blocoSenha').style.display = "block";
-            document.getElementById('senha').required = true;
-            document.getElementById('formLogin').reset();
-            document.getElementById('msgLogin').innerText = "";
-            mostrarTela('telaLogin');
         } else if (destino === 'relatorio') {
-            acaoAtual = 'relatorio';
             mostrarTela('telaEscolhaPerfil');
+            return;
         } else if (destino === 'estoque') {
-            acaoAtual = 'estoque';
             tipoLoginAtual = 'supervisor';
             document.getElementById('tituloLogin').innerText = "Acesso ao Estoque (Supervisor)";
             document.getElementById('subLogin').innerText = "Informe seu nome e senha de supervisor.";
-            document.getElementById('blocoSenha').style.display = "block";
-            document.getElementById('senha').required = true;
-            document.getElementById('formLogin').reset();
-            document.getElementById('msgLogin').innerText = "";
-            mostrarTela('telaLogin');
         }
+        document.getElementById('blocoSenha').style.display = "block";
+        document.getElementById('senha').required = true;
+        document.getElementById('formLogin').reset();
+        document.getElementById('msgLogin').innerText = "";
+        mostrarTela('telaLogin');
     }
 
-    function escolherPerfil(perfil) {
+    function selecionarPerfilConsulta(perfil) {
         tipoLoginAtual = perfil;
         if (perfil === 'tecnico') {
             document.getElementById('tituloLogin').innerText = "Login de Técnico";
@@ -727,4 +721,124 @@
             usarData: document.getElementById('chkData').checked,
             filtroData: document.getElementById('filtroData').value,
             usarTecnico: document.getElementById('chkTecnico').checked,
-            filtroTecnico: isSupervisor ? document.getElementById('filtroTecnicoSelect').value :
+            filtroTecnico: isSupervisor ? document.getElementById('filtroTecnicoSelect').value : tecnicoLogado,
+            usarEquipe: document.getElementById('chkEquipe').checked,
+            filtroEquipe: document.getElementById('filtroEquipe').value
+        };
+
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.innerText = "Pesquisar";
+            btn.disabled = false;
+            if(data.result === "success") {
+                cacheOS = data.lista || [];
+                renderTabelaRelatorio(cacheOS);
+            }
+        })
+        .catch(err => {
+            btn.innerText = "Pesquisar";
+            btn.disabled = false;
+            console.error(err);
+        });
+    }
+
+    document.getElementById('btnFiltrarRelatorio').addEventListener('click', carregarRelatorio);
+
+    function renderTabelaRelatorio(lista) {
+        const tbody = document.querySelector('#tabelaResultados tbody');
+        tbody.innerHTML = "";
+
+        if(lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma O.S. encontrada.</td></tr>';
+            return;
+        }
+
+        lista.forEach(os => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${os.numero_os}</b></td>
+                <td>${os.data_inicial || ''}</td>
+                <td>${os.controladora || ''}</td>
+                <td>${os.tecnico || ''}</td>
+                <td>${os.equipe || ''}</td>
+                <td>${os.status_servico || ''}</td>
+                <td class="actions-cell">
+                    <button type="button" class="btn-pdf" onclick="gerarPDFLocal('${os.numero_os}')">PDF</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function gerarPDFLocal(numOS) {
+        const os = cacheOS.find(o => o.numero_os === numOS);
+        if(!os) return alert("Erro ao carregar dados da OS para PDF.");
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Cabeçalho - Título da Empresa e Informações à Esquerda
+        doc.setFontSize(14);
+        doc.setTextColor(0, 137, 123);
+        doc.setFont("helvetica", "bold");
+        doc.text("Ecomix Gestão e Planeamento", 14, 15);
+
+        doc.setFontSize(9);
+        doc.setTextColor(80, 80, 80);
+        doc.setFont("helvetica", "normal");
+        doc.text("Filial Niterói - Manutenção Semafórica", 14, 21);
+
+        // Bloco Destaque: ORDEM DE SERVIÇO (Largura menor: 50mm, bem posicionado à direita em x=150)
+        doc.setDrawColor(0, 137, 123);
+        doc.setFillColor(240, 253, 244);
+        doc.roundedRect(150, 10, 50, 16, 2, 2, 'FD');
+
+        doc.setFontSize(9);
+        doc.setTextColor(0, 137, 123);
+        doc.setFont("helvetica", "bold");
+        doc.text("ORDEM DE SERVIÇO", 175, 16, { align: "center" });
+
+        doc.setFontSize(10);
+        doc.setTextColor(30, 30, 30);
+        doc.text(`Nº: ${os.numero_os}`, 175, 23, { align: "center" });
+
+        // Linha divisória abaixo do cabeçalho
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, 30, 200, 30);
+
+        // Dados da Tabela Principal
+        const dadosTabela = [
+            ["Controladora", os.controladora || "-"],
+            ["Data/Hora Início", `${os.data_inicial || ''} ${os.hora_inicial || ''}`],
+            ["Data/Hora Fim", `${os.data_final || ''} ${os.hora_final || ''}`],
+            ["Tipo de Serviço", os.tipo_servico || "-"],
+            ["Código do Serviço", os.codigo_servico || "-"],
+            ["Descrição", os.descricao_servico || "-"],
+            ["Modelo Controlador", os.modelo_controlador || "-"],
+            ["Status Controlador", os.status_controlador || "-"],
+            ["Status Serviço", os.status_servico || "-"],
+            ["Pendências", os.pendencia || "-"],
+            ["Observações", os.observacao || "-"],
+            ["Equipe", os.equipe || "-"],
+            ["Técnico", os.tecnico || "-"],
+            ["Supervisor", os.supervisor || "-"]
+        ];
+
+        doc.autoTable({
+            startY: 34,
+            head: [["Campo", "Informação"]],
+            body: dadosTabela,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 137, 123] },
+            styles: { fontSize: 9, cellPadding: 3 }
+        });
+
+        doc.save(`OS_${os.numero_os}.pdf`);
+    }
+</script>
+</body>
+</html>
