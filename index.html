@@ -584,13 +584,12 @@
                 listaMat.forEach(mat => {
                     let isCabo = mat.includes("CABO");
                     let placeholderQtd = isCabo ? "Metros" : "Qtd";
-                    let minVal = isCabo ? "1" : "1";
                     const wrap = document.createElement('div');
                     wrap.className = 'checkbox-item';
                     wrap.innerHTML = `
                         <input type="checkbox" class="chk-material" value="${mat}" id="mat_${mat.replace(/\s+/g, '_')}">
                         <label for="mat_${mat.replace(/\s+/g, '_')}" style="margin:0; font-size:12px; flex:1; cursor:pointer;">${mat}</label>
-                        <input type="number" class="qtd-material" placeholder="${placeholderQtd}" min="${minVal}" value="1" style="width:65px; padding:3px; margin:0;">
+                        <input type="number" class="qtd-material" placeholder="${placeholderQtd}" min="1" value="1" style="width:65px; padding:3px; margin:0;">
                     `;
                     contAlmox.appendChild(wrap);
                 });
@@ -733,7 +732,6 @@
         });
     });
 
-    // Envio do Relatório para o WhatsApp (Formulário)
     document.getElementById('btnWhatsApp').addEventListener('click', function() {
         const ctrl = document.getElementById('controladora').value;
         const dtIni = document.getElementById('data_inicial').value;
@@ -755,7 +753,6 @@
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
     });
 
-    // Envio de Relatório para o WhatsApp direto da Tabela de Consulta
     function enviarWhatsAppTabela(numOS) {
         const os = cacheOS.find(o => o.numero_os === numOS);
         if(!os) return alert("Erro ao carregar dados da OS.");
@@ -771,18 +768,12 @@
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
     }
 
-    // Carregamento de Consulta/Relatório
     function carregarRelatorio() {
         const btn = document.getElementById('btnFiltrarRelatorio');
         btn.innerText = "Pesquisando...";
         btn.disabled = true;
 
-        let tecnicoFiltroFinal = "";
-        if (isSupervisor) {
-            tecnicoFiltroFinal = document.getElementById('filtroTecnicoSelect').value;
-        } else {
-            tecnicoFiltroFinal = tecnicoLogado;
-        }
+        let tecnicoFiltroFinal = isSupervisor ? document.getElementById('filtroTecnicoSelect').value : tecnicoLogado;
 
         const payload = {
             action: "buscarOS",
@@ -907,7 +898,6 @@
         doc.save(`OS_${os.numero_os}.pdf`);
     }
 
-    // Funções da Tela de Estoque
     function carregarEstoque() {
         fetch(URL_APPS_SCRIPT, {
             method: 'POST',
