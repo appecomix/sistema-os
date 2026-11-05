@@ -1,299 +1,194 @@
-var SPREADSHEET_ID_OS = "1ATknNAY8uWYaEbJw4CLdSSB_RW-GSxD9Es9OrI_RsZQ"; // ID da planilha Usuários Niterói
-var SPREADSHEET_ID_ALMOX = "1RXvLOSMnhFRIZMvslt9npmZTbqZrLa9lBeOxL8o1lEA"; // ID do Almoxarifado/Dados
-
-function doPost(e) {
-  try {
-    var data = JSON.parse(e.postData.contents);
-    var action = data.action;
-
-    if (action === "loginTecnico") {
-      return loginTecnico(data.usuario, data.senha);
-    } else if (action === "loginSupervisor" || action === "verificarAcessoEstoque") {
-      return loginSupervisor(data.usuario, data.senha);
-    } else if (action === "getControladoras") {
-      return getControladoras();
-    } else if (action === "getCodigosServico") {
-      return getCodigosServico();
-    } else if (action === "getMateriaisAlmoxarifado") {
-      return getMateriaisAlmoxarifado();
-    } else if (action === "buscarOS") {
-      return buscarOS(data);
-    } else {
-      return registrarOS(data);
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ordem de Serviço - Ecomix Filial Niterói</title>
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --bg: #f0fdf4;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+      --error: #dc2626;
     }
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({
-      result: "error",
-      error: err.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 480px; background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: var(--primary); margin-bottom: 25px; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
+    input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; background: #f8fafc; }
+    input:focus { border-color: var(--primary); outline: none; background: #fff; }
+    button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 12px; }
+    .btn-primary { background-color: var(--primary); color: white; }
+    .btn-primary:hover { background-color: var(--primary-dark); }
+    .btn-secondary { background-color: #475569; color: white; }
+    .btn-secondary:hover { background-color: #334155; }
+    .error-msg { color: var(--error); text-align: center; font-size: 14px; margin-top: 12px; font-weight: bold; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
 
-function loginTecnico(usuario, senha) {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID_OS);
-  var sheet = ss.getSheetByName("Respostas ao formulário 1") || ss.getSheets()[0];
-  var rows = sheet.getDataRange().getValues();
-  
-  var userClean = usuario ? usuario.toString().trim().toLowerCase() : "";
-  var passClean = senha ? senha.toString().trim() : "";
-  
-  for (var i = 1; i < rows.length; i++) {
-    var nome = rows[i][1] ? rows[i][1].toString().trim() : ""; // Coluna B (Técnico)
-    var psw = rows[i][2] ? rows[i][2].toString().trim() : "";  // Coluna C (Senha)
+  <div class="container">
     
-    if (nome.toLowerCase() === userClean && psw === passClean) {
-      return ContentService.createTextOutput(JSON.stringify({
-        result: "success",
-        user: nome
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    result: "error",
-    error: "Usuário ou senha incorretos."
-  })).setMimeType(ContentService.MimeType.JSON);
-}
+    <!-- TELA 1: MENU PRINCIPAL COM OS 4 BOTÕES -->
+    <div id="telaMenu">
+      <h2>Ecomix - Niterói</h2>
+      <p style="text-align: center; color: #64748b; margin-bottom: 20px;">Selecione a opção desejada</p>
+      
+      <button class="btn-primary" onclick="mostrarTela('telaLoginTecnico', 'OS')">Lançamento de O.S.</button>
+      <button class="btn-primary" style="background-color: #0369a1;" onclick="mostrarTela('telaLoginSupervisor', 'Relatorio')">Relatório</button>
+      <button class="btn-primary" style="background-color: #047857;" onclick="mostrarTela('telaLoginSupervisor', 'Mapa')">Mapa</button>
+      <button class="btn-primary" style="background-color: #b45309;" onclick="mostrarTela('telaLoginSupervisor', 'Estoque')">Estoque</button>
+    </div>
 
-function loginSupervisor(usuario, senha) {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID_OS);
-  var sheet = ss.getSheetByName("Respostas ao formulário 1") || ss.getSheets()[0];
-  var rows = sheet.getDataRange().getValues();
-  
-  var userClean = usuario ? usuario.toString().trim().toLowerCase() : "";
-  var passClean = senha ? senha.toString().trim() : "";
-  
-  for (var i = 1; i < rows.length; i++) {
-    var encarregado = rows[i][3] ? rows[i][3].toString().trim() : ""; // Coluna D (Encarregado)
-    var psw = rows[i][4] ? rows[i][4].toString().trim() : "";         // Coluna E (Senha)
+    <!-- TELA 2: LOGIN DE TÉCNICO -->
+    <div id="telaLoginTecnico" class="hidden">
+      <h2>Login de Técnico</h2>
+      <div class="form-group">
+        <label>Usuário / Nome:</label>
+        <input type="text" id="userTecnico" placeholder="Digite seu nome (ex: Alberto)">
+      </div>
+      <div class="form-group">
+        <label>Senha:</label>
+        <input type="password" id="passTecnico" placeholder="Digite sua senha">
+      </div>
+      <button class="btn-primary" onclick="fazerLogin('Técnico')">Entrar</button>
+      <button class="btn-secondary" onclick="mostrarTela('telaMenu')">Voltar ao Menu</button>
+      <div id="erroTecnico" class="error-msg"></div>
+    </div>
+
+    <!-- TELA 3: LOGIN DE SUPERVISOR (USADO PARA RELATÓRIO, MAPA E ESTOQUE) -->
+    <div id="telaLoginSupervisor" class="hidden">
+      <h2 id="tituloLoginSup">Login de Supervisor</h2>
+      <div class="form-group">
+        <label>Usuário / Nome:</label>
+        <input type="text" id="userSupervisor" placeholder="Digite seu nome (ex: Fabiano)">
+      </div>
+      <div class="form-group">
+        <label>Senha:</label>
+        <input type="password" id="passSupervisor" placeholder="Digite sua senha">
+      </div>
+      <button class="btn-primary" onclick="fazerLogin('Supervisor')">Entrar</button>
+      <button class="btn-secondary" onclick="mostrarTela('telaMenu')">Voltar ao Menu</button>
+      <div id="erroSupervisor" class="error-msg"></div>
+    </div>
+
+    <!-- TELA 4: PAINEL DE OPERAÇÕES -->
+    <div id="telaPainel" class="hidden">
+      <h2 id="tituloPainel">Painel de Operações</h2>
+      <p style="text-align: center;" id="saudacaoUsuario"></p>
+      <p style="text-align: center; color: #475569; font-weight: bold;" id="moduloAtual"></p>
+      <button class="btn-secondary" onclick="mostrarTela('telaMenu')">Voltar ao Menu</button>
+    </div>
+
+  </div>
+
+  <script>
+    const URL_CSV_USUARIOS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vShNmQk5PSg_VscyPKrkzGneUz7s_sFvfAZXRk_iIKc2dL4rjTvt3cQ-AIXresDBSQiKUSUV6QbvRb3/pub?output=csv";
     
-    if (!encarregado) continue;
+    let moduloSelecionado = "";
 
-    if (encarregado.toLowerCase() === userClean && psw === passClean) {
-      return ContentService.createTextOutput(JSON.stringify({
-        result: "success",
-        autorizado: true,
-        user: encarregado
-      })).setMimeType(ContentService.MimeType.JSON);
+    function mostrarTela(idTela, modulo = "") {
+      moduloSelecionado = modulo;
+      
+      document.getElementById('telaMenu').classList.add('hidden');
+      document.getElementById('telaLoginTecnico').classList.add('hidden');
+      document.getElementById('telaLoginSupervisor').classList.add('hidden');
+      document.getElementById('telaPainel').classList.add('hidden');
+
+      document.getElementById(idTela).classList.remove('hidden');
+
+      if (idTela === 'telaLoginSupervisor') {
+        const nomesModulos = { 'Relatorio': 'Relatório', 'Mapa': 'Mapa', 'Estoque': 'Estoque' };
+        document.getElementById('tituloLoginSup').innerText = `Acesso - ${nomesModulos[modulo] || 'Supervisor'}`;
+      }
+
+      document.getElementById('erroTecnico').innerText = '';
+      document.getElementById('erroSupervisor').innerText = '';
     }
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    result: "error",
-    autorizado: false,
-    error: "Supervisor não cadastrado ou senha incorreta."
-  })).setMimeType(ContentService.MimeType.JSON);
-}
 
-function getControladoras() {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID_ALMOX);
-  var sheet = ss.getSheetByName("Controladoras") || ss.getSheetByName("Locais") || ss.getSheets()[0];
-  var rows = sheet.getDataRange().getValues();
-  var controladoras = [];
-  
-  for (var i = 0; i < rows.length; i++) {
-    var val = rows[i][0] ? rows[i][0].toString().trim() : "";
-    if (val !== "" && val.toLowerCase() !== "controladora" && val.toLowerCase() !== "local") {
-      controladoras.push(val);
+    function parseCSV(text) {
+      const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length < 2) return [];
+      
+      const data = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",").map(c => c.trim().replace(/"/g, ''));
+        if (cols.length >= 3) {
+          data.push({
+            usuario: cols[0],
+            senha: cols[1],
+            nivel: cols[2]
+          });
+        }
+      }
+      return data;
     }
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    result: "success",
-    controladoras: controladoras
-  })).setMimeType(ContentService.MimeType.JSON);
-}
 
-function getCodigosServico() {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID_ALMOX);
-  var sheet = ss.getSheetByName("Codigos") || ss.getSheetByName("Codigos Servico") || ss.getSheets()[1];
-  var rows = sheet.getDataRange().getValues();
-  var codigos = [];
-  
-  for (var i = 0; i < rows.length; i++) {
-    var val = rows[i][0] ? rows[i][0].toString().trim() : "";
-    if (val !== "" && val.toLowerCase() !== "codigo") {
-      codigos.push(val);
-    }
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    result: "success",
-    codigos: codigos
-  })).setMimeType(ContentService.MimeType.JSON);
-}
+    async function fazerLogin(nivelRequerido) {
+      const isSup = nivelRequerido === 'Supervisor';
+      const inputUser = document.getElementById(isSup ? 'userSupervisor' : 'userTecnico').value.trim();
+      const inputPass = document.getElementById(isSup ? 'passSupervisor' : 'passTecnico').value.trim();
+      const divErro = document.getElementById(isSup ? 'erroSupervisor' : 'erroTecnico');
 
-function getMateriaisAlmoxarifado() {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID_ALMOX);
-  var sheet = ss.getSheetByName("Estoque") || ss.getSheetByName("Almoxarifado") || ss.getSheets()[0];
-  var rows = sheet.getDataRange().getValues();
-  var materiais = [];
-  
-  for (var i = 0; i < rows.length; i++) {
-    var val = rows[i][0] ? rows[i][0].toString().trim() : "";
-    if (val !== "" && val.toLowerCase() !== "material" && val.toLowerCase() !== "produto" && val.toLowerCase() !== "itens") {
-      materiais.push(val);
-    }
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    result: "success",
-    materiais: materiais
-  })).setMimeType(ContentService.MimeType.JSON);
-}
-
-function registrarOS(e) {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID_ALMOX);
-  var abaDados = ss.getSheetByName("Dados") || ss.insertSheet("Dados");
-  var abaEstoque = ss.getSheetByName("Estoque") || ss.getSheetByName("Almoxarifado");
-  
-  var carimboDataHora = new Date();
-  var numeroOS = "SM-" + (abaDados.getLastRow() > 1 ? (1000 + abaDados.getLastRow()) : "1001");
-
-  abaDados.appendRow([
-    carimboDataHora,
-    numeroOS,
-    e.data_inicial || "",
-    e.hora_inicial || "",
-    e.data_final || "",
-    e.hora_final || "",
-    e.controladora || "",
-    e.codigos_servico || "",
-    e.tipo_servico || "",
-    e.descricao_servico || "",
-    e.modelo_controlador || "",
-    e.tensao_alternada || "",
-    e.tensao_75vdc || "",
-    e.tensao_12vdc || "",
-    e.tensao_24vdc || "",
-    e.aterramento || "",
-    e.cabeamento || "",
-    e.fusivel || "",
-    e.involucro || "",
-    e.gabinetes || "",
-    e.placas_cpu_potencia || "",
-    e.padronizada || "",
-    e.blocos_semaforicos || "",
-    e.colunas || "",
-    e.bracos || "",
-    e.nobreak || "",
-    e.trabalho_altura || "",
-    e.trabalhadores_altura || "",
-    e.material_texto || "",
-    e.status_controlador || "",
-    e.status_servico || "",
-    e.pendencia || "",
-    e.observacao || "",
-    e.equipe || "",
-    e.tecnico || "",
-    e.supervisor || ""
-  ]);
-
-  if (abaEstoque && e.materiais_utilizados && e.materiais_utilizados.length > 0) {
-    var dadosEstoque = abaEstoque.getDataRange().getValues();
-    var dataHoje = Utilities.formatDate(carimboDataHora, "GMT-3", "dd/MM/yyyy HH:mm");
-
-    e.materiais_utilizados.forEach(function(item) {
-      var nomeMat = item.nome ? item.nome.toString().trim().toUpperCase() : "";
-      var qtdUsada = parseFloat(item.qtd) || 0;
-
-      if (nomeMat === "FITA ISOLANTE" || nomeMat === "FITA DE AUTO FUSÃO") {
+      if (!inputUser || !inputPass) {
+        divErro.innerText = "Preencha o usuário e a senha.";
         return;
       }
 
-      for (var i = 0; i < dadosEstoque.length; i++) {
-        var nomePlanilha = dadosEstoque[i][0] ? dadosEstoque[i][0].toString().trim().toUpperCase() : "";
-        
-        if (nomePlanilha === nomeMat) {
-          var linhaReal = i + 1;
-          var qtdAtual = parseFloat(dadosEstoque[i][1]) || 0;
-          var novaQtd = Math.max(0, qtdAtual - qtdUsada);
+      divErro.innerText = "A validar acesso...";
+
+      try {
+        const response = await fetch(URL_CSV_USUARIOS + "&t=" + new Date().getTime());
+        if (!response.ok) throw new Error("Falha ao contactar base de dados.");
+
+        const csvText = await response.text();
+        const usuarios = parseCSV(csvText);
+
+        const userClean = inputUser.toLowerCase();
+        const passClean = inputPass;
+        const reqNorm = nivelRequerido.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        const encontrado = usuarios.find(u => {
+          const uNome = u.usuario.toLowerCase();
+          const uSenha = u.senha;
+          const uNivelNorm = u.nivel.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+          const matchUser = uNome === userClean;
+          const matchPass = uSenha === passClean;
           
-          abaEstoque.getRange(linhaReal, 2).setValue(novaQtd);
-          
-          if (linhaReal >= 6) {
-            abaEstoque.getRange(linhaReal, 3).setValue(dataHoje);
+          let matchNivel = false;
+          if (reqNorm === "supervisor") {
+            matchNivel = uNivelNorm.includes("superv") || uNivelNorm.includes("encarregado");
+          } else if (reqNorm === "tecnico") {
+            matchNivel = uNivelNorm.includes("tecnico");
           }
-          break;
+
+          return matchUser && matchPass && matchNivel;
+        });
+
+        if (encontrado) {
+          divErro.innerText = "";
+          document.getElementById('telaLoginTecnico').classList.add('hidden');
+          document.getElementById('telaLoginSupervisor').classList.add('hidden');
+          document.getElementById('telaPainel').classList.remove('hidden');
+          
+          document.getElementById('tituloPainel').innerText = `Painel - ${moduloSelecionado || 'Geral'}`;
+          document.getElementById('saudacaoUsuario').innerText = `Bem-vindo, ${encontrado.usuario}!`;
+          document.getElementById('moduloAtual').innerText = `Módulo: ${moduloSelecionado}`;
+        } else {
+          divErro.innerText = isSup ? "Supervisor não cadastrado ou senha incorreta." : "Usuário ou senha de técnico incorretos.";
         }
-      }
-    });
-  }
 
-  return ContentService.createTextOutput(JSON.stringify({
-    result: "success",
-    numero_os: numeroOS
-  })).setMimeType(ContentService.MimeType.JSON);
-}
-
-function buscarOS(filtro) {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID_ALMOX);
-  var sheet = ss.getSheetByName("Dados");
-  var lista = [];
-
-  if (sheet && sheet.getLastRow() > 1) {
-    var rows = sheet.getDataRange().getValues();
-    
-    for (var i = 1; i < rows.length; i++) {
-      var row = rows[i];
-      var osObj = {
-        carimbo_data_hora: row[0],
-        numero_os: row[1],
-        data_inicial: row[2] ? Utilities.formatDate(new Date(row[2]), "GMT-3", "yyyy-MM-dd") : "",
-        hora_inicial: row[3],
-        data_final: row[4],
-        hora_final: row[5],
-        controladora: row[6],
-        codigo_servico: row[7],
-        tipo_servico: row[8],
-        descricao_servico: row[9],
-        modelo_controlador: row[10],
-        tensao_alternada: row[11],
-        tensao_75vdc: row[12],
-        tensao_12vdc: row[13],
-        tensao_24vdc: row[14],
-        aterramento: row[15],
-        cabeamento: row[16],
-        fusivel: row[17],
-        involucro: row[18],
-        gabinetes: row[19],
-        placas_cpu_potencia: row[20],
-        padronizada: row[21],
-        blocos_semaforicos: row[22],
-        colunas: row[23],
-        bracos: row[24],
-        nobreak: row[25],
-        trabalho_altura: row[26],
-        trabalhadores_altura: row[27],
-        material: row[28],
-        status_controlador: row[29],
-        status_servico: row[30],
-        pendencia: row[31],
-        observacao: row[32],
-        equipe: row[33],
-        tecnico: row[34],
-        supervisor: row[35]
-      };
-
-      var match = true;
-      if (filtro.usarOS && filtro.filtroOS && !String(osObj.numero_os).toLowerCase().includes(filtro.filtroOS.toLowerCase())) {
-        match = false;
-      }
-      if (filtro.usarTecnico && filtro.filtroTecnico && osObj.tecnico.toLowerCase() !== filtro.filtroTecnico.toLowerCase()) {
-        match = false;
-      }
-      if (filtro.usarEquipe && filtro.filtroEquipe && String(osObj.equipe) !== String(filtro.filtroEquipe)) {
-        match = false;
-      }
-
-      if (match) {
-        lista.push(osObj);
+      } catch (err) {
+        console.error(err);
+        divErro.innerText = "Erro de conexão ao verificar credenciais.";
       }
     }
-  }
-
-  return ContentService.createTextOutput(JSON.stringify({
-    result: "success",
-    lista: lista
-  })).setMimeType(ContentService.MimeType.JSON);
-}
+  </script>
+</body>
+</html>
