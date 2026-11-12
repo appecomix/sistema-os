@@ -625,8 +625,8 @@
                     carregarEstoque();
                 } else if(acaoAtual === 'form') {
                     document.getElementById('tecnico').value = data.user;
-                    carregarDadosFormulario();
                     mostrarTela('telaForm');
+                    carregarDadosFormulario(); // <-- CHAMADA ADICIONADA AQUI PARA BUSCAR CONTROLADORAS E CÓDIGOS
                 } else {
                     if(isSupervisor) {
                         document.getElementById('infoSupervisor').innerText = `Supervisor: ${data.user}`;
@@ -712,7 +712,7 @@
                     contAlmox.appendChild(wrap);
                 });
             }
-        });
+        }).catch(err => console.error("Erro ao carregar dados do formulário:", err));
     }
 
     function carregarEstoque() {
@@ -1071,3 +1071,326 @@
         const hrFim = document.getElementById('hora_final').value;
         const tec = document.getElementById('tecnico').value;
         const eqp = document.getElementById('equipe').value;
+        const mod = document.getElementById('modelo_controlador').value;
+        const cod = Array.from(document.querySelectorAll('input[name="codigos_servico_chk"]:checked')).map(c => c.value).join(", ");
+        const tipoServ = document.querySelector('input[name="tipo_servico"]:checked')?.value || "";
+        const tCA = document.getElementById('tensao_alternada').value;
+        const at = document.getElementById('aterramento').value;
+        const nob = document.getElementById('nobreak').value;
+        const fus = document.getElementById('fusivel').value;
+        const cab = document.getElementById('cabeamento').value;
+        const inv = document.getElementById('involucro').value;
+        const gab = document.getElementById('gabinetes').value;
+        const cpu = document.getElementById('placas_cpu_potencia').value;
+        const bloc = document.getElementById('blocos_semaforicos').value;
+        const col = document.getElementById('colunas').value;
+        const bra = document.getElementById('bracos').value;
+        const pad = document.getElementById('padronizada').value;
+        const stCtrl = document.querySelector('input[name="status_controlador"]:checked')?.value || "";
+        const obs = document.getElementById('observacao').value;
+
+        let matTxt = "Nenhum material utilizado";
+        document.querySelectorAll('#checkboxesMateriais .checkbox-item').forEach(item => {
+            const chk = item.querySelector('.chk-material');
+            let q = item.querySelector('.qtd-material').value;
+            if(chk && chk.checked) {
+                if(matTxt === "Nenhum material utilizado") matTxt = "";
+                matTxt += `${chk.value} (${q}), `;
+            }
+        });
+        matTxt = matTxt.replace(/,\s*$/, "");
+
+        let texto = `Manutenção semafórica\n\n` +
+                      `Data Inicial: ${dtIni}\n` +
+                      `Horario inicial: ${hrIni}\n` +
+                      `Data final: ${dtFim}\n` +
+                      `Horario final: ${hrFim}\n\n` +
+                      `Controladora: ${ctrl}\n\n` +
+                      `Código: ${cod}\n\n` +
+                      `${tipoServ}\n` +
+                      `Entrada de Alimentação (CA): ${tCA}\n` +
+                      `Aterramento: ${at}\n` +
+                      `Nobreak: ${nob}\n\n` +
+                      `Fusíveis: ${fus}\n\n`;
+
+        if (mod === 'Cross') {
+            let t75 = document.getElementById('tensao_75vdc').value;
+            let t12 = document.getElementById('tensao_12vdc').value;
+            let t24 = document.getElementById('tensao_24vdc').value;
+            texto += `Saída da fonte de Alimentação (CC):\n` +
+                     `7,5V: ${t75}\n` +
+                     `12V: ${t12}\n` +
+                     `24V: ${t24}\n\n`;
+        } else {
+            texto += `Saída da fonte de Alimentação (CC):\n\n`;
+        }
+
+        texto += `Cabeamento: ${cab}\n\n` +
+                 `Invólucro: ${inv}\n\n` +
+                 `Gabinetes: ${gab}\n\n` +
+                 `Placas de CPU e Potência: ${cpu}\n\n` +
+                 `Grupos focais: ${bloc}\n\n` +
+                 `Colunas: ${col}\n\n` +
+                 `Braços: ${bra}\n\n` +
+                 `Padronizada: ${pad}\n\n` +
+                 `Status da Controladora: ${stCtrl}\n\n` +
+                 `Material Utilizado: ${matTxt}\n\n` +
+                 `Obs.: ${obs}\n\n\n` +
+                 `Equipe: ${eqp}\n` +
+                 `Eletrotécnico Responsável: ${tec}\n\n` +
+                 `O.S SM: ${numeroOSGeradoFinal}`;
+
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+    }
+
+    function carregarRelatorio() {
+        const btn = document.getElementById('btnFiltrarRelatorio');
+        btn.innerText = "Pesquisando...";
+        btn.disabled = true;
+
+        let tecnicoFiltroFinal = isSupervisor ? document.getElementById('filtroTecnicoSelect').value : tecnicoLogado;
+
+        const payload = {
+            action: "buscarOS",
+            usarOS: document.getElementById('chkOS').checked,
+            filtroOS: document.getElementById('filtroOS').value,
+            usarData: document.getElementById('chkData').checked,
+            filtroData: document.getElementById('filtroData').value,
+            usarTecnico: true,
+            filtroTecnico: tecnicoFiltroFinal,
+            usarEquipe: document.getElementById('chkEquipe').checked,
+            filtroEquipe: document.getElementById('filtroEquipe').value
+        };
+
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.innerText = "Pesquisar";
+            btn.disabled = false;
+            if(data.result === "success") {
+                cacheOS = data.lista || [];
+                renderTabelaRelatorio(cacheOS);
+            }
+        })
+        .catch(err => {
+            btn.innerText = "Pesquisar";
+            btn.disabled = false;
+            console.error(err);
+        });
+    }
+
+    function renderTabelaRelatorio(lista) {
+        const tbody = document.querySelector('#tabelaResultados tbody');
+        tbody.innerHTML = "";
+
+        if(lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma O.S. encontrada.</td></tr>';
+            return;
+        }
+
+        lista.forEach(os => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${os.numero_os}</b></td>
+                <td>${os.data_inicial || ''}</td>
+                <td>${os.controladora || ''}</td>
+                <td>${os.tecnico || ''}</td>
+                <td>${os.equipe || ''}</td>
+                <td>${os.status_servico || ''}</td>
+                <td class="actions-cell">
+                    <button type="button" class="btn-pdf" onclick="gerarPDFLocal('${os.numero_os}')">PDF</button>
+                    <button type="button" class="btn-whats" onclick="enviarWhatsAppTabela('${os.numero_os}')">WhatsApp</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function enviarWhatsAppTabela(numOS) {
+        const os = cacheOS.find(o => String(o.numero_os) === String(numOS));
+        if(!os) return alert("Erro ao carregar dados da OS.");
+
+        let texto = `Manutenção semafórica\n\n` +
+                      `Data Inicial: ${os.data_inicial}\n` +
+                      `Horario inicial: ${os.hora_inicial}\n` +
+                      `Data final: ${os.data_final}\n` +
+                      `Horario final: ${os.hora_final}\n\n` +
+                      `Controladora: ${os.controladora}\n\n` +
+                      `Código: ${os.codigo_servico}\n\n` +
+                      `${os.tipo_servico}\n` +
+                      `Entrada de Alimentação (CA): ${os.tensao_alternada}\n` +
+                      `Aterramento: ${os.aterramento}\n` +
+                      `Nobreak: ${os.nobreak}\n\n` +
+                      `Fusíveis: ${os.fusivel}\n\n`;
+
+        if (os.modelo_controlador === 'Cross') {
+            texto += `Saída da fonte de Alimentação (CC):\n` +
+                     `7,5V: ${os.tensao_75vdc}\n` +
+                     `12V: ${os.tensao_12vdc}\n` +
+                     `24V: ${os.tensao_24vdc}\n\n`;
+        } else {
+            texto += `Saída da fonte de Alimentação (CC):\n\n`;
+        }
+
+        texto += `Cabeamento: ${os.cabeamento}\n\n` +
+                 `Invólucro: ${os.involucro}\n\n` +
+                 `Gabinetes: ${os.gabinetes}\n\n` +
+                 `Placas de CPU e Potência: ${os.placas_cpu_potencia}\n\n` +
+                 `Grupos focais: ${os.blocos_semaforicos}\n\n` +
+                 `Colunas: ${os.colunas}\n\n` +
+                 `Braços: ${os.bracos}\n\n` +
+                 `Padronizada: ${os.padronizada}\n\n` +
+                 `Status da Controladora: ${os.status_controlador}\n\n` +
+                 `Material Utilizado: ${os.material_texto}\n\n` +
+                 `Obs.: ${os.observacao}\n\n\n` +
+                 `Equipe: ${os.equipe}\n` +
+                 `Eletrotécnico Responsável: ${os.tecnico}\n\n` +
+                 `O.S SM: ${os.numero_os}`;
+
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+    }
+
+    function gerarPDFLocal(numOS) {
+        const os = cacheOS.find(o => String(o.numero_os) === String(numOS));
+        if(!os) return alert("Erro ao carregar dados da OS para PDF.");
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(14);
+        doc.setTextColor(0, 137, 123);
+        doc.setFont("helvetica", "bold");
+        doc.text("Ecomix Gestão e Planeamento", 14, 15);
+
+        doc.setFontSize(9);
+        doc.setTextColor(80, 80, 80);
+        doc.setFont("helvetica", "normal");
+        doc.text("Filial Niterói - Manutenção Semafórica", 14, 21);
+
+        doc.setDrawColor(0, 137, 123);
+        doc.setFillColor(240, 253, 244);
+        doc.roundedRect(150, 10, 50, 16, 2, 2, 'FD');
+
+        doc.setFontSize(9);
+        doc.setTextColor(0, 137, 123);
+        doc.setFont("helvetica", "bold");
+        doc.text("ORDEM DE SERVIÇO", 175, 16, { align: "center" });
+
+        doc.setFontSize(10);
+        doc.setTextColor(30, 30, 30);
+        doc.text(`Nº: ${os.numero_os}`, 175, 23, { align: "center" });
+
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, 30, 200, 30);
+
+        let dadosTabela = [
+            ["Controladora", os.controladora || "-"],
+            ["Data/Hora Início", `${os.data_inicial || ''} ${os.hora_inicial || ''}`],
+            ["Data/Hora Fim", `${os.data_final || ''} ${os.hora_final || ''}`],
+            ["Tipo de Serviço", os.tipo_servico || "-"],
+            ["Código do Serviço", os.codigo_servico || "-"],
+            ["Descrição", os.descricao_servico || "-"],
+            ["Tensão CA", os.tensao_alternada || "-"]
+        ];
+
+        if (os.modelo_controlador === 'Cross') {
+            dadosTabela.push(
+                ["Tensão 7.5VDC", os.tensao_75vdc || "-"],
+                ["Tensão 12VDC", os.tensao_12vdc || "-"],
+                ["Tensão 24VDC", os.tensao_24vdc || "-"]
+            );
+        }
+
+        dadosTabela.push(
+            ["Aterramento", os.aterramento || "-"],
+            ["Cabeamento", os.cabeamento || "-"],
+            ["Fusível", os.fusivel || "-"],
+            ["Invólucro", os.involucro || "-"],
+            ["Gabinetes", os.gabinetes || "-"],
+            ["Placas CPU/Potência", os.placas_cpu_potencia || "-"],
+            ["Padronizada", os.padronizada || "-"],
+            ["Blocos Semafóricos", os.blocos_semaforicos || "-"],
+            ["Colunas", os.colunas || "-"],
+            ["Braços", os.bracos || "-"],
+            ["Nobreak", os.nobreak || "-"],
+            ["Materiais Utilizados", formatarTextoUnidades(os.material_texto) || "-"],
+            ["Modelo Controlador", os.modelo_controlador || "-"],
+            ["Status Controlador", os.status_controlador || "-"],
+            ["Status Serviço", os.status_servico || "-"],
+            ["Pendências", os.pendencia || "-"],
+            ["Observações", os.observacao || "-"],
+            ["Equipe", os.equipe || "-"],
+            ["Técnico", os.tecnico || "-"],
+            ["Supervisor", os.supervisor || "-"]
+        );
+
+        doc.autoTable({
+            startY: 34,
+            head: [["Campo", "Informação"]],
+            body: dadosTabela,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 137, 123] },
+            styles: { fontSize: 9, cellPadding: 3 }
+        });
+
+        doc.save(`OS_${os.numero_os}.pdf`);
+    }
+
+    function exportarPDFEstoque() {
+        if(!cacheEstoque || cacheEstoque.length === 0) return alert("Sem dados de estoque para exportar.");
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(14);
+        doc.setTextColor(0, 137, 123);
+        doc.setFont("helvetica", "bold");
+        doc.text("Ecomix Gestão e Planeamento", 14, 15);
+
+        doc.setFontSize(9);
+        doc.setTextColor(80, 80, 80);
+        doc.setFont("helvetica", "normal");
+        doc.text("Filial Niterói - Controle de Estoque (Setor Semafórico)", 14, 21);
+
+        doc.setDrawColor(0, 137, 123);
+        doc.setFillColor(240, 253, 244);
+        doc.roundedRect(140, 10, 60, 16, 2, 2, 'FD');
+
+        doc.setFontSize(9);
+        doc.setTextColor(0, 137, 123);
+        doc.setFont("helvetica", "bold");
+        doc.text("RELATÓRIO DE ESTOQUE", 170, 16, { align: "center" });
+
+        doc.setFontSize(8);
+        doc.setTextColor(30, 30, 30);
+        doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-BR')}`, 170, 23, { align: "center" });
+
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, 30, 200, 30);
+
+        const dadosEstoqueTabela = cacheEstoque.map(i => [
+            formatarTextoUnidades(i.material || i.Material || "-"),
+            i.data_ultima_entrada || i.dataUltimaEntrada || "-",
+            i.qtd_ultima_entrada !== undefined ? i.qtd_ultima_entrada : (i.qtdUltimaEntrada !== undefined ? i.qtdUltimaEntrada : (i.QtdEntrada !== undefined ? i.QtdEntrada : 0)),
+            i.qtd_anterior !== undefined ? i.qtd_anterior : (i.qtdAnterior !== undefined ? i.qtdAnterior : (i.QtdAnterior !== undefined ? i.QtdAnterior : 0)),
+            i.data_ultima_os || i.dataUltimaOS || "-",
+            i.estoque !== undefined ? i.estoque : (i.Estoque !== undefined ? i.Estoque : 0)
+        ]);
+
+        doc.autoTable({
+            startY: 34,
+            head: [["Material", "Data da última entrada", "Quantidade da última entrada", "Quantidade anterior à entrada", "Data da última vez que teve ordem de serviço", "Quantidade atual do estoque"]],
+            body: dadosEstoqueTabela,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 137, 123] },
+            styles: { fontSize: 8, cellPadding: 2 }
+        });
+
+        doc.save(`Relatorio_Estoque_Niteroi.pdf`);
+    }
+</script>
+</body>
+</html>
