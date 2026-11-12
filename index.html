@@ -671,9 +671,9 @@
 
     function carregarDadosFormulario() {
         Promise.all([
-            fetch(`${URL_APPS_SCRIPT}?action=getControladoras`).then(r => r.json()),
-            fetch(`${URL_APPS_SCRIPT}?action=getCodigosServico`).then(r => r.json()),
-            fetch(`${URL_APPS_SCRIPT}?action=getMateriaisAlmoxarifado`).then(r => r.json())
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getControladoras" }) }).then(r => r.json()),
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getCodigosServico" }) }).then(r => r.json()),
+            fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify({ action: "getMateriaisAlmoxarifado" }) }).then(r => r.json())
         ]).then(([ctrlData, codData, almoxData]) => {
             if(ctrlData.result === "success" && ctrlData.controladoras) {
                 const datalistCtrl = document.getElementById('listaControladoras');
@@ -716,7 +716,10 @@
     }
 
     function carregarEstoque() {
-        fetch(`${URL_APPS_SCRIPT}?action=getEstoque`)
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify({ action: "getEstoque" })
+        })
         .then(r => r.json())
         .then(data => {
             if(data.result === "success") {
@@ -761,7 +764,10 @@
         const selectFilial = document.getElementById('transFilial');
         selectFilial.innerHTML = '<option value="">Carregando filiais...</option>';
         
-        fetch(`${URL_APPS_SCRIPT}?action=getFiliais`)
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify({ action: "getFiliais" })
+        })
         .then(r => r.json())
         .then(data => {
             selectFilial.innerHTML = '<option value="">Selecione a Filial...</option>';
@@ -793,7 +799,10 @@
 
         if (cacheEstoque.length === 0) {
             container.innerHTML = "Carregando materiais...";
-            fetch(`${URL_APPS_SCRIPT}?action=getEstoque`)
+            fetch(URL_APPS_SCRIPT, {
+                method: 'POST',
+                body: JSON.stringify({ action: "getEstoque" })
+            })
             .then(r => r.json())
             .then(data => {
                 if(data.result === "success") {
@@ -1229,7 +1238,7 @@
         texto += `Cabeamento: ${os.cabeamento}\n\n` +
                  `Invólucro: ${os.involucro}\n\n` +
                  `Gabinetes: ${os.gabinetes}\n\n` +
-                 `Placas de CPU e Potência: ${os.cpu}\n\n` +
+                 `Placas de CPU e Potência: ${os.placas_cpu_potencia}\n\n` +
                  `Grupos focais: ${os.blocos_semaforicos}\n\n` +
                  `Colunas: ${os.colunas}\n\n` +
                  `Braços: ${os.bracos}\n\n` +
