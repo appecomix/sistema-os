@@ -3,397 +3,383 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Ordens de Serviço - Setor Semafórico</title>
+    <title>Sistema de Ordens de Serviço - Ecomix</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root {
-            --verde-claro-fundo: #f4f9f6;
-            --card-bg: #ffffff;
-            --texto-cor: #000000;
+        :root { 
+            --primary: #007bff; 
+            --bg: #e0f2f1; 
+            --success: #28a745; 
+            --whatsapp: #25d366; 
+            --dark: #343a40; 
+            --brand-green: #00897b; 
+            --brand-green-hover: #00695c;
         }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: var(--bg); color: #000000; margin: 0; padding: 10px; }
+        .container { width: 100%; max-width: 900px; background: white; margin: 0 auto; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .hidden { display: none !important; }
+        h2 { color: #000000; border-bottom: 2px solid var(--brand-green); padding-bottom: 8px; margin-top: 0; font-size: 20px; }
+        fieldset { border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 15px; width: 100%; background: #ffffff; }
+        legend { font-weight: bold; color: var(--brand-green); padding: 0 5px; font-size: 14px; }
+        
+        .grid-2, .grid-3, .grid-4 { display: grid; gap: 10px; width: 100%; }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 
-        body {
-            font-family: Arial, sans-serif;
-            background-color: var(--verde-claro-fundo);
-            color: var(--texto-cor);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #000000; }
+        input[type="text"], input[type="password"], input[type="date"], input[type="time"], input[type="number"], textarea, select {
+            width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; color: #000000; background: #ffffff;
         }
+        .radio-group { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
+        .radio-group label { margin: 0; font-weight: normal; cursor: pointer; color: #000000; }
+        button { background-color: var(--brand-green); color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background-color: var(--brand-green-hover); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-secondary:hover { background-color: #5a6268; }
+        .btn-whats { background-color: var(--whatsapp); color: white; }
+        .btn-whats:hover { background-color: #1ebd59; }
+        .btn-pdf { background-color: #dc3545; color: white; }
+        .btn-pdf:hover { background-color: #c82333; }
+        .btn-trans { background-color: #ff9800; color: white; }
+        .btn-trans:hover { background-color: #e68a00; }
+        .btn-nf { background-color: #28a745; color: white; }
+        .btn-nf:hover { background-color: #218838; }
+        
+        .btn-menu { height: 55px; font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; border-radius: 6px; width: 100%; color: white; cursor: pointer; font-weight: bold; box-sizing: border-box; border: none; }
+        
+        #msgLogin, #mensagem { margin-top: 15px; text-align: center; font-weight: bold; }
+        .menu-box, .login-box { width: 100%; max-width: 450px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid var(--brand-green); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; color: #000000; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: var(--brand-green); color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .actions-cell { display: flex; gap: 5px; flex-wrap: wrap; }
+        .actions-cell button { padding: 5px 8px; font-size: 11px; margin: 0; width: auto; }
+        .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .filter-row input[type="checkbox"] { width: auto; margin: 0; }
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin-bottom: 10px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; background: #f8f9fa; padding: 6px; border-radius: 4px; border: 1px solid #e9ecef; font-size: 13px; color: #000000; }
+        .checkbox-item input[type="checkbox"] { width: auto; margin: 0; }
+        .checkbox-item input[type="number"] { width: 75px; margin: 0 0 0 auto; padding: 4px; }
 
-        .container {
-            width: 100%;
-            max-width: 440px;
-        }
-
-        .container.hidden {
-            display: none;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 30px 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .card.wide {
-            max-width: 720px;
-        }
-
-        .logo {
-            display: block;
-            max-width: 180px;
-            margin: 0 auto 10px auto;
-            object-fit: contain;
-        }
-
-        .filial-label {
-            text-align: center;
-            font-size: 15px;
-            font-weight: 500;
-            color: #333333;
-            margin-bottom: 25px;
-        }
-
-        h2, h3 {
-            text-align: center;
-            color: #1b5e20;
-            margin-bottom: 20px;
-        }
-
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 14px;
-            margin-bottom: 4px;
-            color: var(--texto-cor);
-            font-size: 14px;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 11px;
-            border: 1px solid #c8e6c9;
-            border-radius: 6px;
-            background-color: #fafafa;
-            color: var(--texto-cor);
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #2e7d32;
-            background-color: #ffffff;
-        }
-
-        .menu-botoes-personalizados {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-bottom: 15px;
-        }
-
-        .btn-menu {
-            width: 100%;
-            padding: 14px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #ffffff;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: opacity 0.2s;
-        }
-
-        .btn-menu:hover {
-            opacity: 0.9;
-        }
-
-        .btn-cyan { background-color: #00897b; }   
-        .btn-blue { background-color: #007bff; }   
-        .btn-orange { background-color: #ffa500; } 
-        .btn-teal { background-color: #00acc1; }   
-
-        .btn-icon {
-            font-size: 18px;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 15px;
-            border: none;
-            border-radius: 6px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .btn-verde {
-            background-color: #2e7d32;
-            color: #ffffff;
-        }
-
-        .btn-voltar {
-            background-color: #cfd8dc;
-            color: #000000;
-        }
-
-        .btn-sair {
-            background-color: #e57373;
-            color: #ffffff;
-            margin-top: 10px;
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 20px;
-            margin-top: 5px;
-        }
-
-        .radio-group label {
-            font-weight: normal;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-        }
-
-        fieldset {
-            border: 1px solid #c8e6c9;
-            border-radius: 6px;
-            padding: 15px;
-            margin-top: 20px;
-            background-color: #f9fbf9;
-        }
-
-        legend {
-            font-weight: bold;
-            color: #2e7d32;
-            padding: 0 8px;
-        }
-
-        .revisao-box {
-            background-color: #f9fbe7;
-            border: 1px solid #cddc39;
-            padding: 18px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            max-height: 380px;
-            overflow-y: auto;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .hidden {
-            display: none;
-        }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; max-width: 650px; width: 92%; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.2); color: #000000; }
+        .revisao-item { border-bottom: 1px solid #eee; padding: 6px 0; font-size: 14px; }
+        .revisao-item strong { color: var(--brand-green); }
     </style>
 </head>
 <body>
-    <!-- TELA DE LOGIN -->
-    <div id="tela-login" class="container">
-        <div class="card">
-            <img src="https://drive.google.com/uc?id=1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Logo ecomix" class="logo">
-            <h2>Portal Operacional Semafórico</h2>
-            <form id="form-login">
-                <label for="login-filial">Filial:</label>
-                <select id="login-filial" required>
-                    <option value="">Selecione a Filial</option>
-                    <option value="Niterói">Niterói</option>
-                    <option value="Rio das Ostras">Rio das Ostras</option>
-                    <option value="Arraial do Cabo">Arraial do Cabo</option>
-                </select>
-                
-                <label for="login-usuario">Usuário:</label>
-                <input type="text" id="login-usuario" placeholder="Digite seu usuário" required>
-                
-                <label for="login-senha">Senha:</label>
-                <input type="password" id="login-senha" placeholder="Digite sua senha" required>
-                
-                <button type="submit" class="btn-verde">Entrar</button>
-            </form>
-        </div>
+
+<!-- TELA 1: LOGIN INICIAL COM SELEÇÃO DE FILIAL -->
+<div id="telaLogin" class="login-box">
+    <div style="margin-bottom: 15px;">
+        <img id="logoEcomixLogin" src="https://lh3.googleusercontent.com/d/1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Ecomix Logo" style="max-width: 240px; width: 100%; height: auto; display: block; margin: 0 auto 8px auto;" crossorigin="anonymous">
+        <div style="font-size: 14px; color: #000000; font-weight: bold;">Sistema de Ordens de Serviço</div>
     </div>
 
-    <!-- TELA INICIAL (MENU) -->
-    <div id="tela-menu" class="container hidden">
-        <div class="card menu-card">
-            <img src="https://drive.google.com/uc?id=1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Logo ecomix" class="logo">
-            <div id="display-filial" class="filial-label">Filial Niterói</div>
-            
-            <div class="menu-botoes-personalizados">
-                <button class="btn-menu btn-cyan" onclick="abrirTela('nova-os')">
-                    <span class="btn-icon">📝</span> Nova Ordem de Serviço
-                </button>
-                <button class="btn-menu btn-blue" onclick="abrirTela('consulta-os')">
-                    <span class="btn-icon">📊</span> Consultar Ordem de Serviço
-                </button>
-                <button class="btn-menu btn-orange" onclick="abrirTela('estoque')">
-                    <span class="btn-icon">📦</span> Controle de Estoque
-                </button>
-                <button class="btn-menu btn-teal" onclick="abrirMapa()">
-                    <span class="btn-icon">🗺️</span> Mapa das Controladoras
-                </button>
+    <form id="formLogin" onsubmit="realizarLogin(event)">
+        <label for="filialLogin" style="text-align: left;">Filial:</label>
+        <select id="filialLogin" required>
+            <option value="">Selecione a filial...</option>
+            <option value="Niterói">Niterói</option>
+            <option value="Rio das Ostras">Rio das Ostras</option>
+            <option value="Arraial do Cabo">Arraial do Cabo</option>
+        </select>
+
+        <label for="usuario" style="text-align: left;">Usuário:</label>
+        <input type="text" id="usuario" placeholder="Digite seu usuário" required>
+
+        <label for="senha" style="text-align: left;">Senha:</label>
+        <input type="password" id="senha" placeholder="Digite sua senha" required>
+
+        <button type="submit" id="btnLogin">Entrar</button>
+    </form>
+    <div id="msgLogin"></div>
+</div>
+
+<!-- TELA 2: MENU PRINCIPAL -->
+<div id="telaMenu" class="menu-box container hidden">
+    <div style="margin-bottom: 20px;">
+        <img id="logoEcomix" src="https://lh3.googleusercontent.com/d/1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Ecomix Logo" style="max-width: 280px; width: 100%; height: auto; display: block; margin: 0 auto 8px auto;" crossorigin="anonymous">
+        <div id="textoFilialMenu" style="font-size: 15px; color: #000000; font-weight: bold; margin-top: 5px;">Filial</div>
+        <div id="textoUsuarioMenu" style="font-size: 12px; color: #555; margin-top: 2px;"></div>
+    </div>
+    
+    <button type="button" id="btnMenuForm" class="btn-menu" style="background-color: var(--brand-green);">📝 Nova Ordem de Serviço</button>
+    <button type="button" id="btnMenuRel" class="btn-menu" style="background-color: #007bff;">📊 Consulta Ordem de Serviço</button>
+    <a id="btnMenuMapa" href="#" target="_blank" class="btn-menu" style="background-color: #17a2b8;">🗺️ Mapa das Controladoras</a>
+    <button type="button" id="btnMenuEst" class="btn-menu" style="background-color: #ff9800;">📦 Controle de Estoque</button>
+    <button type="button" id="btnSairSistema" class="btn-secondary" style="margin-top: 10px;">Sair / Trocar Filial</button>
+</div>
+
+<!-- TELA 3: FORMULÁRIO NOVA ORDEM DE SERVIÇO -->
+<div id="telaForm" class="container hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2>Nova Ordem de Serviço - <span id="tituloFilialForm"></span></h2>
+        <button type="button" id="btnVoltarForm" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 13px;">Voltar ao Menu</button>
+    </div>
+
+    <form id="formOS" onsubmit="abrirRevisaoOS(event)">
+        <fieldset>
+            <legend>Identificação do Serviço</legend>
+            <div style="margin-bottom: 10px;">
+                <label for="controladora">Controladora:</label>
+                <select id="controladora" required>
+                    <option value="">Carregando controladoras...</option>
+                </select>
             </div>
-            
-            <button class="btn-sair" onclick="logout()">Sair</button>
-        </div>
-    </div>
-
-    <!-- TELA NOVA ORDEM DE SERVIÇO -->
-    <div id="tela-nova-os" class="container hidden">
-        <div class="card wide">
-            <h2>Nova Ordem de Serviço</h2>
-            <form id="form-os">
-                <label for="os-controladora">Controladora:</label>
-                <select id="os-controladora" required></select>
-
+            <div>
                 <label>Tipo de Serviço:</label>
-                <div class="radio-group">
-                    <label><input type="radio" name="tipoServico" value="Corretivo" required> Corretivo</label>
-                    <label><input type="radio" name="tipoServico" value="Preventivo"> Preventivo</label>
-                    <label><input type="radio" name="tipoServico" value="Implantação"> Implantação</label>
+                <div class="radio-group" style="margin-top: 8px;">
+                    <input type="radio" id="corretivo" name="tipo_servico" value="Corretivo" required>
+                    <label for="corretivo">Corretivo</label>
+                    <input type="radio" id="preventivo" name="tipo_servico" value="Preventivo">
+                    <label for="preventivo">Preventivo</label>
+                    <input type="radio" id="implantacao" name="tipo_servico" value="Implantação">
+                    <label for="implantacao">Implantação</label>
                 </div>
+            </div>
+        </fieldset>
 
-                <div id="bloco-codigo-niteroi" class="hidden">
-                    <label>Código do Serviço (Niterói):</label>
-                    <div id="lista-codigos-checkbox" class="checkbox-list"></div>
+        <fieldset>
+            <legend>Período da Atividade</legend>
+            <div class="grid-4">
+                <div><label for="data_inicial">Data Inicial:</label><input type="date" id="data_inicial" required></div>
+                <div><label for="hora_inicial">Hora Inicial:</label><input type="time" id="hora_inicial" required></div>
+                <div><label for="data_final">Data Final:</label><input type="date" id="data_final" required></div>
+                <div><label for="hora_final">Hora Final:</label><input type="time" id="hora_final" required></div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Detalhamento do Serviço</legend>
+            <div id="blocoCodigoNiteroi" class="hidden">
+                <label>Código do Serviço (Exclusivo Niterói):</label>
+                <div id="containerCodigos" class="checkbox-grid" style="max-height: 180px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px; margin-bottom: 10px; background: #fafafa;">
+                    Carregando códigos...
                 </div>
+            </div>
+            <label for="descricao_servico">Descrição do Serviço (Linha única):</label>
+            <input type="text" id="descricao_servico" placeholder="Breve descrição do serviço executado..." required>
+        </fieldset>
 
+        <fieldset>
+            <legend>Manutenção Preventiva</legend>
+            <label for="modelo_controlador">Tipo da Controladora:</label>
+            <select id="modelo_controlador" required onchange="mudarModeloControlador(this.value)">
+                <option value="">Selecione o tipo...</option>
+                <option value="CONTRANSIN">CONTRANSIN</option>
+                <option value="CROSS">CROSS</option>
+                <option value="DATAPROM">DATAPROM</option>
+                <option value="MENG">MENG</option>
+                <option value="TESC">TESC</option>
+            </select>
+
+            <!-- Campos específicos dinâmicos por modelo -->
+            <div id="camposEspecificosModelo" class="grid-3" style="margin-top: 10px;"></div>
+
+            <!-- Campos fixos obrigatórios para todos os controladores -->
+            <div style="margin-top: 12px; border-top: 1px dashed #ccc; padding-top: 12px;">
+                <label style="color: var(--brand-green); margin-bottom: 8px;">Condições Gerais do Circuito e Componentes:</label>
                 <div class="grid-2">
-                    <div>
-                        <label for="os-data-inicial">Data Inicial:</label>
-                        <input type="date" id="os-data-inicial" required>
-                        <label for="os-hora-inicial">Hora Inicial:</label>
-                        <input type="time" id="os-hora-inicial" required>
-                    </div>
-                    <div>
-                        <label for="os-data-final">Data Final:</label>
-                        <input type="date" id="os-data-final" required>
-                        <label for="os-hora-final">Hora Final:</label>
-                        <input type="time" id="os-hora-final" required>
-                    </div>
+                    <div><label for="cabeamento">Cabeamento:</label><textarea id="cabeamento" rows="1" required>ok</textarea></div>
+                    <div><label for="involucro">Invólucro:</label><textarea id="involucro" rows="1" required>ok</textarea></div>
+                    <div><label for="gabinetes">Gabinetes:</label><textarea id="gabinetes" rows="1" required>ok</textarea></div>
+                    <div><label for="placas_cpu_potencia">Placas de CPU e Potência:</label><textarea id="placas_cpu_potencia" rows="1" required>ok</textarea></div>
+                    <div><label for="blocos_semaforicos">Grupos Focais:</label><textarea id="blocos_semaforicos" rows="1" required>ok</textarea></div>
+                    <div><label for="colunas">Colunas:</label><textarea id="colunas" rows="1" required>ok</textarea></div>
+                    <div><label for="bracos">Braços:</label><textarea id="bracos" rows="1" required>ok</textarea></div>
                 </div>
+            </div>
+        </fieldset>
 
-                <label for="os-descricao">Descrição do Serviço (Linha única):</label>
-                <input type="text" id="os-descricao" placeholder="Breve descrição..." required>
-
-                <label for="os-tipo-controladora">Tipo da Controladora:</label>
-                <select id="os-tipo-controladora" required onchange="renderizarCamposPreventiva()">
-                    <option value="">Selecione o fabricante</option>
-                    <option value="CONTRANSIN">CONTRANSIN</option>
-                    <option value="CROSS">CROSS</option>
-                    <option value="DATAPROM">DATAPROM</option>
-                    <option value="MENG">MENG</option>
-                    <option value="TESC">TESC</option>
-                </select>
-
-                <fieldset class="fieldset-preventiva">
-                    <legend>Manutenção Preventiva</legend>
-                    <div id="campos-dinamicos-preventiva"></div>
-                    <label for="prev-cabeamento">Cabeamento:</label><input type="text" id="prev-cabeamento" value="ok" required>
-                    <label for="prev-involucro">Invólucro:</label><input type="text" id="prev-involucro" value="ok" required>
-                    <label for="prev-gabinetes">Gabinetes:</label><input type="text" id="prev-gabinetes" value="ok" required>
-                    <label for="prev-placas">Placas de CPU e Potência:</label><input type="text" id="prev-placas" value="ok" required>
-                    <label for="prev-focais">Grupos Focais:</label><input type="text" id="prev-focais" value="ok" required>
-                    <label for="prev-colunas">Colunas:</label><input type="text" id="prev-colunas" value="ok" required>
-                    <label for="prev-bracos">Braços:</label><input type="text" id="prev-bracos" value="ok" required>
-                </fieldset>
-
-                <label for="os-status-ctrl">Status da Controladora:</label>
-                <select id="os-status-ctrl" required>
-                    <option value="Operacional">Operacional</option>
-                    <option value="Inoperante">Inoperante</option>
-                </select>
-
-                <label for="os-status-serv">Status do Serviço:</label>
-                <select id="os-status-serv" required onchange="togglePendencia()">
-                    <option value="Concluído">Concluído</option>
-                    <option value="Pendente">Pendente</option>
-                </select>
-
-                <div id="bloco-pendencia" class="hidden">
-                    <label for="os-pendencia">Explicação da Pendência:</label>
-                    <textarea id="os-pendencia" rows="2" placeholder="Explique a pendência..."></textarea>
-                </div>
-
-                <label for="utiliza-materiais">Utilizou Materiais?</label>
-                <select id="utiliza-materiais" onchange="toggleMateriais()">
-                    <option value="Não">Não</option>
-                    <option value="Sim">Sim</option>
-                </select>
-
-                <div id="bloco-materiais" class="hidden">
-                    <p class="instrucao-material">Selecione os materiais e informe as quantidades:</p>
-                    <div id="lista-materiais-estoque" class="materiais-box">
-                        <label><input type="checkbox" value="Fita Isolante"> Fita Isolante (Incluso)</label><br>
-                        <label><input type="checkbox" value="Fita de Auto Fusão"> Fita de Auto Fusão (Incluso)</label><br>
+        <fieldset>
+            <legend>Status e Pendências</legend>
+            <div class="grid-2">
+                <div>
+                    <label>Status da Controladora:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="st_operacional" name="status_controlador" value="Operacional" required>
+                        <label for="st_operacional">Operacional</label>
+                        <input type="radio" id="st_inoperante" name="status_controlador" value="Inoperante">
+                        <label for="st_inoperante">Inoperante</label>
                     </div>
                 </div>
-
-                <label for="os-observacao">Observação Completa (Detalhes):</label>
-                <textarea id="os-observacao" rows="4" placeholder="Descrição completa..." required></textarea>
-
-                <label for="trabalho-altura">Houve Trabalho em Altura?</label>
-                <select id="trabalho-altura" onchange="toggleAltura()">
-                    <option value="Não">Não</option>
-                    <option value="Sim">Sim</option>
-                </select>
-
-                <div id="bloco-altura" class="hidden">
-                    <label for="os-trabalhadores">Trabalhadores Envolvidos:</label>
-                    <input type="text" id="os-trabalhadores" placeholder="Nomes dos colaboradores...">
-                </div>
-
-                <div class="grid-2">
-                    <div>
-                        <label for="os-equipe">Equipe:</label>
-                        <select id="os-equipe" required>
-                            <option value="01">Equipe 01</option>
-                            <option value="02">Equipe 02</option>
-                            <option value="03">Equipe 03</option>
-                            <option value="04">Equipe 04</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="os-tecnico">Técnico Responsável:</label>
-                        <input type="text" id="os-tecnico" readonly>
+                <div>
+                    <label>Status do Serviço:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="st_concluido" name="status_servico" value="Concluído" required onchange="mudarStatusServico('Concluído')">
+                        <label for="st_concluido">Concluído</label>
+                        <input type="radio" id="st_pendente" name="status_servico" value="Pendente" onchange="mudarStatusServico('Pendente')">
+                        <label for="st_pendente">Pendente</label>
                     </div>
                 </div>
+            </div>
 
-                <button type="button" class="btn-verde" onclick="irParaRevisao()">Revisar Lançamento</button>
-                <button type="button" class="btn-voltar" onclick="voltarMenu()">Voltar ao Menu</button>
-            </form>
-        </div>
+            <div id="campoPendenciaContainer" class="hidden" style="margin-top: 10px;">
+                <label for="pendencia">Pendência (Explicação obrigatória):</label>
+                <textarea id="pendencia" rows="3" placeholder="Descreva a pendência do serviço..."></textarea>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Material Utilizado</legend>
+            <label>Utilizou materiais?</label>
+            <div class="radio-group" style="margin-bottom: 10px;">
+                <input type="radio" id="material_nao" name="usou_material" value="nao" checked onchange="mudarUsouMaterial('nao')">
+                <label for="material_nao">Não</label>
+                <input type="radio" id="material_sim" name="usou_material" value="sim" onchange="mudarUsouMaterial('sim')">
+                <label for="material_sim">Sim</label>
+            </div>
+            <div id="listaMateriaisContainer" class="hidden" style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa;">
+                <label style="margin-bottom: 8px; color: var(--brand-green);">Selecione os materiais e informe as quantidades (cabos em metros):</label>
+                <div id="checkboxesMateriais" class="checkbox-grid">Carregando almoxarifado...</div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Observação e Segurança</legend>
+            <label for="observacao">Observação (Descrição completa do serviço realizado):</label>
+            <textarea id="observacao" rows="4" placeholder="Descreva todos os detalhes da execução..." required></textarea>
+
+            <label style="margin-top: 10px;">Houve Trabalho em Altura?</label>
+            <div class="radio-group">
+                <input type="radio" id="altura_nao" name="trabalho_altura" value="Não" checked onchange="mudarTrabalhoAltura('Não')">
+                <label for="altura_nao">Não</label>
+                <input type="radio" id="altura_sim" name="trabalho_altura" value="Sim" onchange="mudarTrabalhoAltura('Sim')">
+                <label for="altura_sim">Sim</label>
+            </div>
+            <div id="campoTrabalhadores" class="hidden" style="margin-top: 10px;">
+                <label for="trabalhadores_altura">Trabalhadores Envolvidos:</label>
+                <input type="text" id="trabalhadores_altura" placeholder="Digite os nomes dos colaboradores envolvidos...">
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Identificação da Equipe</legend>
+            <div class="grid-2">
+                <div>
+                    <label for="equipe">Equipe:</label>
+                    <select id="equipe" required>
+                        <option value="">Selecione...</option>
+                        <option value="01">01</option>
+                        <option value="02">02</option>
+                        <option value="03">03</option>
+                        <option value="04">04</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="tecnico">Técnico Responsável:</label>
+                    <input type="text" id="tecnico" readonly style="background:#e9ecef;" required>
+                </div>
+            </div>
+        </fieldset>
+
+        <button type="submit" id="btnRevisar">Revisar e Confirmar Envio</button>
+    </form>
+</div>
+
+<!-- TELA 4: REVISÃO DA ORDEM DE SERVIÇO ANTES DO ENVIO -->
+<div id="telaRevisao" class="container hidden">
+    <h2>Revisão da Ordem de Serviço - <span id="tituloFilialRevisao"></span></h2>
+    <p style="font-size: 13px; color: #555;">Confira todos os dados preenchidos antes de registrar na planilha oficial:</p>
+    
+    <div id="conteudoRevisao" style="background: #f9f9f9; border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 15px;"></div>
+
+    <div class="grid-2">
+        <button type="button" id="btnCorrigirOS" class="btn-secondary">✏️ Corrigir</button>
+        <button type="button" id="btnConfirmarEnvioOS" style="background-color: var(--success);">✅ Confirmar e Enviar</button>
     </div>
 
-    <!-- TELA DE REVISÃO -->
-    <div id="tela-revisao" class="container hidden">
-        <div class="card wide">
-            <h2>Revisão da Ordem de Serviço</h2>
-            <div id="conteudo-revisao" class="revisao-box"></div>
-            <button type="button" class="btn-verde" onclick="confirmarEnvioOS()">Confirmar e Enviar</button>
-            <button type="button" class="btn-voltar" onclick="voltarParaLancamento()">Corrigir</button>
+    <div id="mensagem" style="margin-top: 15px; font-size: 16px;"></div>
+    <button type="button" id="btnWhatsApp" class="btn-whats hidden" onclick="enviarWhatsAppNovaOS()">📲 Enviar para o WhatsApp</button>
+    <button type="button" id="btnNovaOSPosEnvio" class="btn-secondary hidden" onclick="voltarMenuDireto()">Voltar ao Menu Principal</button>
+</div>
+
+<!-- TELA 5: CONSULTA ORDEM DE SERVIÇO -->
+<div id="telaRelatorio" class="container hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div>
+            <h2>Consulta Ordem de Serviço</h2>
+            <span id="infoPerfilConsulta" style="font-size: 12px; color: var(--brand-green); font-weight: bold;"></span>
         </div>
+        <button type="button" id="btnVoltarRel" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 13px;">Voltar ao Menu</button>
     </div>
 
-    <script src="app.js"></script>
-</body>
-</html>
+    <fieldset>
+        <legend>Filtros de Busca</legend>
+        <div class="grid-4">
+            <div id="blocoFilialConsulta" class="hidden">
+                <label for="filtroFilialConsulta">Filial:</label>
+                <select id="filtroFilialConsulta"></select>
+            </div>
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkOS"><label for="chkOS" style="margin:0;">Número da O.S</label></div>
+                <input type="text" id="filtroOS" placeholder="Ex: 2782">
+            </div>
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkData"><label for="chkData" style="margin:0;">Data</label></div>
+                <input type="date" id="filtroData">
+            </div>
+            <div id="blocoFiltroTecnico">
+                <div class="filter-row"><input type="checkbox" id="chkTecnico"><label for="chkTecnico" style="margin:0;">Técnico</label></div>
+                <select id="filtroTecnicoSelect"><option value="">Todos</option></select>
+                <input type="text" id="filtroTecnicoInput" readonly class="hidden" style="background:#e9ecef;">
+            </div>
+            <div>
+                <div class="filter-row"><input type="checkbox" id="chkEquipe"><label for="chkEquipe" style="margin:0;">Equipe</label></div>
+                <select id="filtroEquipe">
+                    <option value="">Todas</option>
+                    <option value="01">01</option>
+                    <option value="02">02</option>
+                    <option value="03">03</option>
+                    <option value="04">04</option>
+                </select>
+            </div>
+        </div>
+        <button type="button" id="btnFiltrarRelatorio" onclick="carregarRelatorio()">Pesquisar</button>
+    </fieldset>
+
+    <div style="overflow-x: auto;">
+        <table id="tabelaResultados">
+            <thead>
+                <tr>
+                    <th>Nº O.S</th>
+                    <th>Data Inicial</th>
+                    <th>Controladora</th>
+                    <th>Técnico</th>
+                    <th>Equipe</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="7" style="text-align:center;">Utilize os filtros acima e clique em Pesquisar...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL VISUALIZAÇÃO DETALHADA DA O.S -->
+<div id="modalVisualizarOS" class="modal hidden">
+    <div class="modal-content">
+        <h2>Detalhes da Ordem de Serviço #<span id="visNumeroOS"></span></h2>
+        <div id="visConteudoOS" style="font-size: 14px; line-height: 1.5; max-height: 60vh; overflow-y: auto; border: 1px solid #ddd; padding: 12px; border-radius: 6px; background: #fafafa;"></div>
+        <div class="grid-3" style="margin-top: 15px;">
+            <button type="button" id="btnVisWhatsApp" class="btn-whats">📲 WhatsApp</button>
+            <button type="button" id="btnVisPDF" class="btn-pdf">📄 Exportar PDF</button>
+            <button type="button" onclick="fecharModalVisOS()" class="btn-secondary">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- TELA 6: CONTROLE DE ESTOQUE -->
+<div id="telaEstoque" class="container hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2>Controle de Estoque</h2>
+        <button type="button" id="btnVoltarEst" class="btn-secondary" style="
