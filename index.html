@@ -10,7 +10,7 @@
     <!-- TELA DE LOGIN -->
     <div id="tela-login" class="container">
         <div class="card">
-            <img src="https://drive.google.com/uc?id=1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Logo" class="logo">
+            <img src="https://drive.google.com/uc?id=1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Logo ecomix" class="logo">
             <h2>Portal Operacional Semafórico</h2>
             <form id="form-login">
                 <label for="login-filial">Filial:</label>
@@ -32,19 +32,27 @@
         </div>
     </div>
 
-    <!-- TELA INICIAL (MENU) -->
+    <!-- TELA INICIAL (MENU COM A APARÊNCIA DA IMAGEM) -->
     <div id="tela-menu" class="container hidden">
-        <div class="card">
-            <img src="https://drive.google.com/uc?id=1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Logo" class="logo">
-            <h3 id="display-filial">Filial: </h3>
-            <p id="display-usuario" class="user-badge"></p>
+        <div class="card menu-card">
+            <img src="https://drive.google.com/uc?id=1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Logo ecomix" class="logo">
+            <div id="display-filial" class="filial-label">Filial Niterói</div>
             
-            <div class="menu-botoes">
-                <button class="btn-verde" onclick="abrirTela('nova-os')">1 - Nova Ordem de Serviço</button>
-                <button class="btn-verde" onclick="abrirTela('consulta-os')">2 - Consulta Ordem de Serviço</button>
-                <button class="btn-verde" onclick="abrirMapa()">3 - Mapa das Controladoras</button>
-                <button class="btn-verde" onclick="abrirTela('estoque')">4 - Controle de Estoque</button>
+            <div class="menu-botoes-personalizados">
+                <button class="btn-menu btn-cyan" onclick="abrirTela('nova-os')">
+                    <span class="btn-icon">📝</span> Nova Ordem de Serviço
+                </button>
+                <button class="btn-menu btn-blue" onclick="abrirTela('consulta-os')">
+                    <span class="btn-icon">📊</span> Consultar Ordem de Serviço
+                </button>
+                <button class="btn-menu btn-orange" onclick="abrirTela('estoque')">
+                    <span class="btn-icon">📦</span> Controle de Estoque
+                </button>
+                <button class="btn-menu btn-teal" onclick="abrirMapa()">
+                    <span class="btn-icon">🗺️</span> Mapa das Controladoras
+                </button>
             </div>
+            
             <button class="btn-sair" onclick="logout()">Sair</button>
         </div>
     </div>
@@ -98,4 +106,94 @@
                 </select>
 
                 <fieldset class="fieldset-preventiva">
-                    <legend>Manutenção Preventiva</
+                    <legend>Manutenção Preventiva</legend>
+                    <div id="campos-dinamicos-preventiva"></div>
+                    <label for="prev-cabeamento">Cabeamento:</label><input type="text" id="prev-cabeamento" value="ok" required>
+                    <label for="prev-involucro">Invólucro:</label><input type="text" id="prev-involucro" value="ok" required>
+                    <label for="prev-gabinetes">Gabinetes:</label><input type="text" id="prev-gabinetes" value="ok" required>
+                    <label for="prev-placas">Placas de CPU e Potência:</label><input type="text" id="prev-placas" value="ok" required>
+                    <label for="prev-focais">Grupos Focais:</label><input type="text" id="prev-focais" value="ok" required>
+                    <label for="prev-colunas">Colunas:</label><input type="text" id="prev-colunas" value="ok" required>
+                    <label for="prev-bracos">Braços:</label><input type="text" id="prev-bracos" value="ok" required>
+                </fieldset>
+
+                <label for="os-status-ctrl">Status da Controladora:</label>
+                <select id="os-status-ctrl" required>
+                    <option value="Operacional">Operacional</option>
+                    <option value="Inoperante">Inoperante</option>
+                </select>
+
+                <label for="os-status-serv">Status do Serviço:</label>
+                <select id="os-status-serv" required onchange="togglePendencia()">
+                    <option value="Concluído">Concluído</option>
+                    <option value="Pendente">Pendente</option>
+                </select>
+
+                <div id="bloco-pendencia" class="hidden">
+                    <label for="os-pendencia">Explicação da Pendência:</label>
+                    <textarea id="os-pendencia" rows="2" placeholder="Explique a pendência..."></textarea>
+                </div>
+
+                <label for="utiliza-materiais">Utilizou Materiais?</label>
+                <select id="utiliza-materiais" onchange="toggleMateriais()">
+                    <option value="Não">Não</option>
+                    <option value="Sim">Sim</option>
+                </select>
+
+                <div id="bloco-materiais" class="hidden">
+                    <p class="instrucao-material">Selecione os materiais e informe as quantidades:</p>
+                    <div id="lista-materiais-estoque" class="materiais-box">
+                        <label><input type="checkbox" value="Fita Isolante"> Fita Isolante (Incluso)</label><br>
+                        <label><input type="checkbox" value="Fita de Auto Fusão"> Fita de Auto Fusão (Incluso)</label><br>
+                    </div>
+                </div>
+
+                <label for="os-observacao">Observação Completa (Detalhes):</label>
+                <textarea id="os-observacao" rows="4" placeholder="Descrição completa..." required></textarea>
+
+                <label for="trabalho-altura">Houve Trabalho em Altura?</label>
+                <select id="trabalho-altura" onchange="toggleAltura()">
+                    <option value="Não">Não</option>
+                    <option value="Sim">Sim</option>
+                </select>
+
+                <div id="bloco-altura" class="hidden">
+                    <label for="os-trabalhadores">Trabalhadores Envolvidos:</label>
+                    <input type="text" id="os-trabalhadores" placeholder="Nomes dos colaboradores...">
+                </div>
+
+                <div class="grid-2">
+                    <div>
+                        <label for="os-equipe">Equipe:</label>
+                        <select id="os-equipe" required>
+                            <option value="01">Equipe 01</option>
+                            <option value="02">Equipe 02</option>
+                            <option value="03">Equipe 03</option>
+                            <option value="04">Equipe 04</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="os-tecnico">Técnico Responsável:</label>
+                        <input type="text" id="os-tecnico" readonly>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-verde" onclick="irParaRevisao()">Revisar Lançamento</button>
+                <button type="button" class="btn-voltar" onclick="voltarMenu()">Voltar ao Menu</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TELA DE REVISÃO -->
+    <div id="tela-revisao" class="container hidden">
+        <div class="card wide">
+            <h2>Revisão da Ordem de Serviço</h2>
+            <div id="conteudo-revisao" class="revisao-box"></div>
+            <button type="button" class="btn-verde" onclick="confirmarEnvioOS()">Confirmar e Enviar</button>
+            <button type="button" class="btn-voltar" onclick="voltarParaLancamento()">Corrigir</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
