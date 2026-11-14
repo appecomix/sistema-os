@@ -589,6 +589,11 @@
         const msg = document.getElementById('msgLogin');
         const btn = document.getElementById('btnLogin');
 
+        if (!filial) {
+            alert("Selecione a filial antes de continuar.");
+            return;
+        }
+
         btn.disabled = true;
         btn.innerText = "Autenticando...";
         msg.innerText = "";
@@ -599,7 +604,12 @@
             method: 'POST',
             body: JSON.stringify({ action: actionName, usuario: user, senha: pass, filial: filial })
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("Erro de rede ou servidor indisponível.");
+            }
+            return res.json();
+        })
         .then(data => {
             btn.disabled = false;
             btn.innerText = "Entrar";
@@ -631,7 +641,8 @@
             btn.disabled = false;
             btn.innerText = "Entrar";
             msg.style.color = "#dc3545";
-            msg.innerText = "Erro de conexão com o servidor.";
+            msg.innerText = "Erro ao conectar com o Apps Script. Verifique a URL e se está publicado como web app.";
+            console.error("Erro de login:", err);
         });
     }
 
@@ -923,4 +934,155 @@
         const btnCorrigir = document.getElementById('btnCorrigirOS');
         const msg = document.getElementById('mensagem');
 
-        btnConfirm
+        btnConfirmar.disabled = true;
+        btnCorrigir.disabled = true;
+        msg.style.color = "#00897b";
+        msg.innerText = "Enviando para a planilha e gerando numeração sequencial...";
+
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify(payloadRevisaoOS)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === "success") {
+                numeroOSGeradoFinal = data.numeroOS;
+                msg.style.color = "#28a745";
+                msg.innerText = `✅ Ordem de Serviço registrada com sucesso! Número da O.S: ${numeroOSGeradoFinal}`;
+                
+                document.getElementById('btnWhatsApp').classList.remove('hidden');
+                document.getElementById('btnNovaOSPosEnvio').classList.remove('hidden');
+            } else {
+                btnConfirmar.disabled = false;
+                btnCorrigir.disabled = false;
+                msg.style.color = "#dc3545";
+                msg.innerText = "Erro ao registrar O.S: " + (data.message || "Tente novamente.");
+            }
+        })
+        .catch(err => {
+            btnConfirmar.disabled = false;
+            btnCorrigir.disabled = false;
+            msg.style.color = "#dc3545";
+            msg.innerText = "Falha de conexão ao salvar O.S.";
+        });
+    }
+
+    function montarMensagemWhatsApp(osObj, numOS) {
+        const m = (osObj.modelo_controlador || "").toUpperCase();
+        let blocoTensoes = "";
+
+        if (m === "CROSS") {
+            blocoTensoes = `\n *Saída da fonte de Alimentação (CC):* \n *7,5V:* ${osObj.tensao_75vdc || ""}\n *12V:* ${osObj.tensao_12vdc || ""}\n *24V:* ${osObj.tensao_24vdc || ""}\n`;
+        } else if (m === "DATAPROM") {
+            blocoTensoes = `\n *Saída da fonte de Alimentação (CC):* \n *+5V:* ${osObj.tensao_mais5v || ""}\n *-5V:* ${osObj.tensao_menos5v || ""}\n *+12V:* ${osObj.tensao_mais12v || ""}\n`;
+        } else if (m === "TESC" && osObj.cabo_flex) {
+            blocoTensoes = `\n *Cabo Flex:* ${osObj.cabo_flex}\n`;
+        }
+
+        const linhaCodigo = (osObj.codigo_servico) ? `\n *Código:* ${osObj.codigo_servico}\n` : "";
+        const linhaNobreak = (osObj.nobreak) ? `\n *Nobreak:* ${osObj.nobreak}\n` : "";
+        const linhaFusiveis = (osObj.fusivel) ? `\n *Fusíveis:* ${osObj.fusivel}\n` : "";
+        const linhaPadronizada = (osObj.padronizada) ? `\n *Padronizada:* ${osObj.padronizada}\n` : "";
+
+        return `*Manutenção semafórica*
+
+*Data Inicial:* ${osObj.data_inicial}
+ *Horário inicial:* ${osObj.hora_inicial}
+*Data final:* ${osObj.data_final}
+ Horário final: ${osObj.hora_final}
+
+ *Controladora:* ${osObj.controladora}
+${linhaCodigo}
+*Preventiva:*
+ *Entrada de Alimentação (CA):* ${osObj.tensao_alternada}
+ *Aterramento:* ${osObj.aterramento} ${linhaNobreak}${linhaFusiveis}${blocoTensoes}
+ *Cabeamento:* ${osObj.cabeamento}
+
+ *Invólucro:* ${osObj.involucro}
+
+ *Gabinetes:* ${osObj.gabinetes}
+
+ *Placas de CPU e Potência:* ${osObj.placas_cpu_potencia}
+
+ *Grupos focais:* ${osObj.blocos_semaforicos}
+
+ *Colunas:* ${osObj.colunas}
+
+ *Braços:* ${osObj.bracos}
+${linhaPadronizada}
+ *Status da Controladora:* ${osObj.status_controlador}
+
+ *Material Utilizado:* ${osObj.material}
+
+ *Obs.:* 
+${osObj.observacao}
+
+ *Equipe:* ${osObj.equipe}
+ *Eletrotécnico Responsável:* ${osObj.tecnico}
+
+ *O.S SM:* ${numOS}`;
+    }
+
+    function enviarWhatsAppNovaOS() {
+        const texto = montarMensagemWhatsApp(payloadRevisaoOS, numeroOSGeradoFinal);
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+    }
+
+    function abrirRelatorio() {
+        const selFilial = document.getElementById('filtroFilialConsulta');
+        const blocoFilial = document.getElementById('blocoFilialConsulta');
+        const selTec = document.getElementById('filtroTecnicoSelect');
+        const inpTec = document.getElementById('filtroTecnicoInput');
+
+        if (sessao.nivel === "Supervisor") {
+            document.getElementById('infoPerfilConsulta').innerText = "Modo Supervisor: Acesso Completo às Filiais Autorizadas";
+            blocoFilial.classList.remove('hidden');
+            selFilial.innerHTML = "";
+            sessao.filiaisPermitidas.forEach(f => {
+                selFilial.innerHTML += `<option value="${f}" ${f === sessao.filial ? 'selected' : ''}>${f}</option>`;
+            });
+            selTec.classList.remove('hidden');
+            inpTec.classList.add('hidden');
+        } else {
+            document.getElementById('infoPerfilConsulta').innerText = `Modo Técnico: Visualizando apenas suas O.S na filial ${sessao.filial}`;
+            blocoFilial.classList.add('hidden');
+            selTec.classList.add('hidden');
+            inpTec.classList.remove('hidden');
+            inpTec.value = sessao.usuario;
+            document.getElementById('chkTecnico').checked = true;
+            document.getElementById('chkTecnico').disabled = true;
+        }
+
+        mostrarTela('telaRelatorio');
+    }
+
+    function carregarRelatorio() {
+        const filialBusca = (sessao.nivel === "Supervisor") ? document.getElementById('filtroFilialConsulta').value : sessao.filial;
+        const tbody = document.querySelector('#tabelaResultados tbody');
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Buscando ordens de serviço...</td></tr>';
+
+        fetch(URL_APPS_SCRIPT, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: "consultarOS",
+                filial: filialBusca,
+                nivel: sessao.nivel,
+                usuario: sessao.usuario,
+                filtroOS: document.getElementById('chkOS').checked ? document.getElementById('filtroOS').value : "",
+                filtroData: document.getElementById('chkData').checked ? formatarDataBR(document.getElementById('filtroData').value) : "",
+                filtroTecnico: (sessao.nivel === "Tecnico") ? sessao.usuario : (document.getElementById('chkTecnico').checked ? document.getElementById('filtroTecnicoSelect').value : ""),
+                filtroEquipe: document.getElementById('chkEquipe').checked ? document.getElementById('filtroEquipe').value : ""
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            cacheOS = data.registros || [];
+            tbody.innerHTML = "";
+
+            if (cacheOS.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma Ordem de Serviço encontrada.</td></tr>';
+                return;
+            }
+
+            cacheOS.forEach((os, index) => {
+                const tr =
