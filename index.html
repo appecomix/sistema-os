@@ -4,7 +4,207 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Ordens de Serviço - Setor Semafórico</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --verde-claro-fundo: #f4f9f6;
+            --card-bg: #ffffff;
+            --texto-cor: #000000;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--verde-claro-fundo);
+            color: var(--texto-cor);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .container.hidden {
+            display: none;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 30px 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .card.wide {
+            max-width: 720px;
+        }
+
+        .logo {
+            display: block;
+            max-width: 180px;
+            margin: 0 auto 10px auto;
+            object-fit: contain;
+        }
+
+        .filial-label {
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+            color: #333333;
+            margin-bottom: 25px;
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: #1b5e20;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 14px;
+            margin-bottom: 4px;
+            color: var(--texto-cor);
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #c8e6c9;
+            border-radius: 6px;
+            background-color: #fafafa;
+            color: var(--texto-cor);
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #2e7d32;
+            background-color: #ffffff;
+        }
+
+        .menu-botoes-personalizados {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 15px;
+        }
+
+        .btn-menu {
+            width: 100%;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: opacity 0.2s;
+        }
+
+        .btn-menu:hover {
+            opacity: 0.9;
+        }
+
+        .btn-cyan { background-color: #00897b; }   
+        .btn-blue { background-color: #007bff; }   
+        .btn-orange { background-color: #ffa500; } 
+        .btn-teal { background-color: #00acc1; }   
+
+        .btn-icon {
+            font-size: 18px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-verde {
+            background-color: #2e7d32;
+            color: #ffffff;
+        }
+
+        .btn-voltar {
+            background-color: #cfd8dc;
+            color: #000000;
+        }
+
+        .btn-sair {
+            background-color: #e57373;
+            color: #ffffff;
+            margin-top: 10px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 5px;
+        }
+
+        .radio-group label {
+            font-weight: normal;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        fieldset {
+            border: 1px solid #c8e6c9;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            background-color: #f9fbf9;
+        }
+
+        legend {
+            font-weight: bold;
+            color: #2e7d32;
+            padding: 0 8px;
+        }
+
+        .revisao-box {
+            background-color: #f9fbe7;
+            border: 1px solid #cddc39;
+            padding: 18px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            max-height: 380px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <!-- TELA DE LOGIN -->
@@ -32,7 +232,7 @@
         </div>
     </div>
 
-    <!-- TELA INICIAL (MENU COM A APARÊNCIA DA IMAGEM) -->
+    <!-- TELA INICIAL (MENU) -->
     <div id="tela-menu" class="container hidden">
         <div class="card menu-card">
             <img src="https://drive.google.com/uc?id=1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Logo ecomix" class="logo">
