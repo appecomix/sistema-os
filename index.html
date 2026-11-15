@@ -440,7 +440,6 @@
 </div>
 
 <script>
-    // URL DE WEB APP OFICIAL ATUALIZADA
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbz9inqXnK7GVNdEcPRYREoxMQhUektFgPrRzaKiYFVfK1JOiCnnjdM12gVmqBEK-jKn/exec";
 
     let sessao = {
@@ -1058,69 +1057,68 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
+        // Cabeçalho profissional com Logo no canto esquerdo
         const imgLogo = document.getElementById("logoPrincipal");
         try {
-            doc.addImage(imgLogo, "PNG", 14, 10, 42, 16);
+            doc.addImage(imgLogo, "PNG", 14, 10, 38, 14);
         } catch (e) {
             doc.setFontSize(12);
             doc.setTextColor(0, 137, 123);
             doc.setFont("helvetica", "bold");
-            doc.text("ECOMIX", 14, 20);
+            doc.text("ECOMIX", 14, 18);
         }
 
-        doc.setFontSize(16);
-        doc.setTextColor(30, 30, 30);
+        // Nome da empresa e Filial
+        doc.setFontSize(11);
+        doc.setTextColor(50, 50, 50);
         doc.setFont("helvetica", "bold");
-        doc.text("Ordem de Serviço", 105, 20, { align: "center" });
+        doc.text("Ecomix Gestão e Planejamento", 60, 14);
 
-        doc.setFontSize(12);
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Filial: ${sessao.filial || "Niterói"}`, 60, 20);
+
+        // Número da OS em destaque à direita
+        doc.setFontSize(14);
         doc.setTextColor(0, 137, 123);
-        doc.text(`O.S SM: ${os.numero_os}`, 196, 20, { align: "right" });
+        doc.setFont("helvetica", "bold");
+        doc.text(`O.S Nº ${os.numero_os}`, 196, 16, { align: "right" });
 
+        // Linha divisória
         doc.setDrawColor(0, 137, 123);
-        doc.setLineWidth(0.5);
-        doc.line(14, 30, 196, 30);
+        doc.setLineWidth(0.6);
+        doc.line(14, 26, 196, 26);
 
+        // Estrutura de dados estilo OS profissional
         const linhas = [
-            [{ content: "IDENTIFICAÇÃO E PERÍODO", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Controladora", os.controladora || "-"],
+            [{ content: "DADOS DO CLIENTE E IDENTIFICAÇÃO", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
+            ["Controladora / Local", os.controladora || "-"],
+            ["Tipo de Serviço", os.tipo_servico || "-"],
             ["Data / Horário Inicial", `${formatarDataBR(os.data_inicial)} às ${os.hora_inicial}`],
             ["Data / Horário Final", `${formatarDataBR(os.data_final)} às ${os.hora_final}`]
         ];
 
         if (os.codigos_servico) {
-            linhas.push(["Código do Serviço", os.codigos_servico]);
+            linhas.push(["Código(s) do Serviço", os.codigos_servico]);
         }
 
         linhas.push(
-            [{ content: "PREVENTIVA E MEDIÇÕES", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
+            ["Descrição Breve", os.descricao_servico || "-"],
+            [{ content: "CARACTERÍSTICAS TÉCNICAS E MEDIÇÕES", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
             ["Entrada de Alimentação (CA)", os.tensao_ca || "-"],
             ["Aterramento", os.aterramento || "-"]
         );
 
-        const mod = (os.modelo_controlador || "").toLowerCase();
-        if (mod === "cross") {
-            linhas.push(
-                ["Nobreak", os.nobreak || "-"],
-                ["Fusíveis", os.fusiveis || "-"],
-                ["Saída Fonte CC (7,5V / 12V / 24V)", `7,5V: ${os.tensao_75vcc || "-"} | 12V: ${os.tensao_12vcc || "-"} | 24V: ${os.tensao_24vcc || "-"}`]
-            );
-        } else if (mod === "dataprom") {
-            linhas.push(
-                ["Nobreak", os.nobreak || "-"],
-                ["Fusíveis", os.fusiveis || "-"],
-                ["Saída Fonte CC (+5V / -5V / +12V)", `+5V: ${os.tensao_mais5v || "-"} | -5V: ${os.tensao_menos5v || "-"} | +12V: ${os.tensao_mais12v || "-"}`]
-            );
-        } else if (mod === "tesc") {
-            linhas.push(
-                ["Cabo Flex", os.cabo_flex || "-"],
-                ["Nobreak", os.nobreak || "-"],
-                ["Fusíveis", os.fusiveis || "-"]
-            );
+        if (os.tensao_75vcc || os.tensao_12vcc || os.tensao_24vcc) {
+            linhas.push(["Saída Fonte CC (Cross)", `7,5V: ${os.tensao_75vcc || "-"} | 12V: ${os.tensao_12vcc || "-"} | 24V: ${os.tensao_24vcc || "-"}`]);
         }
+        if (os.fusiveis) linhas.push(["Fusíveis", os.fusiveis]);
+        if (os.nobreak) linhas.push(["Nobreak", os.nobreak]);
+        if (os.padronizada) linhas.push(["Padronizada", os.padronizada]);
 
         linhas.push(
-            [{ content: "INFRAESTRUTURA E STATUS", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
+            [{ content: "INFRAESTRUTURA E CONDIÇÕES DOS COMPONENTES", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
             ["Cabeamento", os.cabeamento || "-"],
             ["Invólucro", os.involucro || "-"],
             ["Gabinetes", os.gabinetes || "-"],
@@ -1130,24 +1128,28 @@
             ["Braços", os.bracos || "-"]
         );
 
-        if (os.padronizada) {
-            linhas.push(["Padronizada", os.padronizada]);
+        linhas.push(
+            [{ content: "STATUS, MATERIAIS E OBSERVAÇÕES", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
+            ["Status da Controladora", os.status_controladora || "-"],
+            ["Status do Serviço", os.status_servico || "-"]
+        );
+
+        if (os.pendencia) {
+            linhas.push(["Motivo da Pendência", os.pendencia]);
         }
 
         linhas.push(
-            ["Status da Controladora", os.status_controladora || "-"],
-            [{ content: "MATERIAIS, OBSERVAÇÃO E RESPONSÁVEIS", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Material Utilizado", os.material_texto || "Nenhum material utilizado"],
-            ["Observações", os.observacao || "-"],
-            ["Equipe", os.equipe || "-"],
-            ["Eletrotécnico Responsável", os.tecnico || "-"]
+            ["Materiais Utilizados", os.material_texto || "Nenhum material utilizado"],
+            ["Observações Detalhadas", os.observacao || "-"],
+            ["Trabalho em Altura", `${os.trabalho_altura || "Não"} ${os.trabalhadores_altura ? `(Equipe: ${os.trabalhadores_altura})` : ""}`],
+            ["Equipe e Responsável", `Equipe: ${os.equipe || "-"} | Técnico: ${os.tecnico || "-"}`]
         );
 
         doc.autoTable({
-            startY: 34,
+            startY: 30,
             body: linhas,
             theme: "grid",
-            styles: { fontSize: 9, cellPadding: 3 },
+            styles: { fontSize: 8.5, cellPadding: 2.5 },
             columnStyles: { 0: { fontStyle: "bold", cellWidth: 65 } }
         });
 
@@ -1278,172 +1280,4 @@
         const itens = [];
         document.querySelectorAll("#gridMateriaisNF .checkbox-item").forEach(row => {
             const chk = row.querySelector(".chk-nf");
-            const qtd = row.querySelector(".qtd-nf").value;
-            if (chk.checked && qtd > 0) {
-                itens.push({ material: chk.getAttribute("data-mat"), quantidade: qtd });
-            }
-        });
-
-        if (itens.length === 0) return alert("Selecione ao menos um material e informe a quantidade.");
-
-        this.disabled = true;
-        fetch(URL_APPS_SCRIPT, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                action: "salvarNF",
-                filial: getFilialEstoqueAtiva(),
-                numero_nf: nfNum,
-                data_entrada: nfData,
-                usuario: sessao.usuario,
-                itens: itens
-            })
-        })
-        .then(r => r.json())
-        .then(() => {
-            this.disabled = false;
-            alert("Nota Fiscal registrada com sucesso!");
-            document.getElementById("nfNumero").value = "";
-            carregarDadosEstoque();
-            ativarAbaEstoque("atual");
-        });
-    });
-
-    document.getElementById("btnEnviarPedidoTrans").addEventListener("click", function() {
-        const origem = getFilialEstoqueAtiva();
-        const destino = document.getElementById("transDestino").value;
-        const dataPed = document.getElementById("transData").value;
-
-        if (origem === destino) return alert("A filial de destino deve ser diferente da filial atual.");
-        if (!dataPed) return alert("Informe a data do pedido.");
-
-        const itens = [];
-        document.querySelectorAll("#gridMateriaisTrans .checkbox-item").forEach(row => {
-            const chk = row.querySelector(".chk-tr");
-            const qtd = row.querySelector(".qtd-tr").value;
-            if (chk.checked && qtd > 0) {
-                itens.push({ material: chk.getAttribute("data-mat"), quantidade: qtd });
-            }
-        });
-
-        if (itens.length === 0) return alert("Selecione ao menos um material para transferir.");
-
-        this.disabled = true;
-        fetch(URL_APPS_SCRIPT, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                action: "criarTransferencia",
-                filial_origem: origem,
-                filial_destino: destino,
-                data_pedido: dataPed,
-                usuario: sessao.usuario,
-                itens: itens
-            })
-        })
-        .then(r => r.json())
-        .then(() => {
-            this.disabled = false;
-            alert("Pedido de transferência enviado!");
-            carregarPedidosTransferencia();
-        });
-    });
-
-    function carregarPedidosTransferencia() {
-        const filial = getFilialEstoqueAtiva();
-        const box = document.getElementById("listaPedidosTrans");
-        box.innerHTML = "Carregando pedidos...";
-
-        fetch(`${URL_APPS_SCRIPT}?action=getTransferencias&filial=${encodeURIComponent(filial)}`)
-            .then(r => r.json())
-            .then(res => {
-                const pedidos = res.pedidos || [];
-                if (pedidos.length === 0) {
-                    box.innerHTML = "<p>Nenhum pedido de transferência registrado nesta filial.</p>";
-                    return;
-                }
-
-                box.innerHTML = "";
-                pedidos.forEach((p, idx) => {
-                    const div = document.createElement("div");
-                    div.style.cssText = "border:1px solid #ccc; padding:10px; border-radius:6px; margin-bottom:10px; background:#f9f9f9;";
-                    let itensHtml = p.itens.map((it, iIdx) => `
-                        <div style="display:flex; align-items:center; gap:8px; margin:4px 0;">
-                            <span style="flex:1; font-size:13px;">${it.material}</span>
-                            <input type="number" id="edit_tr_${idx}_${iIdx}" value="${it.quantidade}" ${p.status !== "Pendente" ? "disabled" : ""} style="width:75px; padding:4px; margin:0;">
-                        </div>
-                    `).join("");
-
-                    div.innerHTML = `
-                        <div><b>Pedido:</b> ${p.id_pedido} | <b>Data:</b> ${formatarDataBR(p.data_pedido)} | <b>Status:</b> <span style="color:${p.status === 'Confirmado' ? 'green' : (p.status === 'Cancelado' ? 'red' : 'orange')}">${p.status}</span></div>
-                        <div style="font-size:13px; margin:4px 0;"><b>Origem:</b> ${p.origem} ➔ <b>Destino:</b> ${p.destino}</div>
-                        <div style="margin-top:8px;">${itensHtml}</div>
-                        ${p.status === "Pendente" ? `
-                            <div class="grid-2" style="margin-top:8px;">
-                                <button type="button" onclick='responderTransferencia(${JSON.stringify(p)}, ${idx}, "Confirmado")'>✅ Confirmar Pedido</button>
-                                <button type="button" class="btn-pdf" onclick='responderTransferencia(${JSON.stringify(p)}, ${idx}, "Cancelado")'>❌ Cancelar Pedido</button>
-                            </div>
-                        ` : ""}
-                    `;
-                    box.appendChild(div);
-                });
-            });
-    }
-
-    function responderTransferencia(pedido, idx, novoStatus) {
-        const itensAtualizados = pedido.itens.map((it, iIdx) => {
-            const inp = document.getElementById(`edit_tr_${idx}_${iIdx}`);
-            return { material: it.material, quantidade: inp ? inp.value : it.quantidade };
-        });
-
-        fetch(URL_APPS_SCRIPT, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                action: "atualizarTransferencia",
-                id_pedido: pedido.id_pedido,
-                origem: pedido.origem,
-                destino: pedido.destino,
-                status: novoStatus,
-                itens: itensAtualizados
-            })
-        })
-        .then(r => r.json())
-        .then(() => {
-            alert(`Pedido ${pedido.id_pedido} marcado como ${novoStatus}!`);
-            carregarPedidosTransferencia();
-        });
-    }
-
-    document.getElementById("btnExportarPDFEstoque").addEventListener("click", () => {
-        if (cacheEstoqueAtual.length === 0) return alert("Sem dados de estoque.");
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const filial = getFilialEstoqueAtiva();
-
-        doc.setFontSize(14);
-        doc.setTextColor(0, 137, 123);
-        doc.setFont("helvetica", "bold");
-        doc.text(`Controle de Estoque — Filial ${filial}`, 14, 18);
-
-        doc.autoTable({
-            startY: 24,
-            head: [["Material", "Última Entrada", "Qtd Comprada", "Qtd Anterior", "Última OS", "Estoque Atual"]],
-            body: cacheEstoqueAtual.map(i => [
-                i.material,
-                formatarDataBR(i.data_ultima_entrada),
-                i.qtd_ultima_entrada,
-                i.qtd_anterior,
-                formatarDataBR(i.data_ultima_os),
-                i.estoque
-            ]),
-            theme: "grid",
-            headStyles: { fillColor: [0, 137, 123] },
-            styles: { fontSize: 8 }
-        });
-
-        doc.save(`Estoque_${filial}.pdf`);
-    });
-</script>
-</body>
-</html>
+            const qtd = row.querySelector(".qtd-
