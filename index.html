@@ -8,21 +8,25 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
     body { background-color: #f4f6f9; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .container { width: 100%; max-width: 420px; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    .container { width: 100%; max-width: 480px; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
     .logo-area { text-align: center; margin-bottom: 25px; }
-    .logo-area h1 { font-size: 24px; color: #007BFF; font-weight: 700; }
+    .logo-area h1 { font-size: 26px; color: #007BFF; font-weight: 700; }
     .logo-area p { font-size: 14px; color: #666; margin-top: 5px; }
-    .form-group { margin-bottom: 20px; }
-    label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 8px; }
-    select, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; }
-    select:focus, input:focus { border-color: #007BFF; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+    select, input, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    select:focus, input:focus, textarea:focus { border-color: #007BFF; }
     button { width: 100%; padding: 12px; background-color: #007BFF; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
     button:hover { background-color: #0056b3; }
     .error-msg { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; display: none; text-align: center; }
     .hidden { display: none !important; }
-    .app-screen { max-width: 800px; width: 100%; padding: 20px; }
+    .app-screen { max-width: 900px; width: 100%; padding: 20px; margin: 20px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
     .header-app { display: flex; justify-content: space-between; align-items: center; background: #007BFF; color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; flex-wrap: wrap; }
+    .nav-tabs button { width: auto; padding: 8px 16px; background: #e9ecef; color: #333; font-size: 13px; }
+    .nav-tabs button.active { background: #007BFF; color: white; }
+    .card { background: #fafbfc; padding: 20px; border: 1px solid #e1e4e8; border-radius: 8px; margin-bottom: 15px; }
+    .section-title { font-size: 16px; font-weight: 600; color: #007BFF; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
   </style>
 </head>
 <body>
@@ -62,7 +66,7 @@
   </div>
 
   <!-- TELA PRINCIPAL DO SISTEMA -->
-  <div id="appScreen" class="container app-screen hidden">
+  <div id="appScreen" class="app-screen hidden">
     <div class="header-app">
       <div>
         <h2 id="userWelcome">Bem-vindo</h2>
@@ -71,19 +75,68 @@
       <button onclick="sair()" style="width: auto; padding: 8px 15px; background: #dc3545;">Sair</button>
     </div>
 
-    <div class="card">
-      <h3>Painel Operacional Ativo</h3>
-      <p id="systemStatusInfo" style="margin-top: 10px; font-size: 14px; color: #555;">Conectado com sucesso ao backend unificado da Ecomix.</p>
+    <!-- MENUS DE NAVEGAÇÃO -->
+    <div class="nav-tabs">
+      <button id="tabBtnOS" class="active" onclick="mudarAba('os')">Nova O.S.</button>
+      <button id="tabBtnConsultar" onclick="mudarAba('consultar')">Consultar O.S.</button>
+      <button id="tabBtnEstoque" onclick="mudarAba('estoque')">Almoxarifado / Estoque</button>
+    </div>
+
+    <!-- ABA 1: NOVA O.S. -->
+    <div id="abaOS" class="card">
+      <div class="section-title">Registro de Ordem de Serviço</div>
+      <form id="osForm" onsubmit="salvarOS(event)">
+        <div class="form-group">
+          <label>Controladora / Interseção:</label>
+          <select id="controladoraSelect" required>
+            <option value="">Carregando controladoras...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Modelo do Controlador:</label>
+          <select id="modeloSelect" onchange="verificarModeloCross()" required>
+            <option value="">Carregando modelos...</option>
+          </select>
+        </div>
+
+        <!-- CAMPOS ESPECÍFICOS CROSS -->
+        <div id="camposCross" class="hidden" style="background: #eef6ff; padding: 15px; border-radius: 8px; border: 1px solid #b8daff; margin-bottom: 15px;">
+          <div class="section-title" style="color: #004085; font-size: 14px;">Medições Específicas Controladora Cross</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group"><label>Tensão CA:</label><input type="text" id="tensao_ca"></div>
+            <div class="form-group"><label>Aterramento:</label><input type="text" id="aterramento"></div>
+            <div class="form-group"><label>Tensão 75VCC:</label><input type="text" id="tensao_75vcc"></div>
+            <div class="form-group"><label>Tensão 12VCC:</label><input type="text" id="tensao_12vcc"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Descrição do Serviço:</label>
+          <textarea id="descricaoServico" rows="3" placeholder="Descreva o serviço realizado..." required></textarea>
+        </div>
+
+        <button type="submit" id="btnSalvarOS">Salvar Ordem de Serviço</button>
+      </form>
+    </div>
+
+    <!-- ABA 2: CONSULTAR O.S. -->
+    <div id="abaConsultar" class="card hidden">
+      <div class="section-title">Consultar Ordens de Serviço</div>
+      <p style="font-size: 14px; color: #666;">Painel de consultas e histórico de O.S. da filial.</p>
+    </div>
+
+    <!-- ABA 3: ESTOQUE -->
+    <div id="abaEstoque" class="card hidden">
+      <div class="section-title">Almoxarifado e Estoque</div>
+      <p style="font-size: 14px; color: #666;">Controle de materiais e estoque atual.</p>
     </div>
   </div>
 
   <script>
-    // URL ATUALIZADA DO WEB APP DO APPS SCRIPT
     const API_URL = "https://script.google.com/macros/s/AKfycbwZkOGzMvWRBcR4kLawEI2RpIFlLBScCDfi5VDfCI5HuBZnuw2gtvPe-4_XgVh_QoQP/exec";
 
     async function realizarLogin(event) {
       event.preventDefault();
-      
       const filial = document.getElementById('filialSelect').value;
       const usuario = document.getElementById('usuarioInput').value.trim();
       const senha = document.getElementById('senhaInput').value.trim();
@@ -97,18 +150,11 @@
       try {
         const response = await fetch(API_URL, {
           method: 'POST',
-          body: JSON.stringify({
-            action: 'login',
-            filial: filial,
-            usuario: usuario,
-            senha: senha
-          })
+          body: JSON.stringify({ action: 'login', filial, usuario, senha })
         });
-
         const data = await response.json();
 
         if (data.result === 'success') {
-          // Salva sessão local e exibe o sistema
           localStorage.setItem('ecomix_user', JSON.stringify(data));
           carregarAppPrincipal(data);
         } else {
@@ -116,9 +162,8 @@
           errorAlert.style.display = 'block';
         }
       } catch (err) {
-        errorAlert.textContent = 'Erro de conexão com o servidor. Verifique sua rede.';
+        errorAlert.textContent = 'Erro de conexão com o servidor.';
         errorAlert.style.display = 'block';
-        console.error(err);
       } finally {
         btnEntrar.textContent = 'Entrar';
         btnEntrar.disabled = false;
@@ -130,6 +175,59 @@
       document.getElementById('appScreen').classList.remove('hidden');
       document.getElementById('userWelcome').textContent = `Olá, ${dadosUser.user} (${dadosUser.perfil})`;
       document.getElementById('userBranch').textContent = `Filial: ${dadosUser.filial}`;
+      carregarDadosIniciais(dadosUser.filial);
+    }
+
+    async function carregarDadosIniciais(filial) {
+      try {
+        const res = await fetch(`${API_URL}?action=getDadosIniciais&filial=${encodeURIComponent(filial)}`);
+        const data = await res.json();
+        if (data.result === 'success') {
+          const selectCtrl = document.getElementById('controladoraSelect');
+          selectCtrl.innerHTML = '<option value="">Selecione a Controladora...</option>';
+          data.controladoras.forEach(c => {
+            selectCtrl.innerHTML += `<option value="${c}">${c}</option>`;
+          });
+
+          const selectMod = document.getElementById('modeloSelect');
+          selectMod.innerHTML = '<option value="">Selecione o Modelo...</option>';
+          data.modelos.forEach(m => {
+            selectMod.innerHTML += `<option value="${m}">${m}</option>`;
+          });
+        }
+      } catch (e) {
+        console.error("Erro ao carregar dados:", e);
+      }
+    }
+
+    function verificarModeloCross() {
+      const modelo = document.getElementById('modeloSelect').value;
+      const camposCross = document.getElementById('camposCross');
+      if (modelo.toLowerCase().includes('cross')) {
+        camposCross.classList.remove('hidden');
+      } else {
+        camposCross.classList.add('hidden');
+      }
+    }
+
+    function mudarAba(aba) {
+      document.getElementById('abaOS').classList.add('hidden');
+      document.getElementById('abaConsultar').classList.add('hidden');
+      document.getElementById('abaEstoque').classList.add('hidden');
+      document.getElementById('tabBtnOS').classList.remove('active');
+      document.getElementById('tabBtnConsultar').classList.remove('active');
+      document.getElementById('tabBtnEstoque').classList.remove('active');
+
+      if (aba === 'os') {
+        document.getElementById('abaOS').classList.remove('hidden');
+        document.getElementById('tabBtnOS').classList.add('active');
+      } else if (aba === 'consultar') {
+        document.getElementById('abaConsultar').classList.remove('hidden');
+        document.getElementById('tabBtnConsultar').classList.add('active');
+      } else if (aba === 'estoque') {
+        document.getElementById('abaEstoque').classList.remove('hidden');
+        document.getElementById('tabBtnEstoque').classList.add('active');
+      }
     }
 
     function sair() {
@@ -139,7 +237,6 @@
       document.getElementById('loginForm').reset();
     }
 
-    // Auto-login se já houver sessão salva
     window.onload = function() {
       const sessao = localStorage.getItem('ecomix_user');
       if (sessao) {
