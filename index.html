@@ -149,4 +149,111 @@
                 <div><label for="osDataInicial">Data Inicial:</label><input type="date" id="osDataInicial" required></div>
                 <div><label for="osHoraInicial">Hora Inicial:</label><input type="time" id="osHoraInicial" required></div>
                 <div><label for="osDataFinal">Data Final:</label><input type="date" id="osDataFinal" required></div>
-                <div><label for="osHoraFinal">Hora Final:</label><input type="time" id="osHoraFinal"
+                <div><label for="osHoraFinal">Hora Final:</label><input type="time" id="osHoraFinal" required></div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Detalhamento Técnico</legend>
+            <div id="blocoCodigosNiteroi" class="hidden" style="margin-bottom: 12px;">
+                <label>Código do Serviço (Selecione um ou mais):</label>
+                <div id="listaCodigosContainer" style="max-height: 170px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #fafafa;">
+                    Carregando códigos...
+                </div>
+            </div>
+
+            <label for="osDescricaoBreve">Descrição do Serviço (Breve resumo em linha única):</label>
+            <input type="text" id="osDescricaoBreve" placeholder="Ex: Troca de lâmpadas LED e ajuste de fases" required>
+        </fieldset>
+
+        <fieldset>
+            <legend>Tipo da Controladora e Manutenção Preventiva</legend>
+            <label for="osModeloControlador">Modelo da Controladora:</label>
+            <select id="osModeloControlador" required>
+                <option value="">Selecione o modelo...</option>
+            </select>
+
+            <div id="camposDinamicosModelo" class="grid-3" style="margin-top: 10px;"></div>
+
+            <div style="margin-top: 12px; border-top: 1px dashed #ccc; padding-top: 12px;">
+                <label style="color: var(--brand-green); margin-bottom: 8px;">Condições Gerais do Circuito e Componentes:</label>
+                <div class="grid-3">
+                    <div><label for="osCabeamento">Cabeamento:</label><textarea id="osCabeamento" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osInvolucro">Invólucro:</label><textarea id="osInvolucro" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osGabinetes">Gabinetes:</label><textarea id="osGabinetes" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osPlacas">Placas de CPU e Potência:</label><textarea id="osPlacas" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osGruposFocais">Grupos Focais:</label><textarea id="osGruposFocais" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osColunas">Colunas:</label><textarea id="osColunas" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osBracos">Braços:</label><textarea id="osBracos" class="expansivel" rows="1" required></textarea></div>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Status Pós-Intervenção</legend>
+            <div class="grid-2">
+                <div>
+                    <label>Status da Controladora:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="status_controladora" value="Operacional" required> Operacional</label>
+                        <label><input type="radio" name="status_controladora" value="Inoperante"> Inoperante</label>
+                    </div>
+                </div>
+                <div>
+                    <label>Status do Serviço:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="status_servico" value="Concluído" required> Concluído</label>
+                        <label><input type="radio" name="status_servico" value="Pendente"> Pendente</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="blocoPendencia" class="hidden" style="margin-top: 8px;">
+                <label for="osPendencia">Explicação da Pendência:</label>
+                <textarea id="osPendencia" class="expansivel" rows="2" placeholder="Descreva o motivo da pendência..."></textarea>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Material Utilizado</legend>
+            <label>Utilizou materiais?</label>
+            <div class="radio-group">
+                <label><input type="radio" name="utilizou_material" value="Não" checked required> Não</label>
+                <label><input type="radio" name="utilizou_material" value="Sim"> Sim</label>
+            </div>
+
+            <div id="blocoListaMateriais" class="hidden" style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa;">
+                <label style="color: var(--brand-green); margin-bottom: 8px;">Selecione os materiais utilizados:</label>
+                <div id="gridMateriaisOS" class="checkbox-grid">Carregando almoxarifado...</div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Observações, Segurança e Identificação</legend>
+            <label for="osObservacao">Observação (Descrição completa e detalhada do serviço):</label>
+            <textarea id="osObservacao" class="infinito" placeholder="Descreva todos os detalhes do serviço executado..." required></textarea>
+
+            <label style="margin-top: 8px;">Houve Trabalho em Altura?</label>
+            <div class="radio-group">
+                <label><input type="radio" name="trabalho_altura" value="Não" checked required> Não</label>
+                <label><input type="radio" name="trabalho_altura" value="Sim"> Sim</label>
+            </div>
+
+            <div id="blocoTrabalhadores" class="hidden" style="margin-bottom: 10px;">
+                <label for="osTrabalhadores">Trabalhadores Envolvidos:</label>
+                <input type="text" id="osTrabalhadores" placeholder="Digite os nomes dos colaboradores envolvidos...">
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <label for="osEquipe">Equipe:</label>
+                    <select id="osEquipe" required>
+                        <option value="">Selecione a equipe...</option>
+                        <option value="01">01</option>
+                        <option value="02">02</option>
+                        <option value="03">03</option>
+                        <option value="04">04</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="osTecnico">Técnico
