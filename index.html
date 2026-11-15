@@ -135,7 +135,6 @@
     </div>
 
     <form id="formOS">
-        <!-- 2.1 e 2.2 -->
         <fieldset>
             <legend>Identificação do Serviço</legend>
             <label for="osControladora">Controladora:</label>
@@ -150,7 +149,6 @@
             </div>
         </fieldset>
 
-        <!-- 2.3 -->
         <fieldset>
             <legend>Período da Atividade</legend>
             <div class="grid-4">
@@ -161,11 +159,8 @@
             </div>
         </fieldset>
 
-        <!-- 2.4 e 2.5 -->
         <fieldset>
             <legend>Detalhamento Técnico</legend>
-            
-            <!-- 2.4 Exclusivo Filial Niterói -->
             <div id="blocoCodigosNiteroi" class="hidden" style="margin-bottom: 12px;">
                 <label>Código do Serviço (Selecione um ou mais):</label>
                 <div id="listaCodigosContainer" style="max-height: 170px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #fafafa;">
@@ -177,7 +172,6 @@
             <input type="text" id="osDescricaoBreve" placeholder="Ex: Troca de lâmpadas LED e ajuste de fases" required>
         </fieldset>
 
-        <!-- 2.6 e 2.7 -->
         <fieldset>
             <legend>Tipo da Controladora e Manutenção Preventiva</legend>
             <label for="osModeloControlador">Modelo da Controladora:</label>
@@ -185,10 +179,8 @@
                 <option value="">Selecione o modelo...</option>
             </select>
 
-            <!-- Campos dinâmicos exclusivos por modelo -->
             <div id="camposDinamicosModelo" class="grid-3" style="margin-top: 10px;"></div>
 
-            <!-- Campos fixos obrigatórios em todos os modelos -->
             <div style="margin-top: 12px; border-top: 1px dashed #ccc; padding-top: 12px;">
                 <label style="color: var(--brand-green); margin-bottom: 8px;">Condições Gerais do Circuito e Componentes:</label>
                 <div class="grid-3">
@@ -203,7 +195,6 @@
             </div>
         </fieldset>
 
-        <!-- 2.8, 2.9 e 2.10 -->
         <fieldset>
             <legend>Status Pós-Intervenção</legend>
             <div class="grid-2">
@@ -229,7 +220,6 @@
             </div>
         </fieldset>
 
-        <!-- 2.11 -->
         <fieldset>
             <legend>Material Utilizado</legend>
             <label>Utilizou materiais?</label>
@@ -244,7 +234,6 @@
             </div>
         </fieldset>
 
-        <!-- 2.12, 2.13 e 2.14 -->
         <fieldset>
             <legend>Observações, Segurança e Identificação</legend>
             <label for="osObservacao">Observação (Descrição completa e detalhada do serviço):</label>
@@ -401,7 +390,6 @@
         <button type="button" id="tabBtnTransferencia" class="btn-secondary hidden">3 - Pedido de Transferência</button>
     </div>
 
-    <!-- SUBTELA 1: ESTOQUE ATUAL -->
     <div id="subTelaEstoqueAtual">
         <button type="button" id="btnExportarPDFEstoque" class="btn-pdf" style="width: auto; padding: 9px 16px; margin-bottom: 10px;">📄 Exportar Estoque em PDF</button>
         <div style="overflow-x: auto;">
@@ -421,7 +409,6 @@
         </div>
     </div>
 
-    <!-- SUBTELA 2: ENTRADA DE NOTA FISCAL (APENAS SUPERVISOR) -->
     <div id="subTelaEntradaNF" class="hidden">
         <fieldset>
             <legend>Cadastrar Entrada de Nota Fiscal</legend>
@@ -435,7 +422,6 @@
         </fieldset>
     </div>
 
-    <!-- SUBTELA 3: PEDIDO DE TRANSFERÊNCIA (APENAS SUPERVISOR) -->
     <div id="subTelaTransferencia" class="hidden">
         <fieldset>
             <legend>Novo Pedido de Transferência entre Filiais</legend>
@@ -467,13 +453,13 @@
 
 <script>
     // =========================================================================
-    // CONFIGURAÇÃO DA URL DO WEB APP (SUBSTITUA PELA SUA URL /exec APÓS IMPLANTAR)
+    // URL DO WEB APP (CONFIRME SE É A URL /exec DA SUA IMPLANTAÇÃO ATUAL)
     // =========================================================================
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxejf3AQvcDiOC2ShcRziOFuIHzkgYmwNn01PoF_vWwtRiaPdI5QmYU1NYIammMmH-J/exec";
 
     let sessao = {
         usuario: "",
-        perfil: "", // "supervisor" ou "tecnico"
+        perfil: "",
         filial: "",
         filiaisAutorizadas: [],
         tecnicos: [],
@@ -492,9 +478,6 @@
     let cacheConsultaOS = [];
     let cacheEstoqueAtual = [];
 
-    // =========================================================================
-    // NAVEGAÇÃO ENTRE TELAS
-    // =========================================================================
     function abrirTela(id) {
         ["telaLogin", "telaMenu", "telaNovaOS", "telaRevisaoOS", "telaConsultaOS", "telaEstoque"].forEach(t => {
             document.getElementById(t).classList.add("hidden");
@@ -514,7 +497,7 @@
     });
 
     // =========================================================================
-    // A2 - LOGIN POR FILIAL
+    // A2 - LOGIN POR FILIAL VIA GET
     // =========================================================================
     document.getElementById("formLogin").addEventListener("submit", function(e) {
         e.preventDefault();
@@ -528,11 +511,9 @@
         btn.innerText = "Autenticando...";
         msg.innerText = "";
 
-        fetch(URL_APPS_SCRIPT, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "login", filial, usuario, senha })
-        })
+        const url = `${URL_APPS_SCRIPT}?action=login&filial=${encodeURIComponent(filial)}&usuario=${encodeURIComponent(usuario)}&senha=${encodeURIComponent(senha)}`;
+
+        fetch(url)
         .then(r => r.json())
         .then(res => {
             btn.disabled = false;
@@ -555,13 +536,14 @@
                 abrirTela("telaMenu");
                 carregarDadosIniciaisDaFilial(sessao.filial);
             } else {
-                msg.innerText = res.error || "Falha no login.";
+                msg.innerText = res.error || "Usuário ou senha incorretos.";
             }
         })
         .catch(err => {
             btn.disabled = false;
             btn.innerText = "Entrar";
-            msg.innerText = "Erro de conexão com o servidor.";
+            msg.innerText = "Erro ao conectar. Verifique se implantou uma Nova Versão no Apps Script.";
+            console.error(err);
         });
     });
 
@@ -589,7 +571,6 @@
         document.getElementById("blocoListaMateriais").classList.add("hidden");
         document.getElementById("blocoTrabalhadores").classList.add("hidden");
 
-        // 2.4 - Códigos exclusivo de Niterói
         const blocoCod = document.getElementById("blocoCodigosNiteroi");
         if (sessao.filial === "Niterói") {
             blocoCod.classList.remove("hidden");
@@ -602,7 +583,6 @@
     });
 
     function preencherCombosNovaOS() {
-        // Controladoras
         const dl = document.getElementById("datalistControladoras");
         dl.innerHTML = "";
         dadosIniciaisFilial.controladoras.forEach(c => {
@@ -611,7 +591,6 @@
             dl.appendChild(opt);
         });
 
-        // Códigos de Serviço (Niterói)
         const boxCod = document.getElementById("listaCodigosContainer");
         boxCod.innerHTML = "";
         dadosIniciaisFilial.codigos.forEach(c => {
@@ -624,7 +603,6 @@
             boxCod.appendChild(div);
         });
 
-        // Modelos de Controladora
         const selMod = document.getElementById("osModeloControlador");
         selMod.innerHTML = '<option value="">Selecione o modelo...</option>';
         dadosIniciaisFilial.modelos.forEach(m => {
@@ -634,7 +612,6 @@
             selMod.appendChild(opt);
         });
 
-        // Materiais do Almoxarifado (incluindo Fita Isolante e Fita de Auto Fusão sem quantidade numérica)
         const gridMat = document.getElementById("gridMateriaisOS");
         gridMat.innerHTML = "";
         const listaCompletaMat = [...dadosIniciaisFilial.materiais];
@@ -655,7 +632,6 @@
         });
     }
 
-    // 2.6 - Campos dinâmicos conforme Tipo da Controladora
     document.getElementById("osModeloControlador").addEventListener("change", function() {
         const mod = this.value;
         const container = document.getElementById("camposDinamicosModelo");
@@ -701,7 +677,6 @@
         });
     });
 
-    // 2.10 - Pendência condicional
     document.querySelectorAll('input[name="status_servico"]').forEach(r => {
         r.addEventListener("change", function() {
             const bloco = document.getElementById("blocoPendencia");
@@ -717,7 +692,6 @@
         });
     });
 
-    // 2.11 - Materiais condicional
     document.querySelectorAll('input[name="utilizou_material"]').forEach(r => {
         r.addEventListener("change", function() {
             const bloco = document.getElementById("blocoListaMateriais");
@@ -729,7 +703,6 @@
         });
     });
 
-    // 2.13 - Trabalho em altura condicional
     document.querySelectorAll('input[name="trabalho_altura"]').forEach(r => {
         r.addEventListener("change", function() {
             const bloco = document.getElementById("blocoTrabalhadores");
@@ -745,13 +718,9 @@
         });
     });
 
-    // =========================================================================
-    // B (ETAPA 2) - REVISÃO ANTES DO ENVIO PARA PLANILHA
-    // =========================================================================
     document.getElementById("formOS").addEventListener("submit", function(e) {
         e.preventDefault();
 
-        // Valida códigos se for Niterói
         let codigosSelecionados = [];
         if (sessao.filial === "Niterói") {
             codigosSelecionados = Array.from(document.querySelectorAll(".chk-codigo-os:checked")).map(c => c.value);
@@ -761,7 +730,6 @@
             }
         }
 
-        // Valida materiais
         const usouMat = document.querySelector('input[name="utilizou_material"]:checked').value;
         const materiaisLista = [];
         const materiaisFormatados = [];
@@ -923,9 +891,6 @@
         });
     });
 
-    // =========================================================================
-    // MODELO EXATO DE MENSAGEM PARA O WHATSAPP (ITEM B1)
-    // =========================================================================
     function gerarMensagemWhatsApp(d, numOS) {
         let msg = `*Manutenção semafórica*\n\n` +
                   `*Data Inicial:* ${formatarDataBR(d.data_inicial)}\n` +
@@ -1012,501 +977,4 @@
                 selFilial.appendChild(opt);
             });
 
-            const selTec = document.getElementById("consTecnico");
-            selTec.innerHTML = '<option value="">Todos</option>';
-            sessao.tecnicos.forEach(t => {
-                const opt = document.createElement("option");
-                opt.value = t;
-                opt.innerText = t;
-                selTec.appendChild(opt);
-            });
-        } else {
-            boxFilial.classList.add("hidden");
-            boxTec.classList.add("hidden");
-        }
-
-        abrirTela("telaConsultaOS");
-        executarBuscaOS();
-    });
-
-    document.getElementById("btnPesquisarOS").addEventListener("click", executarBuscaOS);
-
-    function executarBuscaOS() {
-        const btn = document.getElementById("btnPesquisarOS");
-        btn.disabled = true;
-        btn.innerText = "Buscando...";
-
-        const filialBusca = (sessao.perfil === "supervisor") ? document.getElementById("consFilial").value : sessao.filial;
-        const numOS = document.getElementById("consNumeroOS").value.trim();
-        const dataIni = document.getElementById("consData").value;
-        const tecnico = (sessao.perfil === "supervisor") ? document.getElementById("consTecnico").value : sessao.usuario;
-        const equipe = document.getElementById("consEquipe").value;
-
-        const url = `${URL_APPS_SCRIPT}?action=buscarOS&filial=${encodeURIComponent(filialBusca)}&filtroOS=${encodeURIComponent(numOS)}&filtroData=${encodeURIComponent(dataIni)}&filtroTecnico=${encodeURIComponent(tecnico)}&filtroEquipe=${encodeURIComponent(equipe)}`;
-
-        fetch(url)
-            .then(r => r.json())
-            .then(res => {
-                btn.disabled = false;
-                btn.innerText = "🔍 Buscar Ordens de Serviço";
-                cacheConsultaOS = res.lista || [];
-                renderTabelaConsultaOS(cacheConsultaOS);
-            })
-            .catch(err => {
-                btn.disabled = false;
-                btn.innerText = "🔍 Buscar Ordens de Serviço";
-            });
-    }
-
-    function renderTabelaConsultaOS(lista) {
-        const tbody = document.querySelector("#tabelaConsultaOS tbody");
-        tbody.innerHTML = "";
-
-        if (lista.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma Ordem de Serviço encontrada.</td></tr>';
-            return;
-        }
-
-        lista.forEach((os, idx) => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td><b>${os.numero_os}</b></td>
-                <td>${formatarDataBR(os.data_inicial)}</td>
-                <td>${os.controladora}</td>
-                <td>${os.tecnico}</td>
-                <td>${os.equipe}</td>
-                <td>${os.status_servico}</td>
-                <td style="display:flex; gap:5px; flex-wrap:wrap;">
-                    <button type="button" class="btn-primary" style="width:auto; padding:5px 9px; font-size:12px; margin:0;" onclick="abrirModalVisualizarOS(${idx})">Visualizar</button>
-                    <button type="button" class="btn-whats" style="width:auto; padding:5px 9px; font-size:12px; margin:0;" onclick="exportarWhatsAppConsulta(${idx})">WhatsApp</button>
-                    <button type="button" class="btn-pdf" style="width:auto; padding:5px 9px; font-size:12px; margin:0;" onclick="gerarPDFOrdemServico(${idx})">PDF</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function abrirModalVisualizarOS(idx) {
-        const os = cacheConsultaOS[idx];
-        document.getElementById("modalNumOS").innerText = os.numero_os;
-        document.getElementById("corpoModalOS").innerText = gerarMensagemWhatsApp(os, os.numero_os);
-        document.getElementById("btnModalWhatsApp").onclick = () => exportarWhatsAppConsulta(idx);
-        document.getElementById("btnModalPDF").onclick = () => gerarPDFOrdemServico(idx);
-        document.getElementById("modalVisualizarOS").classList.remove("hidden");
-    }
-
-    document.getElementById("btnFecharModalOS").addEventListener("click", () => {
-        document.getElementById("modalVisualizarOS").classList.add("hidden");
-    });
-
-    function exportarWhatsAppConsulta(idx) {
-        const os = cacheConsultaOS[idx];
-        const texto = gerarMensagemWhatsApp(os, os.numero_os);
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, "_blank");
-    }
-
-    // =========================================================================
-    // C 1.4.1 - EXPORTAÇÃO DE PDF NO MODELO EXATO SOLICITADO
-    // =========================================================================
-    function gerarPDFOrdemServico(idx) {
-        const os = cacheConsultaOS[idx];
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        // Cabeçalho: Logo à esquerda, Título "Ordem de Serviço" no centro, Número da O.S na direita
-        const imgLogo = document.getElementById("logoPrincipal");
-        try {
-            doc.addImage(imgLogo, "PNG", 14, 10, 42, 16);
-        } catch (e) {
-            doc.setFontSize(12);
-            doc.setTextColor(0, 137, 123);
-            doc.setFont("helvetica", "bold");
-            doc.text("ECOMIX", 14, 20);
-        }
-
-        doc.setFontSize(16);
-        doc.setTextColor(30, 30, 30);
-        doc.setFont("helvetica", "bold");
-        doc.text("Ordem de Serviço", 105, 20, { align: "center" });
-
-        doc.setFontSize(12);
-        doc.setTextColor(0, 137, 123);
-        doc.text(`O.S SM: ${os.numero_os}`, 196, 20, { align: "right" });
-
-        doc.setDrawColor(0, 137, 123);
-        doc.setLineWidth(0.5);
-        doc.line(14, 30, 196, 30);
-
-        // Corpo seguindo a ordem e informações da mensagem do WhatsApp, separados por categorias
-        const linhas = [
-            [{ content: "IDENTIFICAÇÃO E PERÍODO", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Controladora", os.controladora || "-"],
-            ["Data / Horário Inicial", `${formatarDataBR(os.data_inicial)} às ${os.hora_inicial}`],
-            ["Data / Horário Final", `${formatarDataBR(os.data_final)} às ${os.hora_final}`]
-        ];
-
-        if (os.codigos_servico) {
-            linhas.push(["Código do Serviço", os.codigos_servico]);
-        }
-
-        linhas.push(
-            [{ content: "PREVENTIVA E MEDIÇÕES", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Entrada de Alimentação (CA)", os.tensao_ca || "-"],
-            ["Aterramento", os.aterramento || "-"]
-        );
-
-        const mod = (os.modelo_controlador || "").toLowerCase();
-        if (mod === "cross") {
-            linhas.push(
-                ["Nobreak", os.nobreak || "-"],
-                ["Fusíveis", os.fusiveis || "-"],
-                ["Saída Fonte CC (7,5V / 12V / 24V)", `7,5V: ${os.tensao_75vcc || "-"} | 12V: ${os.tensao_12vcc || "-"} | 24V: ${os.tensao_24vcc || "-"}`]
-            );
-        } else if (mod === "dataprom") {
-            linhas.push(
-                ["Nobreak", os.nobreak || "-"],
-                ["Fusíveis", os.fusiveis || "-"],
-                ["Saída Fonte CC (+5V / -5V / +12V)", `+5V: ${os.tensao_mais5v || "-"} | -5V: ${os.tensao_menos5v || "-"} | +12V: ${os.tensao_mais12v || "-"}`]
-            );
-        } else if (mod === "tesc") {
-            linhas.push(
-                ["Cabo Flex", os.cabo_flex || "-"],
-                ["Nobreak", os.nobreak || "-"],
-                ["Fusíveis", os.fusiveis || "-"]
-            );
-        }
-
-        linhas.push(
-            [{ content: "INFRAESTRUTURA E STATUS", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Cabeamento", os.cabeamento || "-"],
-            ["Invólucro", os.involucro || "-"],
-            ["Gabinetes", os.gabinetes || "-"],
-            ["Placas de CPU e Potência", os.placas_cpu_potencia || "-"],
-            ["Grupos Focais", os.grupos_focais || "-"],
-            ["Colunas", os.colunas || "-"],
-            ["Braços", os.bracos || "-"]
-        );
-
-        if (os.padronizada) {
-            linhas.push(["Padronizada", os.padronizada]);
-        }
-
-        linhas.push(
-            ["Status da Controladora", os.status_controladora || "-"],
-            [{ content: "MATERIAIS, OBSERVAÇÃO E RESPONSÁVEIS", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Material Utilizado", os.material_texto || "Nenhum material utilizado"],
-            ["Observações", os.observacao || "-"],
-            ["Equipe", os.equipe || "-"],
-            ["Eletrotécnico Responsável", os.tecnico || "-"]
-        );
-
-        doc.autoTable({
-            startY: 34,
-            body: linhas,
-            theme: "grid",
-            styles: { fontSize: 9, cellPadding: 3 },
-            columnStyles: { 0: { fontStyle: "bold", cellWidth: 65 } }
-        });
-
-        doc.save(`OS_${os.numero_os}.pdf`);
-    }
-
-    // =========================================================================
-    // D - CONTROLE DE ESTOQUE (ATUAL, ENTRADA DE NF E TRANSFERÊNCIA)
-    // =========================================================================
-    document.getElementById("btnIrEstoque").addEventListener("click", () => {
-        const boxFilial = document.getElementById("boxSeletorFilialEstoque");
-        const selFilial = document.getElementById("estFilialSelect");
-
-        if (sessao.perfil === "supervisor") {
-            boxFilial.classList.remove("hidden");
-            document.getElementById("tabBtnEntradaNF").classList.remove("hidden");
-            document.getElementById("tabBtnTransferencia").classList.remove("hidden");
-
-            selFilial.innerHTML = "";
-            sessao.filiaisAutorizadas.forEach(f => {
-                const opt = document.createElement("option");
-                opt.value = f;
-                opt.innerText = f;
-                if (f === sessao.filial) opt.selected = true;
-                selFilial.appendChild(opt);
-            });
-        } else {
-            boxFilial.classList.add("hidden");
-            document.getElementById("tabBtnEntradaNF").classList.add("hidden");
-            document.getElementById("tabBtnTransferencia").classList.add("hidden");
-        }
-
-        ativarAbaEstoque("atual");
-        abrirTela("telaEstoque");
-        carregarDadosEstoque();
-    });
-
-    document.getElementById("estFilialSelect").addEventListener("change", carregarDadosEstoque);
-
-    function getFilialEstoqueAtiva() {
-        return (sessao.perfil === "supervisor") ? document.getElementById("estFilialSelect").value : sessao.filial;
-    }
-
-    function ativarAbaEstoque(aba) {
-        ["subTelaEstoqueAtual", "subTelaEntradaNF", "subTelaTransferencia"].forEach(s => document.getElementById(s).classList.add("hidden"));
-        ["tabBtnEstoqueAtual", "tabBtnEntradaNF", "tabBtnTransferencia"].forEach(b => {
-            document.getElementById(b).classList.remove("btn-primary");
-            document.getElementById(b).classList.add("btn-secondary");
-        });
-
-        if (aba === "atual") {
-            document.getElementById("subTelaEstoqueAtual").classList.remove("hidden");
-            document.getElementById("tabBtnEstoqueAtual").classList.replace("btn-secondary", "btn-primary");
-        } else if (aba === "nf") {
-            document.getElementById("subTelaEntradaNF").classList.remove("hidden");
-            document.getElementById("tabBtnEntradaNF").classList.replace("btn-secondary", "btn-primary");
-        } else if (aba === "trans") {
-            document.getElementById("subTelaTransferencia").classList.remove("hidden");
-            document.getElementById("tabBtnTransferencia").classList.replace("btn-secondary", "btn-primary");
-            carregarPedidosTransferencia();
-        }
-    }
-
-    document.getElementById("tabBtnEstoqueAtual").addEventListener("click", () => ativarAbaEstoque("atual"));
-    document.getElementById("tabBtnEntradaNF").addEventListener("click", () => ativarAbaEstoque("nf"));
-    document.getElementById("tabBtnTransferencia").addEventListener("click", () => ativarAbaEstoque("trans"));
-
-    function carregarDadosEstoque() {
-        const filial = getFilialEstoqueAtiva();
-        fetch(`${URL_APPS_SCRIPT}?action=getEstoque&filial=${encodeURIComponent(filial)}`)
-            .then(r => r.json())
-            .then(res => {
-                cacheEstoqueAtual = res.estoque || [];
-                const tbody = document.querySelector("#tabelaEstoque tbody");
-                tbody.innerHTML = "";
-
-                if (cacheEstoqueAtual.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum material cadastrado.</td></tr>';
-                } else {
-                    cacheEstoqueAtual.forEach(item => {
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td><b>${item.material}</b></td>
-                            <td>${formatarDataBR(item.data_ultima_entrada)}</td>
-                            <td>${item.qtd_ultima_entrada}</td>
-                            <td>${item.qtd_anterior}</td>
-                            <td>${formatarDataBR(item.data_ultima_os)}</td>
-                            <td><b>${item.estoque}</b></td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
-
-                montarListasMateriaisEstoque();
-            });
-    }
-
-    function montarListasMateriaisEstoque() {
-        const lista = cacheEstoqueAtual.map(i => i.material);
-        if (!lista.some(m => m.toLowerCase().includes("fita isolante"))) lista.push("Fita Isolante");
-        if (!lista.some(m => m.toLowerCase().includes("auto fus"))) lista.push("Fita de Auto Fusão");
-
-        const gridNF = document.getElementById("gridMateriaisNF");
-        const gridTrans = document.getElementById("gridMateriaisTrans");
-        gridNF.innerHTML = "";
-        gridTrans.innerHTML = "";
-
-        lista.forEach((mat, i) => {
-            gridNF.innerHTML += `
-                <div class="checkbox-item">
-                    <input type="checkbox" class="chk-nf" data-mat="${mat}" id="nf_${i}">
-                    <label for="nf_${i}" style="margin:0; font-size:12px; flex:1;">${mat}</label>
-                    <input type="number" class="qtd-nf" min="1" placeholder="Qtd" style="width:70px; padding:4px; margin:0;">
-                </div>
-            `;
-            gridTrans.innerHTML += `
-                <div class="checkbox-item">
-                    <input type="checkbox" class="chk-tr" data-mat="${mat}" id="tr_${i}">
-                    <label for="tr_${i}" style="margin:0; font-size:12px; flex:1;">${mat}</label>
-                    <input type="number" class="qtd-tr" min="1" placeholder="Qtd" style="width:70px; padding:4px; margin:0;">
-                </div>
-            `;
-        });
-    }
-
-    // Salvar Entrada de Nota Fiscal
-    document.getElementById("btnRegistrarNF").addEventListener("click", function() {
-        const nfNum = document.getElementById("nfNumero").value.trim();
-        const nfData = document.getElementById("nfData").value;
-        if (!nfNum || !nfData) return alert("Preencha o Número da NF e a Data de Entrada.");
-
-        const itens = [];
-        document.querySelectorAll("#gridMateriaisNF .checkbox-item").forEach(row => {
-            const chk = row.querySelector(".chk-nf");
-            const qtd = row.querySelector(".qtd-nf").value;
-            if (chk.checked && qtd > 0) {
-                itens.push({ material: chk.getAttribute("data-mat"), quantidade: qtd });
-            }
-        });
-
-        if (itens.length === 0) return alert("Selecione ao menos um material e informe a quantidade.");
-
-        this.disabled = true;
-        fetch(URL_APPS_SCRIPT, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                action: "salvarNF",
-                filial: getFilialEstoqueAtiva(),
-                numero_nf: nfNum,
-                data_entrada: nfData,
-                usuario: sessao.usuario,
-                itens: itens
-            })
-        })
-        .then(r => r.json())
-        .then(() => {
-            this.disabled = false;
-            alert("Nota Fiscal registrada com sucesso!");
-            document.getElementById("nfNumero").value = "";
-            carregarDadosEstoque();
-            ativarAbaEstoque("atual");
-        });
-    });
-
-    // Criar Pedido de Transferência
-    document.getElementById("btnEnviarPedidoTrans").addEventListener("click", function() {
-        const origem = getFilialEstoqueAtiva();
-        const destino = document.getElementById("transDestino").value;
-        const dataPed = document.getElementById("transData").value;
-
-        if (origem === destino) return alert("A filial de destino deve ser diferente da filial atual.");
-        if (!dataPed) return alert("Informe a data do pedido.");
-
-        const itens = [];
-        document.querySelectorAll("#gridMateriaisTrans .checkbox-item").forEach(row => {
-            const chk = row.querySelector(".chk-tr");
-            const qtd = row.querySelector(".qtd-tr").value;
-            if (chk.checked && qtd > 0) {
-                itens.push({ material: chk.getAttribute("data-mat"), quantidade: qtd });
-            }
-        });
-
-        if (itens.length === 0) return alert("Selecione ao menos um material para transferir.");
-
-        this.disabled = true;
-        fetch(URL_APPS_SCRIPT, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                action: "criarTransferencia",
-                filial_origem: origem,
-                filial_destino: destino,
-                data_pedido: dataPed,
-                usuario: sessao.usuario,
-                itens: itens
-            })
-        })
-        .then(r => r.json())
-        .then(() => {
-            this.disabled = false;
-            alert("Pedido de transferência enviado!");
-            carregarPedidosTransferencia();
-        });
-    });
-
-    function carregarPedidosTransferencia() {
-        const filial = getFilialEstoqueAtiva();
-        const box = document.getElementById("listaPedidosTrans");
-        box.innerHTML = "Carregando pedidos...";
-
-        fetch(`${URL_APPS_SCRIPT}?action=getTransferencias&filial=${encodeURIComponent(filial)}`)
-            .then(r => r.json())
-            .then(res => {
-                const pedidos = res.pedidos || [];
-                if (pedidos.length === 0) {
-                    box.innerHTML = "<p>Nenhum pedido de transferência registrado nesta filial.</p>";
-                    return;
-                }
-
-                box.innerHTML = "";
-                pedidos.forEach((p, idx) => {
-                    const div = document.createElement("div");
-                    div.style.cssText = "border:1px solid #ccc; padding:10px; border-radius:6px; margin-bottom:10px; background:#f9f9f9;";
-                    let itensHtml = p.itens.map((it, iIdx) => `
-                        <div style="display:flex; align-items:center; gap:8px; margin:4px 0;">
-                            <span style="flex:1; font-size:13px;">${it.material}</span>
-                            <input type="number" id="edit_tr_${idx}_${iIdx}" value="${it.quantidade}" ${p.status !== "Pendente" ? "disabled" : ""} style="width:75px; padding:4px; margin:0;">
-                        </div>
-                    `).join("");
-
-                    div.innerHTML = `
-                        <div><b>Pedido:</b> ${p.id_pedido} | <b>Data:</b> ${formatarDataBR(p.data_pedido)} | <b>Status:</b> <span style="color:${p.status === 'Confirmado' ? 'green' : (p.status === 'Cancelado' ? 'red' : 'orange')}">${p.status}</span></div>
-                        <div style="font-size:13px; margin:4px 0;"><b>Origem:</b> ${p.origem} ➔ <b>Destino:</b> ${p.destino}</div>
-                        <div style="margin-top:8px;">${itensHtml}</div>
-                        ${p.status === "Pendente" ? `
-                            <div class="grid-2" style="margin-top:8px;">
-                                <button type="button" onclick='responderTransferencia(${JSON.stringify(p)}, ${idx}, "Confirmado")'>✅ Confirmar Pedido</button>
-                                <button type="button" class="btn-pdf" onclick='responderTransferencia(${JSON.stringify(p)}, ${idx}, "Cancelado")'>❌ Cancelar Pedido</button>
-                            </div>
-                        ` : ""}
-                    `;
-                    box.appendChild(div);
-                });
-            });
-    }
-
-    function responderTransferencia(pedido, idx, novoStatus) {
-        const itensAtualizados = pedido.itens.map((it, iIdx) => {
-            const inp = document.getElementById(`edit_tr_${idx}_${iIdx}`);
-            return { material: it.material, quantidade: inp ? inp.value : it.quantidade };
-        });
-
-        fetch(URL_APPS_SCRIPT, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                action: "atualizarTransferencia",
-                id_pedido: pedido.id_pedido,
-                origem: pedido.origem,
-                destino: pedido.destino,
-                status: novoStatus,
-                itens: itensAtualizados
-            })
-        })
-        .then(r => r.json())
-        .then(() => {
-            alert(`Pedido ${pedido.id_pedido} marcado como ${novoStatus}!`);
-            carregarPedidosTransferencia();
-        });
-    }
-
-    // Exportar Estoque em PDF
-    document.getElementById("btnExportarPDFEstoque").addEventListener("click", () => {
-        if (cacheEstoqueAtual.length === 0) return alert("Sem dados de estoque.");
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const filial = getFilialEstoqueAtiva();
-
-        doc.setFontSize(14);
-        doc.setTextColor(0, 137, 123);
-        doc.setFont("helvetica", "bold");
-        doc.text(`Controle de Estoque — Filial ${filial}`, 14, 18);
-
-        doc.autoTable({
-            startY: 24,
-            head: [["Material", "Última Entrada", "Qtd Comprada", "Qtd Anterior", "Última OS", "Estoque Atual"]],
-            body: cacheEstoqueAtual.map(i => [
-                i.material,
-                formatarDataBR(i.data_ultima_entrada),
-                i.qtd_ultima_entrada,
-                i.qtd_anterior,
-                formatarDataBR(i.data_ultima_os),
-                i.estoque
-            ]),
-            theme: "grid",
-            headStyles: { fillColor: [0, 137, 123] },
-            styles: { fontSize: 8 }
-        });
-
-        doc.save(`Estoque_${filial}.pdf`);
-    });
-</script>
-</body>
-</html>
+            const selTec = document.getElementById
