@@ -1365,10 +1365,9 @@
     document.getElementById("tabBtnEntradaNF").addEventListener("click", () => ativarAbaEstoque("nf"));
     document.getElementById("tabBtnTransferencia").addEventListener("click", () => ativarAbaEstoque("trans"));
 
-    function formatarDataISOparaBR(iso) {
-        if (!iso || iso === "-" || !iso.includes("-")) return iso;
-        const p = iso.split("-");
-        return `${p[2]}/${p[1]}/${p[0]}`;
+  function formatarDataISOparaBR(iso) {
+        if (!iso || iso === "-") return "-";
+        return normalizarDataBR(iso);
     }
 
     function carregarDadosEstoque() {
