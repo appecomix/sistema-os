@@ -441,7 +441,7 @@
 
 <script>
     // URL DE WEB APP OFICIAL ATUALIZADA
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwZkOGzMvWRBcR4kLawEI2RpIFlLBScCDfi5VDfCI5HuBZnuw2gtvPe-4_XgVh_QoQP/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbz9inqXnK7GVNdEcPRYREoxMQhUektFgPrRzaKiYFVfK1JOiCnnjdM12gVmqBEK-jKn/exec";
 
     let sessao = {
         usuario: "",
@@ -1058,97 +1058,272 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
+        // --- Configurações de Paleta e Fonte ---
+        const corVerdeFundoLegenda = [224, 242, 241]; // E0F2F1 - Verde claro de fundo
+        const corVerdeTextoLegenda = [0, 105, 92];    // 00695C - Verde escuro para texto
+        const corCinzaBorda = [200, 200, 200];         // C8C8C8 - Cinza claro para bordas
+        const corCinzaTextoConteudo = [50, 50, 50];    // 323232 - Cinza escuro para texto
+
+        doc.setFont("helvetica");
+
+        // --- Cabeçalho ---
         const imgLogo = document.getElementById("logoPrincipal");
         try {
-            doc.addImage(imgLogo, "PNG", 14, 10, 42, 16);
+            // Logo Ecomix maior e alinhada
+            doc.addImage(imgLogo, "PNG", 14, 10, 46, 18);
         } catch (e) {
-            doc.setFontSize(12);
-            doc.setTextColor(0, 137, 123);
+            // Fallback se imagem falhar
+            doc.setFontSize(14);
+            doc.setTextColor(corVerdeTextoLegenda);
             doc.setFont("helvetica", "bold");
             doc.text("ECOMIX", 14, 20);
         }
 
+        // Título centralizado "ORDEM DE SERVIÇO"
         doc.setFontSize(16);
         doc.setTextColor(30, 30, 30);
         doc.setFont("helvetica", "bold");
-        doc.text("Ordem de Serviço", 105, 20, { align: "center" });
+        doc.text("ORDEM DE SERVIÇO", 105, 20, { align: "center" });
 
+        // Nº SM alinhado à direita
         doc.setFontSize(12);
-        doc.setTextColor(0, 137, 123);
-        doc.text(`O.S SM: ${os.numero_os}`, 196, 20, { align: "right" });
+        doc.setTextColor(corVerdeTextoLegenda);
+        doc.text(`Nº SM: ${os.numero_os}`, 196, 20, { align: "right" });
 
-        doc.setDrawColor(0, 137, 123);
-        doc.setLineWidth(0.5);
+        // Linha divisória
+        doc.setDrawColor(corVerdeFundoLegenda);
+        doc.setLineWidth(0.6);
         doc.line(14, 30, 196, 30);
 
-        const linhas = [
-            [{ content: "IDENTIFICAÇÃO E PERÍODO", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Controladora", os.controladora || "-"],
-            ["Data / Horário Inicial", `${formatarDataBR(os.data_inicial)} às ${os.hora_inicial}`],
-            ["Data / Horário Final", `${formatarDataBR(os.data_final)} às ${os.hora_final}`]
+        // --- Definição das Seções e Conteúdo (Replicando o Modelo da Imagem) ---
+        const secoesPDF = [
+            // Seção: CONTROLADORA (replica o cabeçalho preto da imagem)
+            { tipo: 'legenda', texto: 'CONTROLADORA' },
+            { tipo: 'conteudo', texto: os.controladora || "-" },
+
+            // Seção: TIPO DO SERVIÇO
+            { tipo: 'legenda', texto: 'TIPO DO SERVIÇO' },
+            { tipo: 'grid', colunas: 3, conteudo: [
+                ['CORRETIVO', (os.tipo_servico === 'Corretivo' ? 'X' : '')],
+                ['PREVENTIVO', (os.tipo_servico === 'Preventivo' ? 'X' : '')],
+                ['IMPLANTAÇÃO', (os.tipo_servico === 'Implantação' ? 'X' : '')]
+            ]},
+
+            // Seção: PERÍODO DA ATIVIDADE
+            { tipo: 'legenda', texto: 'PERÍODO DA ATIVIDADE' },
+            { tipo: 'grid', colunas: 4, conteudo: [
+                ['INÍCIO - DATA', formatarDataBR(os.data_inicial)],
+                ['INÍCIO - HORA', os.hora_inicial],
+                ['TÉRMINO - DATA', formatarDataBR(os.data_final)],
+                ['TÉRMINO - HORA', os.hora_final]
+            ]},
+
+            // Seção: CÓDIGO DO SERVIÇO
+            { tipo: 'legenda', texto: 'CÓDIGO DO SERVIÇO' },
+            { tipo: 'conteudo', texto: os.codigos_servico || "-" },
+
+            // Seção: DESCRIÇÃO DO SERVIÇO REALIZADO (replica a legenda preta)
+            { tipo: 'legenda', texto: 'DESCRIÇÃO DO SERVIÇO REALIZADO' },
+            { tipo: 'conteudo', texto: os.descricao_servico || "-", multiline: true },
+
+            // Seção: MANUTENÇÃO PREVENTIVA (Medições)
+            { tipo: 'legenda', texto: 'MANUTENÇÃO PREVENTIVA' },
+            { tipo: 'grid_medições', modelo: os.modelo_controlador, conteudo: os },
+
+            // Seção: CABEAMENTO
+            { tipo: 'legenda', texto: 'CABEAMENTO' },
+            { tipo: 'conteudo', texto: os.cabeamento || "-", multiline: true },
+
+            // Seção: INVÓLUCRO
+            { tipo: 'legenda', texto: 'INVÓLUCRO' },
+            { tipo: 'conteudo', texto: os.involucro || "-", multiline: true },
+
+            // Seção: GABINETES
+            { tipo: 'legenda', texto: 'GABINETES' },
+            { tipo: 'conteudo', texto: os.gabinetes || "-", multiline: true },
+
+            // Seção: PLACAS DE CPU E POTÊNCIA
+            { tipo: 'legenda', texto: 'PLACAS DE CPU E POTÊNCIA' },
+            { tipo: 'conteudo', texto: os.placas_cpu_potencia || "-", multiline: true },
+
+            // Seção: GRUPOS FOCAIS
+            { tipo: 'legenda', texto: 'GRUPOS FOCAIS' },
+            { tipo: 'conteudo', texto: os.grupos_focais || "-", multiline: true },
+
+            // Seção: COLUNAS
+            { tipo: 'legenda', texto: 'COLUNAS' },
+            { tipo: 'conteudo', texto: os.colunas || "-", multiline: true },
+
+            // Seção: BRAÇOS
+            { tipo: 'legenda', texto: 'BRAÇOS' },
+            { tipo: 'conteudo', texto: os.bracos || "-", multiline: true },
+
+            // Seção: STATUS (Controladora e Serviço)
+            { tipo: 'legenda', texto: 'STATUS' },
+            { tipo: 'grid', colunas: 4, conteudo: [
+                ['CONTROLADORA - OPERACIONAL', (os.status_controladora === 'Operacional' ? 'X' : '')],
+                ['CONTROLADORA - INOPERANTE', (os.status_controladora === 'Inoperante' ? 'X' : '')],
+                ['SERVIÇO - CONCLUÍDO', (os.status_servico === 'Concluído' ? 'X' : '')],
+                ['SERVIÇO - PENDENTE', (os.status_servico === 'Pendente' ? 'X' : '')]
+            ]},
+
+            // Seção: PENDÊNCIA (mostra apenas se houver)
+            ...(os.pendencia ? [
+                { tipo: 'legenda', texto: 'PENDÊNCIA' },
+                { tipo: 'conteudo', texto: os.pendencia, multiline: true }
+            ] : []),
+
+            // Seção: MATERIAL UTILIZADO
+            { tipo: 'legenda', texto: 'MATERIAL UTILIZADO' },
+            { tipo: 'conteudo', texto: os.material_texto || "-", multiline: true },
+
+            // Seção: OBSERVAÇÃO
+            { tipo: 'legenda', texto: 'OBSERVAÇÃO' },
+            { tipo: 'conteudo', texto: os.observacao || "-", multiline: true },
+
+            // Seção: IDENTIFICAÇÃO (Equipe, Técnico, Supervisor)
+            { tipo: 'legenda', texto: 'IDENTIFICAÇÃO' },
+            { tipo: 'grid', colunas: 3, conteudo: [
+                ['EQUIPE', os.equipe || "-"],
+                ['TÉCNICO RESPONSÁVEL', os.tecnico || "-"],
+                ['SUPERVISOR', (sessao.perfil === 'supervisor' ? sessao.usuario : "-")]
+            ]}
         ];
 
-        if (os.codigos_servico) {
-            linhas.push(["Código do Serviço", os.codigos_servico]);
-        }
+        // --- Renderização Dinâmica das Seções ---
+        let yPos = 34; // Posição Y inicial para as seções
+        const margemEsquerda = 14;
+        const larguraUtil = 182; // 196 - 14
 
-        linhas.push(
-            [{ content: "PREVENTIVA E MEDIÇÕES", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Entrada de Alimentação (CA)", os.tensao_ca || "-"],
-            ["Aterramento", os.aterramento || "-"]
-        );
+        secoesPDF.forEach(secao => {
+            // Verifica quebra de página
+            if (yPos > 270) {
+                doc.addPage();
+                yPos = 20; // Recomeça y na nova página
+            }
 
-        const mod = (os.modelo_controlador || "").toLowerCase();
-        if (mod === "cross") {
-            linhas.push(
-                ["Nobreak", os.nobreak || "-"],
-                ["Fusíveis", os.fusiveis || "-"],
-                ["Saída Fonte CC (7,5V / 12V / 24V)", `7,5V: ${os.tensao_75vcc || "-"} | 12V: ${os.tensao_12vcc || "-"} | 24V: ${os.tensao_24vcc || "-"}`]
-            );
-        } else if (mod === "dataprom") {
-            linhas.push(
-                ["Nobreak", os.nobreak || "-"],
-                ["Fusíveis", os.fusiveis || "-"],
-                ["Saída Fonte CC (+5V / -5V / +12V)", `+5V: ${os.tensao_mais5v || "-"} | -5V: ${os.tensao_menos5v || "-"} | +12V: ${os.tensao_mais12v || "-"}`]
-            );
-        } else if (mod === "tesc") {
-            linhas.push(
-                ["Cabo Flex", os.cabo_flex || "-"],
-                ["Nobreak", os.nobreak || "-"],
-                ["Fusíveis", os.fusiveis || "-"]
-            );
-        }
+            if (secao.tipo === 'legenda') {
+                // Legenda: Fundo verde claro, texto verde escuro, negrito
+                doc.setDrawColor(corVerdeTextoLegenda); // Borda verde escura para legenda
+                doc.setLineWidth(0.4);
+                doc.setFillColor(corVerdeFundoLegenda);
+                doc.rect(margemEsquerda, yPos, larguraUtil, 8, "DF");
 
-        linhas.push(
-            [{ content: "INFRAESTRUTURA E STATUS", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Cabeamento", os.cabeamento || "-"],
-            ["Invólucro", os.involucro || "-"],
-            ["Gabinetes", os.gabinetes || "-"],
-            ["Placas de CPU e Potência", os.placas_cpu_potencia || "-"],
-            ["Grupos Focais", os.grupos_focais || "-"],
-            ["Colunas", os.colunas || "-"],
-            ["Braços", os.bracos || "-"]
-        );
+                doc.setFontSize(10);
+                doc.setTextColor(corVerdeTextoLegenda);
+                doc.setFont("helvetica", "bold");
+                doc.text(secao.texto, margemEsquerda + 2, yPos + 6);
+                yPos += 8;
+            } else if (secao.tipo === 'conteudo') {
+                // Conteúdo: Texto normal, cinza escuro
+                doc.setDrawColor(corCinzaBorda); // Borda cinza claro
+                doc.setLineWidth(0.2);
+                
+                doc.setFontSize(9);
+                doc.setTextColor(corCinzaTextoConteudo);
+                doc.setFont("helvetica", "normal");
 
-        if (os.padronizada) {
-            linhas.push(["Padronizada", os.padronizada]);
-        }
+                if (secao.multiline) {
+                    const textoSplit = doc.splitTextToSize(secao.texto, larguraUtil - 4);
+                    const alturaLinha = textoSplit.length * 5 + 4;
+                    doc.rect(margemEsquerda, yPos, larguraUtil, alturaLinha, "D");
+                    doc.text(textoSplit, margemEsquerda + 2, yPos + 6);
+                    yPos += alturaLinha;
+                } else {
+                    doc.rect(margemEsquerda, yPos, larguraUtil, 8, "D");
+                    doc.text(secao.texto, margemEsquerda + 2, yPos + 6);
+                    yPos += 8;
+                }
+            } else if (secao.tipo === 'grid') {
+                // Grid simples (x colunas): Título negrito, conteúdo normal
+                const larguraColuna = larguraUtil / secao.colunas;
+                doc.setDrawColor(corCinzaBorda);
+                doc.setLineWidth(0.2);
+                doc.setFontSize(9);
+                doc.setTextColor(corCinzaTextoConteudo);
+                doc.setFont("helvetica", "normal");
 
-        linhas.push(
-            ["Status da Controladora", os.status_controladora || "-"],
-            [{ content: "MATERIAIS, OBSERVAÇÃO E RESPONSÁVEIS", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Material Utilizado", os.material_texto || "Nenhum material utilizado"],
-            ["Observações", os.observacao || "-"],
-            ["Equipe", os.equipe || "-"],
-            ["Eletrotécnico Responsável", os.tecnico || "-"]
-        );
+                // Desenha borda externa da linha
+                doc.rect(margemEsquerda, yPos, larguraUtil, 8, "D");
 
-        doc.autoTable({
-            startY: 34,
-            body: linhas,
-            theme: "grid",
-            styles: { fontSize: 9, cellPadding: 3 },
-            columnStyles: { 0: { fontStyle: "bold", cellWidth: 65 } }
+                secao.conteudo.forEach((item, idx) => {
+                    // Desenha borda da coluna
+                    doc.rect(margemEsquerda + idx * larguraColuna, yPos, larguraColuna, 8, "D");
+                    
+                    // Título negrito
+                    doc.setFont("helvetica", "bold");
+                    doc.text(item[0], margemEsquerda + idx * larguraColuna + 2, yPos + 6);
+                    
+                    // Conteúdo normal (ou 'X')
+                    doc.setFont("helvetica", "normal");
+                    const offsetConteudo = doc.getTextWidth(item[0]) + 4;
+                    doc.text(String(item[1]), margemEsquerda + idx * larguraColuna + offsetConteudo, yPos + 6);
+                });
+                yPos += 8;
+            } else if (secao.tipo === 'grid_medições') {
+                // Grid complexo para medições, replica a estrutura da imagem
+                const larguraUtilMedicoes = 178; // Um pouco menor para caber melhor
+                const xOffsetLegenda = 35; // Onde começam os labels negrito
+                const xOffsetConteudo = 75; // Onde começam os valores
+                
+                doc.setDrawColor(corCinzaBorda);
+                doc.setLineWidth(0.2);
+                doc.setFontSize(9);
+                doc.setTextColor(corCinzaTextoConteudo);
+                doc.setFont("helvetica", "normal");
+
+                const medições = [
+                    ['TENSÃO (CA)', 'tensao_ca'],
+                    ['TENSÃO 7,5VCC', 'tensao_75vcc'],
+                    ['TENSÃO 12VCC', 'tensao_12vcc'],
+                    ['TENSÃO 24VCC', 'tensao_24vcc'],
+                    ['TENSÃO +5V', 'tensao_mais5v'],
+                    ['TENSÃO -5V', 'tensao_menos5v'],
+                    ['TENSÃO +12V', 'tensao_mais12v'],
+                    ['CABO FLEX', 'cabo_flex'],
+                    ['ATERRAMENTO', 'aterramento'],
+                    ['FUSÍVEIS', 'fusiveis'],
+                    ['PADRONIZADA', 'padronizada'],
+                    ['NOBREAK', 'nobreak']
+                ];
+
+                // Filtra medições relevantes para o modelo
+                const mediçõesModelo = medições.filter(med => {
+                    const key = med[1];
+                    // Mostra as gerais ou se tem valor específico para o modelo no objeto 'os'
+                    return ['tensao_ca', 'aterramento', 'fusiveis', 'nobreak', 'padronizada'].includes(key) || (os[key] && os[key] !== "-");
+                });
+
+                const numLinhasGrid = Math.ceil(mediçõesModelo.length / 2);
+                for (let i = 0; i < numLinhasGrid; i++) {
+                    // Quebra página se necessário
+                    if (yPos > 270) { doc.addPage(); yPos = 20; }
+                    
+                    // Borda externa da linha
+                    doc.rect(margemEsquerda, yPos, larguraUtil, 8, "D");
+
+                    // Renderiza duas colunas (Esquerda e Direita)
+                    [0, 1].forEach(col => {
+                        const idx = i * 2 + col;
+                        if (idx < mediçõesModelo.length) {
+                            const [label, key] = mediçõesModelo[idx];
+                            const xBase = margemEsquerda + col * (larguraUtil / 2);
+
+                            // Borda da coluna
+                            doc.rect(xBase, yPos, larguraUtil / 2, 8, "D");
+                            
+                            // Valor normal (Técnico)
+                            doc.setFont("helvetica", "normal");
+                            doc.text(String(os[key] || "-"), xBase + 2, yPos + 6);
+                            
+                            // Título negrito (PADRONIZADO)
+                            doc.setFont("helvetica", "bold");
+                            doc.text(label, xBase + 20, yPos + 6);
+                        }
+                    });
+                    yPos += 8;
+                }
+            }
         });
 
         doc.save(`OS_${os.numero_os}.pdf`);
@@ -1421,13 +1596,22 @@
         const doc = new jsPDF();
         const filial = getFilialEstoqueAtiva();
 
-        doc.setFontSize(14);
-        doc.setTextColor(0, 137, 123);
+        doc.setFontSize(11);
+        doc.setTextColor(50, 50, 50);
         doc.setFont("helvetica", "bold");
-        doc.text(`Controle de Estoque — Filial ${filial}`, 14, 18);
+        doc.text("Ecomix Gestão e Planejamento", 60, 14);
+
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Controle de Estoque — Filial: ${filial}`, 60, 20);
+
+        doc.setDrawColor(0, 137, 123);
+        doc.setLineWidth(0.6);
+        doc.line(14, 26, 196, 26);
 
         doc.autoTable({
-            startY: 24,
+            startY: 32,
             head: [["Material", "Última Entrada", "Qtd Comprada", "Qtd Anterior", "Última OS", "Estoque Atual"]],
             body: cacheEstoqueAtual.map(i => [
                 i.material,
@@ -1439,7 +1623,7 @@
             ]),
             theme: "grid",
             headStyles: { fillColor: [0, 137, 123] },
-            styles: { fontSize: 8 }
+            styles: { fontSize: 9 }
         });
 
         doc.save(`Estoque_${filial}.pdf`);
