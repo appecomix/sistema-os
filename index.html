@@ -442,7 +442,7 @@
 
 <script>
     // URL DE WEB APP OFICIAL ATUALIZADA
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbz9inqXnK7GVNdEcPRYREoxMQhUektFgPrRzaKiYFVfK1JOiCnnjdM12gVmqBEK-jKn/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwZkOGzMvWRBcR4kLawEI2RpIFlLBScCDfi5VDfCI5HuBZnuw2gtvPe-4_XgVh_QoQP/exec";
 
     let sessao = {
         usuario: "",
@@ -758,11 +758,9 @@
 
         const getVal = id => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
         
-        // Coletar datas e horas do formulário (vêm em padrão ISO do navegador, yyyy-MM-dd)
         const dtIniISO = getVal("osDataInicial");
         const dtFinISO = getVal("osDataFinal");
         
-        // Converter para Padrão BR para o salvamento na planilha
         const converterISOparaBR = (iso) => {
             if(!iso || !iso.includes("-")) return iso;
             const p = iso.split("-");
@@ -774,7 +772,6 @@
             filial: sessao.filial,
             controladora: getVal("osControladora"),
             tipo_servico: document.querySelector('input[name="tipo_servico"]:checked').value,
-            // Datas convertidas para BR para gravar na planilha
             data_inicial: converterISOparaBR(dtIniISO), 
             hora_inicial: getVal("osHoraInicial"),
             data_final: converterISOparaBR(dtFinISO),
@@ -830,7 +827,6 @@
             <div class="revisao-linha"><b>Modelo Controlador:</b> ${d.modelo_controlador}</div>
             <div class="revisao-linha"><b>Tensão CA:</b> ${d.tensao_ca} | <b>Aterramento:</b> ${d.aterramento}</div>
         `;
-        // Campos dinâmicos CC na revisão
         if (d.modelo_controlador.toLowerCase() === "cross") {
             html += `<div class="revisao-linha"><b>Saída CC:</b> 7,5V: ${d.tensao_75vcc} | 12V: ${d.tensao_12vcc} | 24V: ${d.tensao_24vcc} | <b>Fusíveis:</b> ${d.fusiveis} | <b>Nobreak:</b> ${d.nobreak} | <b>Padronizada:</b> ${d.padronizada}</div>`;
         } else if (d.modelo_controlador.toLowerCase() === "dataprom") {
@@ -888,9 +884,9 @@
     // --- WHATSAPP ---
     function gerarMensagemWhatsApp(d, numOS) {
         let msg = `*Manutenção semafórica*\n\n` +
-                  `*Data Inicial:* ${d.data_inicial}\n` + // String BR já formatada no salvamento/consulta
+                  `*Data Inicial:* ${d.data_inicial}\n` +
                   ` *Horário inicial:* ${d.hora_inicial}\n` +
-                  `*Data final:* ${d.data_final}\n` + // String BR já formatada no salvamento/consulta
+                  `*Data final:* ${d.data_final}\n` + 
                   ` *Horário final:* ${d.hora_final}\n\n` +
                   ` *Controladora:* ${d.controladora}\n\n`;
 
@@ -982,11 +978,11 @@
         }
 
         abrirTela("telaConsultaOS");
-        // Não busca automaticamente, espera o clique no botão Buscar
     });
 
     document.getElementById("btnPesquisarOS").addEventListener("click", executarBuscaOS);
 
+    // CORREÇÃO: Função executarBuscaOS sem a reformatação antiga de data ISO/BR
     function executarBuscaOS() {
         const btn = document.getElementById("btnPesquisarOS");
         btn.disabled = true;
@@ -994,29 +990,31 @@
 
         const filialBusca = (sessao.perfil === "supervisor") ? document.getElementById("consFilial").value : sessao.filial;
         const numOS = document.getElementById("consNumeroOS").value.trim();
-        const dataIni = document.getElementById("consData").value; // Formato yyyy-MM-dd do input date
+        const dataBuscaISO = document.getElementById("consData").value;
         const tecnico = (sessao.perfil === "supervisor") ? document.getElementById("consTecnico").value : sessao.usuario;
         const equipe = document.getElementById("consEquipe").value;
 
-        // Montar URL com filtros
-        const url = `${URL_APPS_SCRIPT}?action=buscarOS&filial=${encodeURIComponent(filialBusca)}&filtroOS=${encodeURIComponent(numOS)}&filtroData=${encodeURIComponent(dataIni)}&filtroTecnico=${encodeURIComponent(tecnico)}&filtroEquipe=${encodeURIComponent(equipe)}`;
+        const url = `${URL_APPS_SCRIPT}?action=buscarOS&filial=${encodeURIComponent(filialBusca)}&filtroOS=${encodeURIComponent(numOS)}&filtroData=${encodeURIComponent(dataBuscaISO)}&filtroTecnico=${encodeURIComponent(tecnico)}&filtroEquipe=${encodeURIComponent(equipe)}`;
 
         fetch(url)
             .then(r => r.json())
             .then(res => {
                 btn.disabled = false;
                 btn.innerText = "🔍 Buscar Ordens de Serviço";
+                
                 if (res.result === "success") {
-                    cacheConsultaOS = res.lista;
+                    cacheConsultaOS = res.lista || [];
                     renderTabelaConsultaOS(cacheConsultaOS);
                 } else {
                     alert("Erro na busca: " + res.error);
+                    renderTabelaConsultaOS([]); 
                 }
             })
             .catch(err => {
                 btn.disabled = false;
                 btn.innerText = "🔍 Buscar Ordens de Serviço";
                 console.error(err);
+                alert("Erro de conexão ao buscar.");
             });
     }
 
@@ -1033,7 +1031,7 @@
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td><b>${os.numero_os}</b></td>
-                <td>${os.data_inicial}</td> <!-- Data já vem BR da planilha -->
+                <td>${os.data_inicial}</td>
                 <td>${os.controladora}</td>
                 <td>${os.tecnico}</td>
                 <td>${os.equipe}</td>
@@ -1070,6 +1068,7 @@
     }
 
     // --- PDF ---
+    // CORREÇÃO: Função gerarPDFOrdemServico com o layout original unificado e limpo
     function gerarPDFOrdemServico(idx) {
         const os = cacheConsultaOS[idx];
         const { jsPDF } = window.jspdf;
@@ -1085,8 +1084,8 @@
         const linhas = [
             [{ content: "IDENTIFICAÇÃO E PERÍODO", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
             ["Controladora", os.controladora || "-"],
-            ["Data / Horário Inicial", `${os.data_inicial} às ${os.hora_inicial}`], // Dados BR direto da planilha
-            ["Data / Horário Final", `${os.data_final} às ${os.hora_final}`], // Dados BR direto da planilha
+            ["Data / Horário Inicial", `${os.data_inicial} às ${os.hora_inicial}`],
+            ["Data / Horário Final", `${os.data_final} às ${os.hora_final}`],
             ["Modelo Controladora", os.modelo_controlador || "-"],
             ["Equipe / Técnico", `EQ: ${os.equipe || "-"} / TEC: ${os.tecnico || "-"}`],
             
@@ -1121,7 +1120,6 @@
         doc.save(`OS_${os.numero_os}.pdf`);
     }
 
-    // --- ESTOQUE E ABAIXO --- (Mantendo o resto do seu código original)
     // --- ESTOQUE E SUB-ABAS ---
     document.getElementById("btnIrEstoque").addEventListener("click", () => {
         const boxFilial = document.getElementById("boxSeletorFilialEstoque");
@@ -1181,7 +1179,6 @@
     document.getElementById("tabBtnEntradaNF").addEventListener("click", () => ativarAbaEstoque("nf"));
     document.getElementById("tabBtnTransferencia").addEventListener("click", () => ativarAbaEstoque("trans"));
 
-    // Auxiliar para formatar datas ISO (yyyy-MM-dd) para BR (dd/mm/aaaa) no estoque
     function formatarDataISOparaBR(iso) {
         if (!iso || iso === "-" || !iso.includes("-")) return iso;
         const p = iso.split("-");
@@ -1219,9 +1216,7 @@
     }
 
     function montarListasMateriaisEstoque() {
-        // Pega nomes dos materiais do cache do estoque
         const lista = cacheEstoqueAtual.map(i => i.material);
-        // Garante que fita isolante e auto fusão estejam na lista para OS (uso geral)
         if (!lista.some(m => m.toLowerCase().includes("fita isolante"))) lista.push("Fita Isolante");
         if (!lista.some(m => m.toLowerCase().includes("auto fus"))) lista.push("Fita de Auto Fusão");
 
@@ -1253,7 +1248,6 @@
         const nfDataISO = document.getElementById("nfData").value;
         if (!nfNum || !nfDataISO) return alert("Preencha o Número da NF e a Data de Entrada.");
         
-        // Converter data para BR para salvar
         const p = nfDataISO.split("-");
         const nfDataBR = `${p[2]}/${p[1]}/${p[0]}`;
 
@@ -1302,7 +1296,6 @@
         if (origem === destino) return alert("A filial de destino deve ser diferente da filial atual.");
         if (!dataPedISO) return alert("Informe a data do pedido.");
 
-        // Converter data para BR para salvar
         const p = dataPedISO.split("-");
         const dataPedBR = `${p[2]}/${p[1]}/${p[0]}`;
 
@@ -1359,7 +1352,6 @@
                     const div = document.createElement("div");
                     div.style.cssText = "border:1px solid #ccc; padding:10px; border-radius:6px; margin-bottom:10px; background:#f9f9f9;";
                     
-                    // Lista de itens formatada com input para edição se pendente
                     let itensHtml = p.itens.map((it, iIdx) => `
                         <div style="display:flex; align-items:center; gap:8px; margin:4px 0;">
                             <span style="flex:1; font-size:13px;">${it.material}</span>
@@ -1385,7 +1377,6 @@
     }
 
     function responderTransferencia(pedido, idx, novoStatus) {
-        // Coleta quantidades atualizadas dos inputs
         const itensAtualizados = pedido.itens.map((it, iIdx) => {
             const inp = document.getElementById(`edit_tr_${idx}_${iIdx}`);
             return {
@@ -1414,7 +1405,7 @@
             if (res.result === "success") {
                 alert(`Pedido ${pedido.id_pedido} atualizado para ${novoStatus}!`);
                 carregarPedidosTransferencia();
-                if (novoStatus === "Confirmado") carregarDadosEstoque(); // Atualiza estoque na tela
+                if (novoStatus === "Confirmado") carregarDadosEstoque();
             } else {
                 alert("Erro ao atualizar: " + res.error);
             }
@@ -1428,7 +1419,6 @@
         const doc = new jsPDF();
         const filial = getFilialEstoqueAtiva();
 
-        // Cabeçalho PDF Estoque
         doc.setFontSize(14);
         doc.setTextColor(0, 105, 92);
         doc.setFont("helvetica", "bold");
@@ -1441,7 +1431,6 @@
         doc.text(`Relatório de Estoque Atual - Filial: ${filial} (Gerado em: ${dataRel})`, 14, 21);
         doc.line(14, 25, 196, 25);
 
-        // Corpo da Tabela
         const corpo = cacheEstoqueAtual.map(i => [
             i.material,
             formatarDataISOparaBR(i.data_ultima_entrada),
@@ -1458,7 +1447,7 @@
             headStyles: { fillColor: [0, 137, 123], textColor: [255, 255, 255], fontStyle: "bold" },
             styles: { fontSize: 9, cellPadding: 2 },
             columnStyles: {
-                0: { cellWidth: 70 }, // Material mais largo
+                0: { cellWidth: 70 },
                 1: { cellWidth: 25 },
                 2: { cellWidth: 15, halign: "center" },
                 3: { cellWidth: 25 },
