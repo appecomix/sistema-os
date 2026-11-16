@@ -442,7 +442,7 @@
 
 <script>
     // URL DE WEB APP OFICIAL ATUALIZADA
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwZkOGzMvWRBcR4kLawEI2RpIFlLBScCDfi5VDfCI5HuBZnuw2gtvPe-4_XgVh_QoQP/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbz9inqXnK7GVNdEcPRYREoxMQhUektFgPrRzaKiYFVfK1JOiCnnjdM12gVmqBEK-jKn/exec";
 
     let sessao = {
         usuario: "",
@@ -758,9 +758,11 @@
 
         const getVal = id => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
         
+        // Coletar datas e horas do formulário (ISO yyyy-MM-dd)
         const dtIniISO = getVal("osDataInicial");
         const dtFinISO = getVal("osDataFinal");
         
+        // Converter ISO para BR (dd/mm/aaaa) para salvar
         const converterISOparaBR = (iso) => {
             if(!iso || !iso.includes("-")) return iso;
             const p = iso.split("-");
@@ -772,6 +774,7 @@
             filial: sessao.filial,
             controladora: getVal("osControladora"),
             tipo_servico: document.querySelector('input[name="tipo_servico"]:checked').value,
+            // Datas convertidas para BR para salvar na planilha
             data_inicial: converterISOparaBR(dtIniISO), 
             hora_inicial: getVal("osHoraInicial"),
             data_final: converterISOparaBR(dtFinISO),
@@ -994,6 +997,7 @@
         const tecnico = (sessao.perfil === "supervisor") ? document.getElementById("consTecnico").value : sessao.usuario;
         const equipe = document.getElementById("consEquipe").value;
 
+        // Montar URL com o filtro de data em formato ISO (yyyy-mm-dd)
         const url = `${URL_APPS_SCRIPT}?action=buscarOS&filial=${encodeURIComponent(filialBusca)}&filtroOS=${encodeURIComponent(numOS)}&filtroData=${encodeURIComponent(dataBuscaISO)}&filtroTecnico=${encodeURIComponent(tecnico)}&filtroEquipe=${encodeURIComponent(equipe)}`;
 
         fetch(url)
@@ -1031,7 +1035,7 @@
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td><b>${os.numero_os}</b></td>
-                <td>${os.data_inicial}</td>
+                <td>${os.data_inicial}</td> <!-- Data já vem BR da planilha -->
                 <td>${os.controladora}</td>
                 <td>${os.tecnico}</td>
                 <td>${os.equipe}</td>
@@ -1169,8 +1173,9 @@
             document.getElementById("subTelaEntradaNF").classList.remove("hidden");
             document.getElementById("tabBtnEntradaNF").classList.replace("btn-secondary", "btn-primary");
         } else if (aba === "trans") {
+            document.getElementById("subTelaEstoqueAtual").classList.remove("hidden");
+            document.getElementById("subTelaEntradaNF").classList.remove("hidden");
             document.getElementById("subTelaTransferencia").classList.remove("hidden");
-            document.getElementById("tabBtnTransferencia").classList.replace("btn-secondary", "btn-primary");
             carregarPedidosTransferencia();
         }
     }
