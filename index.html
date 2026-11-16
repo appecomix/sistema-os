@@ -9,8 +9,452 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root { 
-            --bg: #e0f2f1; /* Verde muito claro */
-            --brand-green: #00897b; /* Verde Ecomix */
+            --bg: #e0f2f1;
+            --brand-green: #00897b;
+            --brand-green-hover: #00695c;
+            --whatsapp: #25d366;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --warning: #ff9800;
+            --primary: #007bff;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 10px; color: #333; }
+        .container { width: 100%; max-width: 920px; background: white; margin: 0 auto; padding: 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .box-central { width: 100%; max-width: 440px; margin: 25px auto; background: white; padding: 24px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12); text-align: center; border-top: 5px solid var(--brand-green); }
+        .hidden { display: none !important; }
+        
+        h2 { color: #222; border-bottom: 2px solid var(--brand-green); padding-bottom: 8px; margin-top: 0; font-size: 20px; }
+        fieldset { border: 1px solid #ddd; border-radius: 6px; padding: 14px; margin-bottom: 16px; width: 100%; }
+        legend { font-weight: bold; color: var(--brand-green); padding: 0 6px; font-size: 14px; }
+        
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #444; text-align: left; }
+        input[type="text"], input[type="password"], input[type="date"], input[type="time"], input[type="number"], textarea, select {
+            width: 100%; padding: 9px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; font-family: inherit;
+        }
+        textarea.expansivel { min-height: 38px; resize: vertical; }
+        textarea.infinito { min-height: 110px; resize: vertical; }
+
+        .radio-group { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
+        .radio-group label { margin: 0; font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .radio-group input[type="radio"] { width: auto; margin: 0; }
+
+        button, .btn-link {
+            background-color: var(--brand-green); color: white; border: none; padding: 12px; width: 100%;
+            border-radius: 5px; font-size: 15px; cursor: pointer; font-weight: bold; margin-top: 8px;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
+        }
+        button:hover, .btn-link:hover { background-color: var(--brand-green-hover); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .btn-menu { height: 52px; font-size: 16px; margin-bottom: 10px; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-secondary:hover { background-color: #5a6268; }
+        .btn-whats { background-color: var(--whatsapp); }
+        .btn-whats:hover { background-color: #1ebd59; }
+        .btn-pdf { background-color: var(--danger); }
+        .btn-pdf:hover { background-color: #c82333; }
+        .btn-primary { background-color: var(--primary); }
+        .btn-primary:hover { background-color: #0069d9; }
+        .btn-warning { background-color: var(--warning); }
+        .btn-warning:hover { background-color: #e68a00; }
+        .btn-info { background-color: var(--info); }
+        .btn-info:hover { background-color: #138496; }
+
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; background: #f8f9fa; padding: 7px; border-radius: 4px; border: 1px solid #e2e6ea; }
+        .checkbox-item input[type="checkbox"] { width: auto; margin: 0; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: var(--brand-green); color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+
+        .revisao-box { background: #f8f9fa; border: 1px solid #ced4da; border-radius: 6px; padding: 15px; line-height: 1.6; font-size: 14px; }
+        .revisao-linha { border-bottom: 1px solid #e9ecef; padding: 6px 0; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 10px; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .sub-tabs button { width: auto; flex: 1; margin: 0; padding: 10px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<!-- TELA DE LOGIN COM SELEÇÃO DE FILIAL -->
+<div id="telaLogin" class="box-central">
+    <img id="logoPrincipal" src="https://lh3.googleusercontent.com/d/1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Ecomix Logo" style="max-width: 260px; width: 100%; height: auto; display: block; margin: 0 auto 15px auto;" crossorigin="anonymous">
+    <h2>Acesso ao Sistema</h2>
+    <form id="formLogin">
+        <label for="loginFilial">Selecione a Filial:</label>
+        <select id="loginFilial" required>
+            <option value="">Escolha a filial...</option>
+            <option value="Niterói">Niterói</option>
+            <option value="Rio das Ostras">Rio das Ostras</option>
+            <option value="Arraial do Cabo">Arraial do Cabo</option>
+        </select>
+
+        <label for="loginUsuario">Usuário:</label>
+        <input type="text" id="loginUsuario" placeholder="Digite seu nome de usuário" required>
+
+        <label for="loginSenha">Senha:</label>
+        <input type="password" id="loginSenha" placeholder="Digite sua senha" required>
+
+        <button type="submit" id="btnEntrar">Entrar</button>
+    </form>
+    <div id="msgLogin" style="margin-top: 12px; font-weight: bold; color: var(--danger);"></div>
+</div>
+
+<!-- MENU PRINCIPAL APÓS LOGIN -->
+<div id="telaMenu" class="box-central hidden">
+    <img src="https://lh3.googleusercontent.com/d/1rgyO7scYxCYGqe5NM4cmOjkn1AZt6wMH" alt="Ecomix Logo" style="max-width: 250px; width: 100%; height: auto; display: block; margin: 0 auto 6px auto;">
+    <div id="tituloFilialMenu" style="font-size: 16px; font-weight: bold; color: var(--brand-green); margin-bottom: 4px;"></div>
+    <div id="infoUsuarioMenu" style="font-size: 12px; color: #666; margin-bottom: 18px;"></div>
+
+    <button type="button" id="btnIrNovaOS" class="btn-menu">1 - Nova Ordem de Serviço</button>
+    <button type="button" id="btnIrConsultaOS" class="btn-menu btn-primary">2 - Consulta Ordem de Serviço</button>
+    <a id="btnIrMapa" href="#" target="_blank" class="btn-link btn-menu btn-info">3 - Mapa das Controladoras</a>
+    <button type="button" id="btnIrEstoque" class="btn-menu btn-warning">4 - Controle de Estoque</button>
+
+    <button type="button" id="btnSair" class="btn-secondary" style="margin-top: 15px; font-size: 13px; padding: 8px;">Sair / Trocar Filial</button>
+</div>
+
+<!-- TELA NOVA ORDEM DE SERVIÇO -->
+<div id="telaNovaOS" class="container hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h2>Nova Ordem de Serviço — <span id="spanFilialOS" style="color: var(--brand-green);"></span></h2>
+        <button type="button" class="btnVoltarMenu btn-secondary" style="width: auto; padding: 7px 14px; font-size: 13px; margin: 0;">Voltar ao Menu</button>
+    </div>
+
+    <form id="formOS">
+        <fieldset>
+            <legend>Identificação do Serviço</legend>
+            <label for="osControladora">Controladora:</label>
+            <input type="text" id="osControladora" list="datalistControladoras" placeholder="Clique para selecionar ou digite para buscar..." required autocomplete="off">
+            <datalist id="datalistControladoras"></datalist>
+
+            <label style="margin-top: 8px;">Tipo de Serviço:</label>
+            <div class="radio-group">
+                <label><input type="radio" name="tipo_servico" value="Corretivo" required> Corretivo</label>
+                <label><input type="radio" name="tipo_servico" value="Preventivo"> Preventivo</label>
+                <label><input type="radio" name="tipo_servico" value="Implantação"> Implantação</label>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Período da Atividade</legend>
+            <div class="grid-4">
+                <div><label for="osDataInicial">Data Inicial:</label><input type="date" id="osDataInicial" required></div>
+                <div><label for="osHoraInicial">Hora Inicial:</label><input type="time" id="osHoraInicial" required></div>
+                <div><label for="osDataFinal">Data Final:</label><input type="date" id="osDataFinal" required></div>
+                <div><label for="osHoraFinal">Hora Final:</label><input type="time" id="osHoraFinal" required></div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Detalhamento Técnico</legend>
+            <div id="blocoCodigosNiteroi" class="hidden" style="margin-bottom: 12px;">
+                <label>Código do Serviço (Selecione um ou mais):</label>
+                <div id="listaCodigosContainer" style="max-height: 170px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #fafafa;">
+                    Carregando códigos...
+                </div>
+            </div>
+
+            <label for="osDescricaoBreve">Descrição do Serviço (Breve resumo em linha única):</label>
+            <input type="text" id="osDescricaoBreve" placeholder="Ex: Troca de lâmpadas LED e ajuste de fases" required>
+        </fieldset>
+
+        <fieldset>
+            <legend>Tipo da Controladora e Manutenção Preventiva</legend>
+            <label for="osModeloControlador">Modelo da Controladora:</label>
+            <select id="osModeloControlador" required>
+                <option value="">Selecione o modelo...</option>
+            </select>
+
+            <div id="camposDinamicosModelo" class="grid-3" style="margin-top: 10px;"></div>
+
+            <div style="margin-top: 12px; border-top: 1px dashed #ccc; padding-top: 12px;">
+                <label style="color: var(--brand-green); margin-bottom: 8px;">Condições Gerais do Circuito e Componentes:</label>
+                <div class="grid-3">
+                    <div><label for="osCabeamento">Cabeamento:</label><textarea id="osCabeamento" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osInvolucro">Invólucro:</label><textarea id="osInvolucro" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osGabinetes">Gabinetes:</label><textarea id="osGabinetes" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osPlacas">Placas de CPU e Potência:</label><textarea id="osPlacas" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osGruposFocais">Grupos Focais:</label><textarea id="osGruposFocais" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osColunas">Colunas:</label><textarea id="osColunas" class="expansivel" rows="1" required></textarea></div>
+                    <div><label for="osBracos">Braços:</label><textarea id="osBracos" class="expansivel" rows="1" required></textarea></div>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Status Pós-Intervenção</legend>
+            <div class="grid-2">
+                <div>
+                    <label>Status da Controladora:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="status_controladora" value="Operacional" required> Operacional</label>
+                        <label><input type="radio" name="status_controladora" value="Inoperante"> Inoperante</label>
+                    </div>
+                </div>
+                <div>
+                    <label>Status do Serviço:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="status_servico" value="Concluído" required> Concluído</label>
+                        <label><input type="radio" name="status_servico" value="Pendente"> Pendente</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="blocoPendencia" class="hidden" style="margin-top: 8px;">
+                <label for="osPendencia">Explicação da Pendência:</label>
+                <textarea id="osPendencia" class="expansivel" rows="2" placeholder="Descreva o motivo da pendência..."></textarea>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Material Utilizado</legend>
+            <label>Utilizou materiais?</label>
+            <div class="radio-group">
+                <label><input type="radio" name="utilizou_material" value="Não" checked required> Não</label>
+                <label><input type="radio" name="utilizou_material" value="Sim"> Sim</label>
+            </div>
+
+            <div id="blocoListaMateriais" class="hidden" style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa;">
+                <label style="color: var(--brand-green); margin-bottom: 8px;">Selecione os materiais utilizados:</label>
+                <div id="gridMateriaisOS" class="checkbox-grid">Carregando almoxarifado...</div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Observações, Segurança e Identificação</legend>
+            <label for="osObservacao">Observação (Descrição completa e detalhada do serviço):</label>
+            <textarea id="osObservacao" class="infinito" placeholder="Descreva todos os detalhes do serviço executado..." required></textarea>
+
+            <label style="margin-top: 8px;">Houve Trabalho em Altura?</label>
+            <div class="radio-group">
+                <label><input type="radio" name="trabalho_altura" value="Não" checked required> Não</label>
+                <label><input type="radio" name="trabalho_altura" value="Sim"> Sim</label>
+            </div>
+
+            <div id="blocoTrabalhadores" class="hidden" style="margin-bottom: 10px;">
+                <label for="osTrabalhadores">Trabalhadores Envolvidos:</label>
+                <input type="text" id="osTrabalhadores" placeholder="Digite os nomes dos colaboradores envolvidos...">
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <label for="osEquipe">Equipe:</label>
+                    <select id="osEquipe" required>
+                        <option value="">Selecione a equipe...</option>
+                        <option value="01">01</option>
+                        <option value="02">02</option>
+                        <option value="03">03</option>
+                        <option value="04">04</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="osTecnico">Técnico Responsável:</label>
+                    <input type="text" id="osTecnico" readonly style="background: #e9ecef;" required>
+                </div>
+            </div>
+        </fieldset>
+
+        <button type="submit" id="btnRevisarOS">Revisar Dados para Envio</button>
+    </form>
+</div>
+
+<!-- TELA DE REVISÃO E CONFIRMAÇÃO DE ENVIO -->
+<div id="telaRevisaoOS" class="container hidden">
+    <h2>Revisão da Ordem de Serviço</h2>
+    <p style="font-size: 13px; color: #555;">Confira todos os dados abaixo antes de gravar na planilha:</p>
+    
+    <div id="conteudoRevisao" class="revisao-box"></div>
+
+    <div id="botoesAntesEnvio" class="grid-2" style="margin-top: 15px;">
+        <button type="button" id="btnCorrigirOS" class="btn-secondary">✏️ Corrigir</button>
+        <button type="button" id="btnConfirmarEnvioOS">✅ Confirmar e Enviar para Planilha</button>
+    </div>
+
+    <div id="boxPosEnvio" class="hidden" style="margin-top: 18px; text-align: center; padding: 15px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 6px;">
+        <div id="msgSucessoOS" style="font-size: 17px; font-weight: bold; color: #2e7d32; margin-bottom: 12px;"></div>
+        <button type="button" id="btnEnviarWhatsAppOS" class="btn-whats">📲 Enviar Mensagem no WhatsApp</button>
+        <button type="button" class="btnVoltarMenu btn-secondary" style="margin-top: 10px;">Voltar ao Menu Principal</button>
+    </div>
+</div>
+
+<!-- TELA CONSULTA ORDEM DE SERVIÇO -->
+<div id="telaConsultaOS" class="container hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h2>Consulta de Ordem de Serviço</h2>
+        <button type="button" class="btnVoltarMenu btn-secondary" style="width: auto; padding: 7px 14px; font-size: 13px; margin: 0;">Voltar ao Menu</button>
+    </div>
+
+    <fieldset>
+        <legend>Filtros de Busca</legend>
+        <div class="grid-4">
+            <div id="boxFiltroFilialConsulta" class="hidden">
+                <label for="consFilial">Filial:</label>
+                <select id="consFilial"></select>
+            </div>
+            <div>
+                <label for="consNumeroOS">Número da O.S:</label>
+                <input type="text" id="consNumeroOS" placeholder="Ex: 2782">
+            </div>
+            <div>
+                <label for="consData">Data Inicial (Opcional):</label>
+                <input type="date" id="consData">
+            </div>
+            <div id="boxFiltroTecnicoConsulta" class="hidden">
+                <label for="consTecnico">Técnico:</label>
+                <select id="consTecnico"><option value="">Todos</option></select>
+            </div>
+            <div>
+                <label for="consEquipe">Equipe:</label>
+                <select id="consEquipe">
+                    <option value="">Todas</option>
+                    <option value="01">01</option>
+                    <option value="02">02</option>
+                    <option value="03">03</option>
+                    <option value="04">04</option>
+                </select>
+            </div>
+        </div>
+        <button type="button" id="btnPesquisarOS" class="btn-primary">🔍 Buscar Ordens de Serviço</button>
+    </fieldset>
+
+    <div style="overflow-x: auto;">
+        <table id="tabelaConsultaOS">
+            <thead>
+                <tr>
+                    <th>O.S</th>
+                    <th>Data</th>
+                    <th>Controladora</th>
+                    <th>Técnico</th>
+                    <th>Equipe</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="7" style="text-align: center;">Clique em Buscar para carregar...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL DE VISUALIZAÇÃO DA O.S. -->
+<div id="modalVisualizarOS" class="modal hidden">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0;">Detalhes da O.S #<span id="modalNumOS"></span></h2>
+            <button type="button" id="btnFecharModalOS" class="btn-secondary" style="width: auto; padding: 6px 12px; margin: 0;">Fechar</button>
+        </div>
+        <div id="corpoModalOS" class="revisao-box" style="margin-top: 12px;"></div>
+        <div class="grid-2" style="margin-top: 12px;">
+            <button type="button" id="btnModalWhatsApp" class="btn-whats">📲 Exportar WhatsApp</button>
+            <button type="button" id="btnModalPDF" class="btn-pdf">📄 Exportar PDF</button>
+        </div>
+    </div>
+</div>
+
+<!-- TELA CONTROLE DE ESTOQUE -->
+<div id="telaEstoque" class="container hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h2>Controle de Estoque</h2>
+        <button type="button" class="btnVoltarMenu btn-secondary" style="width: auto; padding: 7px 14px; font-size: 13px; margin: 0;">Voltar ao Menu</button>
+    </div>
+
+    <div id="boxSeletorFilialEstoque" class="hidden" style="margin-bottom: 12px;">
+        <label for="estFilialSelect">Filial Selecionada:</label>
+        <select id="estFilialSelect"></select>
+    </div>
+
+    <div class="sub-tabs">
+        <button type="button" id="tabBtnEstoqueAtual" class="btn-primary">1 - Estoque Atual</button>
+        <button type="button" id="tabBtnEntradaNF" class="btn-secondary hidden">2 - Entrada de Nota Fiscal</button>
+        <button type="button" id="tabBtnTransferencia" class="btn-secondary hidden">3 - Pedido de Transferência</button>
+    </div>
+
+    <div id="subTelaEstoqueAtual">
+        <button type="button" id="btnExportarPDFEstoque" class="btn-pdf" style="width: auto; padding: 9px 16px; margin-bottom: 10px;">📄 Exportar Estoque em PDF</button>
+        <div style="overflow-x: auto;">
+            <table id="tabelaEstoque">
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Última Entrada</th>
+                        <th>Qtd Comprada</th>
+                        <th>Qtd Anterior</th>
+                        <th>Última Utilização (OS)</th>
+                        <th>Estoque Atual</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="subTelaEntradaNF" class="hidden">
+        <fieldset>
+            <legend>Cadastrar Entrada de Nota Fiscal</legend>
+            <div class="grid-2">
+                <div><label for="nfNumero">Número da Nota Fiscal:</label><input type="text" id="nfNumero" required></div>
+                <div><label for="nfData">Data de Entrada:</label><input type="date" id="nfData" required></div>
+            </div>
+            <label style="color: var(--brand-green); margin-top: 8px;">Selecione os Materiais e Quantidades Compradas:</label>
+            <div id="gridMateriaisNF" class="checkbox-grid" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;"></div>
+            <button type="button" id="btnRegistrarNF" style="margin-top: 12px;">✅ Registrar Entrada de NF</button>
+        </fieldset>
+    </div>
+
+    <div id="subTelaTransferencia" class="hidden">
+        <fieldset>
+            <legend>Novo Pedido de Transferência entre Filiais</legend>
+            <div class="grid-2">
+                <div>
+                    <label for="transDestino">Solicitar para / Enviar para Filial:</label>
+                    <select id="transDestino">
+                        <option value="Niterói">Niterói</option>
+                        <option value="Rio das Ostras">Rio das Ostras</option>
+                        <option value="Arraial do Cabo">Arraial do Cabo</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="transData">Data do Pedido:</label>
+                    <input type="date" id="transData">
+                </div>
+            </div>
+            <label style="color: var(--brand-green); margin-top: 8px;">Selecione os Materiais e Quantidades:</label>
+            <div id="gridMateriaisTrans" class="checkbox-grid" style="max-height: 240px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;"></div>
+            <button type="button" id="btnEnviarPedidoTrans" class="btn-warning" style="margin-top: 12px;">🔄 Enviar Pedido de Transferência</button>
+        </fieldset>
+
+        <fieldset>
+            <legend>Pedidos de Transferência da Filial (Editar / Confirmar / Cancelar)</legend>
+            <div id="listaPedidosTrans">Carregando pedidos...</div>
+        </fieldset>
+    </div>
+</div>
+
+<script>
+    // URL DE WEB APP OFICIAL ATUALIZADA
+    const URL_APPS_SCRIPT = "<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordem de Serviço - Ecomix</title>
+    <!-- Bibliotecas para PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root { 
+            --bg: #e0f2f1;
+            --brand-green: #00897b;
             --brand-green-hover: #00695c;
             --whatsapp: #25d366;
             --danger: #dc3545;
@@ -661,7 +1105,6 @@
         });
     });
 
-    // Lógica de exibir pendência e materiais
     document.querySelectorAll('input[name="status_servico"]').forEach(r => {
         r.addEventListener("change", function() {
             const bloco = document.getElementById("blocoPendencia");
@@ -758,24 +1201,21 @@
 
         const getVal = id => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
         
-        // Coletar datas e horas do formulário (ISO yyyy-MM-dd)
         const dtIniISO = getVal("osDataInicial");
         const dtFinISO = getVal("osDataFinal");
         
-        // Converter ISO para BR (dd/mm/aaaa) para salvar
         const converterISOparaBR = (iso) => {
-            if(!iso || !iso.includes("-")) return iso;
+            if (!iso || !iso.includes("-")) return iso;
             const p = iso.split("-");
             return `${p[2]}/${p[1]}/${p[0]}`;
-        }
+        };
 
         osEmRevisao = {
             action: "salvarOS",
             filial: sessao.filial,
             controladora: getVal("osControladora"),
             tipo_servico: document.querySelector('input[name="tipo_servico"]:checked').value,
-            // Datas convertidas para BR para salvar na planilha
-            data_inicial: converterISOparaBR(dtIniISO), 
+            data_inicial: converterISOparaBR(dtIniISO),
             hora_inicial: getVal("osHoraInicial"),
             data_final: converterISOparaBR(dtFinISO),
             hora_final: getVal("osHoraFinal"),
@@ -985,7 +1425,6 @@
 
     document.getElementById("btnPesquisarOS").addEventListener("click", executarBuscaOS);
 
-    // CORREÇÃO: Função executarBuscaOS sem a reformatação antiga de data ISO/BR
     function executarBuscaOS() {
         const btn = document.getElementById("btnPesquisarOS");
         btn.disabled = true;
@@ -997,7 +1436,6 @@
         const tecnico = (sessao.perfil === "supervisor") ? document.getElementById("consTecnico").value : sessao.usuario;
         const equipe = document.getElementById("consEquipe").value;
 
-        // Montar URL com o filtro de data em formato ISO (yyyy-mm-dd)
         const url = `${URL_APPS_SCRIPT}?action=buscarOS&filial=${encodeURIComponent(filialBusca)}&filtroOS=${encodeURIComponent(numOS)}&filtroData=${encodeURIComponent(dataBuscaISO)}&filtroTecnico=${encodeURIComponent(tecnico)}&filtroEquipe=${encodeURIComponent(equipe)}`;
 
         fetch(url)
@@ -1035,7 +1473,7 @@
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td><b>${os.numero_os}</b></td>
-                <td>${os.data_inicial}</td> <!-- Data já vem BR da planilha -->
+                <td>${os.data_inicial}</td>
                 <td>${os.controladora}</td>
                 <td>${os.tecnico}</td>
                 <td>${os.equipe}</td>
@@ -1071,54 +1509,221 @@
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, "_blank");
     }
 
-    // --- PDF ---
-    // CORREÇÃO: Função gerarPDFOrdemServico com o layout original unificado e limpo
+    // --- PDF DA ORDEM DE SERVIÇO (LAYOUT EXATO DA IMAGEM) ---
     function gerarPDFOrdemServico(idx) {
         const os = cacheConsultaOS[idx];
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        const doc = new jsPDF("p", "mm", "a4");
 
-        const imgLogo = document.getElementById("logoPrincipal");
-        doc.addImage(imgLogo, "PNG", 14, 10, 30, 10);
-        doc.setFontSize(10);
-        doc.text("Ecomix Gestão e Planejamento", 50, 14);
-        doc.text(`Ordem de Serviço Nº ${os.numero_os}`, 50, 19);
-        doc.line(14, 25, 196, 25);
+        const fillHeader = [217, 217, 217];
+        const textDark = [20, 20, 20];
+        const borderDark = [60, 60, 60];
 
-        const linhas = [
-            [{ content: "IDENTIFICAÇÃO E PERÍODO", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Controladora", os.controladora || "-"],
-            ["Data / Horário Inicial", `${os.data_inicial} às ${os.hora_inicial}`],
-            ["Data / Horário Final", `${os.data_final} às ${os.hora_final}`],
-            ["Modelo Controladora", os.modelo_controlador || "-"],
-            ["Equipe / Técnico", `EQ: ${os.equipe || "-"} / TEC: ${os.tecnico || "-"}`],
-            
-            [{ content: "DETALHAMENTO TÉCNICO E MANUTENÇÃO", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Tipo / Código", `${os.tipo_servico || "-"} / CÓD: ${os.codigos_servico || "-"}`],
-            ["Descrição Resumida", os.descricao_servico || "-"],
-            ["Medições Preventiva", `CA: ${os.tensao_ca || "-"}V / Aterramento: ${os.aterramento || "-"} ohms`],
-            ["Componentes", `Cabeamento: ${os.cabeamento || "-"} / Gabinetes: ${os.gabinetes || "-"} / Placas: ${os.placas_cpu_potencia || "-"}`],
-            ["Sinalização/Colunas", `Grupos Focais: ${os.grupos_focais || "-"} / Colunas: ${os.colunas || "-"} / Braços: ${os.bracos || "-"}`],
-            ["Observação Completa", { content: os.observacao || "-", styles: { cellPadding: 3 } }],
-            
-            [{ content: "FECHAMENTO E MATERIAIS", colSpan: 2, styles: { fillColor: [224, 242, 241], textColor: [0, 105, 92], fontStyle: "bold" } }],
-            ["Status Final Controladora", os.status_controladora || "-"],
-            ["Status do Serviço", os.status_servico || "-"],
-            ["Pendência Registrada", os.pendencia || "-"],
-            ["Material Utilizado", { content: os.material_texto || "Nenhum material utilizado", styles: { cellPadding: 3, fontStyle: "italic" } }],
-            ["Segurança", `Trabalho em Altura: ${os.trabalho_altura || "Não"} / Equipe: ${os.trabalhadores_altura || "-"}`]
+        const tipoNorm = (os.tipo_servico || "").toLowerCase();
+        const isCorretivo = tipoNorm.includes("corretivo") ? "X" : "";
+        const isPreventivo = tipoNorm.includes("preventivo") ? "X" : "";
+        const isImplantacao = (tipoNorm.includes("implantação") || tipoNorm.includes("implantacao")) ? "X" : "";
+
+        const statusCtrlNorm = (os.status_controladora || "").toLowerCase();
+        const isOperacional = statusCtrlNorm.includes("operacional") ? "X" : "";
+        const isInoperante = statusCtrlNorm.includes("inoperante") ? "X" : "";
+
+        const statusServNorm = (os.status_servico || "").toLowerCase();
+        const isConcluido = (statusServNorm.includes("concluído") || statusServNorm.includes("concluido")) ? "X" : "";
+        const isPendente = statusServNorm.includes("pendente") ? "X" : "";
+
+        const modNorm = (os.modelo_controlador || "").toLowerCase();
+        let lblCC1 = "TENSÃO 7,5VCC", valCC1 = os.tensao_75vcc || "";
+        let lblCC2 = "TENSÃO 12VCC", valCC2 = os.tensao_12vcc || "";
+        let lblCC3 = "TENSÃO 24VCC", valCC3 = os.tensao_24vcc || "";
+
+        if (modNorm === "dataprom") {
+            lblCC1 = "TENSÃO +5V"; valCC1 = os.tensao_mais5v || "";
+            lblCC2 = "TENSÃO -5V"; valCC2 = os.tensao_menos5v || "";
+            lblCC3 = "TENSÃO +12V"; valCC3 = os.tensao_mais12v || "";
+        } else if (modNorm === "tesc") {
+            lblCC1 = "CABO FLEX"; valCC1 = os.cabo_flex || "";
+            lblCC2 = ""; valCC2 = "";
+            lblCC3 = ""; valCC3 = "";
+        }
+
+        const cellTitle = (txt) => ({
+            content: txt,
+            colSpan: 12,
+            styles: { fillColor: fillHeader, textColor: textDark, fontStyle: "bold", halign: "center", cellPadding: 1.3 }
+        });
+
+        const body = [
+            // Cabeçalho Superior
+            [
+                { content: "", colSpan: 3, styles: { minCellHeight: 11 } },
+                { content: "ORDEM DE SERVIÇO", colSpan: 6, styles: { fontSize: 12, fontStyle: "bold", halign: "center", valign: "middle" } },
+                { content: "Nº SM", colSpan: 2, styles: { fillColor: fillHeader, fontStyle: "bold", halign: "center", valign: "middle" } },
+                { content: String(os.numero_os || ""), colSpan: 1, styles: { fontStyle: "bold", halign: "center", valign: "middle" } }
+            ],
+            // CONTROLADORA
+            [cellTitle("CONTROLADORA")],
+            [{ content: os.controladora || "", colSpan: 12, styles: { cellPadding: 1.8 } }],
+
+            // TIPO DO SERVIÇO
+            [cellTitle("TIPO DO SERVIÇO")],
+            [
+                { content: "CORRETIVO", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isCorretivo, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } },
+                { content: "PREVENTIVO", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isPreventivo, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } },
+                { content: "IMPLANTAÇÃO", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isImplantacao, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } }
+            ],
+
+            // PERÍODO DA ATIVIDADE
+            [cellTitle("PERÍODO DA ATIVIDADE")],
+            [
+                { content: "INÍCIO", colSpan: 5, styles: { fontStyle: "bold", halign: "center" } },
+                { content: "", colSpan: 1 },
+                { content: "TÉRMINO", colSpan: 6, styles: { fontStyle: "bold", halign: "center" } }
+            ],
+            [
+                { content: "DATA", colSpan: 1, styles: { fontStyle: "bold", halign: "right" } },
+                { content: os.data_inicial || "", colSpan: 2, styles: { halign: "center" } },
+                { content: "HORA", colSpan: 1, styles: { fontStyle: "bold", halign: "right" } },
+                { content: os.hora_inicial || "", colSpan: 1, styles: { halign: "center" } },
+                { content: "", colSpan: 1 },
+                { content: "DATA", colSpan: 2, styles: { fontStyle: "bold", halign: "right" } },
+                { content: os.data_final || "", colSpan: 2, styles: { halign: "center" } },
+                { content: "HORA", colSpan: 1, styles: { fontStyle: "bold", halign: "right" } },
+                { content: os.hora_final || "", colSpan: 1, styles: { halign: "center" } }
+            ],
+
+            // CÓDIGO DO SERVIÇO
+            [
+                { content: "CÓDIGO DO SERVIÇO", colSpan: 3, styles: { fillColor: fillHeader, fontStyle: "bold", halign: "center" } },
+                { content: os.codigos_servico || "", colSpan: 9, styles: { halign: "left" } }
+            ],
+
+            // DESCRIÇÃO DO SERVIÇO REALIZADO
+            [cellTitle("DESCRIÇÃO DO SERVIÇO REALIZADO")],
+            [{ content: os.descricao_servico || "", colSpan: 12, styles: { cellPadding: 2, minCellHeight: 11 } }],
+
+            // MANUTENÇÃO PREVENTIVA
+            [cellTitle("MANUTENÇÃO PREVENTIVA")],
+            [
+                { content: os.tensao_ca || "", colSpan: 2, styles: { halign: "left" } },
+                { content: "TENSÃO (CA)", colSpan: 3, styles: { fontStyle: "bold" } },
+                { content: "", colSpan: 1 },
+                { content: os.aterramento || "", colSpan: 2, styles: { halign: "left" } },
+                { content: "ATERRAMENTO", colSpan: 4, styles: { fontStyle: "bold" } }
+            ],
+            [
+                { content: valCC1, colSpan: 2, styles: { halign: "left" } },
+                { content: lblCC1, colSpan: 3, styles: { fontStyle: "bold" } },
+                { content: "", colSpan: 1 },
+                { content: os.fusiveis || "", colSpan: 2, styles: { halign: "left" } },
+                { content: "FUSÍVEIS", colSpan: 4, styles: { fontStyle: "bold" } }
+            ],
+            [
+                { content: valCC2, colSpan: 2, styles: { halign: "left" } },
+                { content: lblCC2, colSpan: 3, styles: { fontStyle: "bold" } },
+                { content: "", colSpan: 1 },
+                { content: os.padronizada || "", colSpan: 2, styles: { halign: "left" } },
+                { content: "PADRONIZADA", colSpan: 4, styles: { fontStyle: "bold" } }
+            ],
+            [
+                { content: valCC3, colSpan: 2, styles: { halign: "left" } },
+                { content: lblCC3, colSpan: 3, styles: { fontStyle: "bold" } },
+                { content: "", colSpan: 1 },
+                { content: os.nobreak || "", colSpan: 2, styles: { halign: "left" } },
+                { content: "NOBREAK", colSpan: 4, styles: { fontStyle: "bold" } }
+            ],
+
+            // COMPONENTES EM LINHA
+            [cellTitle("CABEAMENTO")],
+            [{ content: os.cabeamento || "", colSpan: 12 }],
+
+            [cellTitle("INVÓLUCRO")],
+            [{ content: os.involucro || "", colSpan: 12 }],
+
+            [cellTitle("GABINETES")],
+            [{ content: os.gabinetes || "", colSpan: 12 }],
+
+            [cellTitle("PLACAS DE CPU E POTÊNCIA")],
+            [{ content: os.placas_cpu_potencia || "", colSpan: 12 }],
+
+            [cellTitle("GRUPOS FOCAIS")],
+            [{ content: os.grupos_focais || "", colSpan: 12 }],
+
+            [cellTitle("COLUNAS")],
+            [{ content: os.colunas || "", colSpan: 12 }],
+
+            [cellTitle("BRAÇOS")],
+            [{ content: os.bracos || "", colSpan: 12 }],
+
+            // STATUS DA CONTROLADORA E SERVIÇO
+            [
+                { content: "STATUS DA CONTROLADORA", colSpan: 4, styles: { fontStyle: "bold" } },
+                { content: "OPERACIONAL", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isOperacional, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } },
+                { content: "INOPERANTE", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isInoperante, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } }
+            ],
+            [
+                { content: "STATUS DO SERVIÇO", colSpan: 4, styles: { fontStyle: "bold" } },
+                { content: "CONCLUÍDO", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isConcluido, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } },
+                { content: "PENDENTE", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isPendente, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } }
+            ],
+
+            // PENDÊNCIA
+            [cellTitle("PENDÊNCIA")],
+            [{ content: os.pendencia || "", colSpan: 12, styles: { minCellHeight: 7 } }],
+
+            // MATERIAL UTILIZADO
+            [cellTitle("MATERIAL UTILIZADO")],
+            [{ content: os.material_texto || "Nenhum material utilizado", colSpan: 12, styles: { minCellHeight: 7 } }],
+
+            // OBSERVAÇÃO
+            [cellTitle("OBSERVAÇÃO")],
+            [{ content: os.observacao || "", colSpan: 12, styles: { cellPadding: 2, minCellHeight: 12 } }],
+
+            // IDENTIFICAÇÃO
+            [cellTitle("IDENTIFICAÇÃO")],
+            [
+                { content: "EQUIPE", colSpan: 2, styles: { fontStyle: "bold" } },
+                { content: os.equipe || "", colSpan: 2, styles: { halign: "center" } },
+                { content: "TÉCNICO RESPONSÁVEL", colSpan: 4, styles: { fontStyle: "bold" } },
+                { content: os.tecnico || "", colSpan: 4 }
+            ],
+            [
+                { content: "SUPERVISOR", colSpan: 3, styles: { fontStyle: "bold" } },
+                { content: "", colSpan: 9 }
+            ]
         ];
 
+        const imgLogo = document.getElementById("logoPrincipal");
+
         doc.autoTable({
-            startY: 30,
-            body: linhas,
+            startY: 8,
+            margin: { left: 10, right: 10, bottom: 8 },
+            body: body,
             theme: "grid",
-            styles: { fontSize: 9, cellPadding: 2, overflow: "linebreak" },
-            columnStyles: {
-                0: { cellWidth: 50, fontStyle: "bold", fillColor: [245, 245, 245] },
-                1: { cellWidth: "auto" }
+            styles: {
+                font: "helvetica",
+                fontSize: 8.5,
+                textColor: textDark,
+                lineColor: borderDark,
+                lineWidth: 0.25,
+                cellPadding: 1.4,
+                valign: "middle",
+                overflow: "linebreak"
             },
-            alternateRowStyles: { fillColor: [252, 252, 252] }
+            didDrawCell: function(data) {
+                if (data.row.index === 0 && data.column.index === 0 && imgLogo) {
+                    try {
+                        doc.addImage(imgLogo, "PNG", data.cell.x + 2, data.cell.y + 1.2, 42, 8.5);
+                    } catch (e) {}
+                }
+            }
         });
 
         doc.save(`OS_${os.numero_os}.pdf`);
@@ -1173,9 +1778,8 @@
             document.getElementById("subTelaEntradaNF").classList.remove("hidden");
             document.getElementById("tabBtnEntradaNF").classList.replace("btn-secondary", "btn-primary");
         } else if (aba === "trans") {
-            document.getElementById("subTelaEstoqueAtual").classList.remove("hidden");
-            document.getElementById("subTelaEntradaNF").classList.remove("hidden");
             document.getElementById("subTelaTransferencia").classList.remove("hidden");
+            document.getElementById("tabBtnTransferencia").classList.replace("btn-secondary", "btn-primary");
             carregarPedidosTransferencia();
         }
     }
@@ -1195,7 +1799,7 @@
         fetch(`${URL_APPS_SCRIPT}?action=getEstoque&filial=${encodeURIComponent(filial)}`)
             .then(r => r.json())
             .then(res => {
-                cacheEstoqueAtual = res.estoque;
+                cacheEstoqueAtual = res.estoque || [];
                 const tbody = document.querySelector("#tabelaEstoque tbody");
                 tbody.innerHTML = "";
 
@@ -1308,7 +1912,7 @@
         document.querySelectorAll("#gridMateriaisTrans .checkbox-item").forEach(row => {
             const chk = row.querySelector(".chk-tr");
             const qtdInp = row.querySelector(".qtd-tr");
-            const qtd = qtdInp ? qtdInp.value : 0;
+            const qtd = qtdInp ? Number(qtdInp.value) : 0;
             if (chk.checked && qtd > 0) {
                 itens.push({ material: chk.getAttribute("data-mat"), quantidade: qtd });
             }
@@ -1346,7 +1950,7 @@
         fetch(`${URL_APPS_SCRIPT}?action=getTransferencias&filial=${encodeURIComponent(filial)}`)
             .then(r => r.json())
             .then(res => {
-                const pedidos = res.pedidos;
+                const pedidos = res.pedidos || [];
                 if (pedidos.length === 0) {
                     box.innerHTML = "<p>Nenhum pedido de transferência registrado nesta filial.</p>";
                     return;
@@ -1355,7 +1959,7 @@
                 box.innerHTML = "";
                 pedidos.forEach((p, idx) => {
                     const div = document.createElement("div");
-                    div.style.cssText = "border:1px solid #ccc; padding:10px; border-radius:6px; margin-bottom:10px; background:#f9f9f9;";
+                    div.style.cssText = "border:1px solid #ccc; padding:12px; border-radius:6px; margin-bottom:12px; background:#fdfdfd;";
                     
                     let itensHtml = p.itens.map((it, iIdx) => `
                         <div style="display:flex; align-items:center; gap:8px; margin:4px 0;">
@@ -1364,106 +1968,1104 @@
                         </div>
                     `).join("");
 
-                    div.innerHTML = `
-                        <div style="font-size:14px; margin-bottom:5px;"><b>Pedido:</b> ${p.id_pedido} | <b>Data:</b> ${formatarDataISOparaBR(p.data_pedido)}</div>
-                        <div style="font-size:13px; margin-bottom:5px;"><b>Origem:</b> ${p.origem} ➔ <b>Destino:</b> ${p.destino}</div>
-                        <div style="font-size:13px; margin-bottom:5px;"><b>Status:</b> <span style="font-weight:bold; color:${p.status === 'Confirmado' ? 'green' : (p.status === 'Cancelado' ? 'red' : 'orange')}">${p.status}</span></div>
-                        <div style="margin-top:8px; border-top:1px solid #eee; padding-top:5px;">${itensHtml}</div>
-                        ${p.status === "Pendente" ? `
+                    let actionsHtml = "";
+                    if (p.status === "Pendente") {
+                        actionsHtml = `
                             <div class="grid-2" style="margin-top:10px; gap:8px;">
                                 <button type="button" class="btn-primary" style="font-size:13px; padding:8px;" onclick='responderTransferencia(${JSON.stringify(p)}, ${idx}, "Confirmado")'>✅ Confirmar</button>
-                                <button type="button" class="btn-danger" style="font-size:13px; padding:8px;" onclick='responderTransferencia(${JSON.stringify(p)}, ${idx}, "Cancelado")'>❌ Cancelar</button>
-                            </div>
-                        ` : ""}
-                    `;
-                    box.appendChild(div);
-                });
-            });
+                                <button type="button" class="btn-pdf" style="font-size:13px; padding:8px;" onclick='responderTransferencia(${JSON.stringify(p)}, ${idx}, "Cancelado")'>❌ Cancelar</button>
+                            </div>`;
+                    }
+
+                    div.inner";
+
+    let sessao = {
+        usuario: "",
+        perfil: "",
+        filial: "",
+        filiaisAutorizadas: [],
+        tecnicos: [],
+        mapaUrl: ""
+    };
+
+    let dadosIniciaisFilial = {
+        controladoras: [],
+        codigos: [],
+        modelos: [],
+        materiais: []
+    };
+
+    let osEmRevisao = null;
+    let osNumeroSalvo = null;
+    let cacheConsultaOS = [];
+    let cacheEstoqueAtual = [];
+
+    // --- FUNÇÕES DE NAVEGAÇÃO ---
+    function abrirTela(id) {
+        ["telaLogin", "telaMenu", "telaNovaOS", "telaRevisaoOS", "telaConsultaOS", "telaEstoque"].forEach(t => {
+            document.getElementById(t).classList.add("hidden");
+        });
+        document.getElementById(id).classList.remove("hidden");
+        window.scrollTo(0, 0);
     }
 
-    function responderTransferencia(pedido, idx, novoStatus) {
-        const itensAtualizados = pedido.itens.map((it, iIdx) => {
-            const inp = document.getElementById(`edit_tr_${idx}_${iIdx}`);
-            return {
-                material: it.material,
-                quantidade: inp ? inp.value : it.quantidade
-            };
+    document.querySelectorAll(".btnVoltarMenu").forEach(btn => {
+        btn.addEventListener("click", () => abrirTela("telaMenu"));
+    });
+
+    document.getElementById("btnSair").addEventListener("click", () => {
+        document.getElementById("formLogin").reset();
+        document.getElementById("msgLogin").innerText = "";
+        abrirTela("telaLogin");
+    });
+
+    // --- LOGIN ---
+    document.getElementById("formLogin").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const filial = document.getElementById("loginFilial").value;
+        const usuario = document.getElementById("loginUsuario").value.trim();
+        const senha = document.getElementById("loginSenha").value.trim();
+        const btn = document.getElementById("btnEntrar");
+        const msg = document.getElementById("msgLogin");
+
+        btn.disabled = true;
+        btn.innerText = "Autenticando...";
+        msg.innerText = "";
+
+        const url = `${URL_APPS_SCRIPT}?action=login&filial=${encodeURIComponent(filial)}&usuario=${encodeURIComponent(usuario)}&senha=${encodeURIComponent(senha)}`;
+
+        fetch(url)
+        .then(r => r.json())
+        .then(res => {
+            btn.disabled = false;
+            btn.innerText = "Entrar";
+
+            if (res.result === "success") {
+                sessao = {
+                    usuario: res.user,
+                    perfil: res.perfil,
+                    filial: res.filial,
+                    filiaisAutorizadas: res.filiaisAutorizadas || [res.filial],
+                    tecnicos: res.tecnicos || [],
+                    mapaUrl: res.mapaUrl || "https://www.google.com/maps"
+                };
+
+                document.getElementById("tituloFilialMenu").innerText = "Filial: " + sessao.filial;
+                document.getElementById("infoUsuarioMenu").innerText = `${sessao.perfil.toUpperCase()}: ${sessao.usuario}`;
+                document.getElementById("btnIrMapa").href = sessao.mapaUrl;
+
+                abrirTela("telaMenu");
+                carregarDadosIniciaisDaFilial(sessao.filial);
+            } else {
+                msg.innerText = res.error || "Usuário ou senha incorretos.";
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerText = "Entrar";
+            msg.innerText = "Erro de conexão ao tentar autenticar.";
+            console.error(err);
+        });
+    });
+
+    function carregarDadosIniciaisDaFilial(filial) {
+        fetch(`${URL_APPS_SCRIPT}?action=getDadosIniciais&filial=${encodeURIComponent(filial)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.result === "success") {
+                    dadosIniciaisFilial = data;
+                    preencherCombosNovaOS();
+                }
+            })
+            .catch(err => console.error("Erro ao carregar dados iniciais:", err));
+    }
+
+    // --- NOVA OS ---
+    document.getElementById("btnIrNovaOS").addEventListener("click", () => {
+        document.getElementById("formOS").reset();
+        document.getElementById("spanFilialOS").innerText = sessao.filial;
+        document.getElementById("osTecnico").value = sessao.usuario;
+        document.getElementById("camposDinamicosModelo").innerHTML = "";
+        document.getElementById("blocoPendencia").classList.add("hidden");
+        document.getElementById("blocoListaMateriais").classList.add("hidden");
+        document.getElementById("blocoTrabalhadores").classList.add("hidden");
+
+        const blocoCod = document.getElementById("blocoCodigosNiteroi");
+        if (sessao.filial === "Niterói") {
+            blocoCod.classList.remove("hidden");
+        } else {
+            blocoCod.classList.add("hidden");
+        }
+
+        preencherCombosNovaOS();
+        abrirTela("telaNovaOS");
+    });
+
+    function preencherCombosNovaOS() {
+        const dl = document.getElementById("datalistControladoras");
+        dl.innerHTML = "";
+        dadosIniciaisFilial.controladoras.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c;
+            dl.appendChild(opt);
         });
 
-        if (novoStatus === "Confirmado" && !confirm("Deseja confirmar o recebimento/envio desta transferência? O estoque será atualizado.")) return;
-        if (novoStatus === "Cancelado" && !confirm("Deseja cancelar este pedido de transferência?")) return;
+        const boxCod = document.getElementById("listaCodigosContainer");
+        boxCod.innerHTML = "";
+        dadosIniciaisFilial.codigos.forEach(c => {
+            const div = document.createElement("div");
+            div.style.marginBottom = "6px";
+            div.innerHTML = `<label style="font-weight:normal; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" class="chk-codigo-os" value="${c.numero}" style="width:auto; margin:0;">
+                <span><b>${c.numero}</b> - ${c.descricao}</span>
+            </label>`;
+            boxCod.appendChild(div);
+        });
+
+        const selMod = document.getElementById("osModeloControlador");
+        selMod.innerHTML = '<option value="">Selecione o modelo...</option>';
+        dadosIniciaisFilial.modelos.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m;
+            opt.innerText = m;
+            selMod.appendChild(opt);
+        });
+
+        const gridMat = document.getElementById("gridMateriaisOS");
+        gridMat.innerHTML = "";
+        const listaCompletaMat = [...dadosIniciaisFilial.materiais];
+        if (!listaCompletaMat.some(m => m.toLowerCase().includes("fita isolante"))) listaCompletaMat.push("Fita Isolante");
+        if (!listaCompletaMat.some(m => m.toLowerCase().includes("auto fus"))) listaCompletaMat.push("Fita de Auto Fusão");
+
+        listaCompletaMat.forEach((mat, idx) => {
+            const isFita = mat.toLowerCase().includes("fita isolante") || mat.toLowerCase().includes("auto fus");
+            const isCabo = mat.toLowerCase().includes("cabo");
+            const div = document.createElement("div");
+            div.className = "checkbox-item";
+            div.innerHTML = `
+                <input type="checkbox" class="chk-mat-os" data-nome="${mat}" data-fita="${isFita}" data-cabo="${isCabo}" id="mat_os_${idx}">
+                <label for="mat_os_${idx}" style="margin:0; font-size:12px; flex:1; cursor:pointer;">${mat}</label>
+                ${isFita ? '<span style="font-size:11px; color:#666;">(Uso geral)</span>' : `<input type="number" class="qtd-mat-os" min="1" placeholder="${isCabo ? 'Metros' : 'Qtd'}" style="width:72px; padding:4px; margin:0;">`}
+            `;
+            gridMat.appendChild(div);
+        });
+    }
+
+    document.getElementById("osModeloControlador").addEventListener("change", function() {
+        const mod = this.value;
+        const container = document.getElementById("camposDinamicosModelo");
+        container.innerHTML = "";
+
+        if (!mod) return;
+
+        let campos = [
+            { id: "osTensaoCA", label: "Tensão Alternada (CA):" },
+            { id: "osAterramento", label: "Aterramento:" }
+        ];
+
+        if (mod.toLowerCase() === "cross") {
+            campos.push(
+                { id: "osTensao75", label: "Tensão 7,5VCC:" },
+                { id: "osTensao12", label: "Tensão 12VCC:" },
+                { id: "osTensao24", label: "Tensão 24VCC:" },
+                { id: "osFusiveis", label: "Fusíveis:" },
+                { id: "osPadronizada", label: "Padronizada:" },
+                { id: "osNobreak", label: "Nobreak:" }
+            );
+        } else if (mod.toLowerCase() === "dataprom") {
+            campos.push(
+                { id: "osTensaoMais5", label: "Tensão +5V:" },
+                { id: "osTensaoMenos5", label: "Tensão -5V:" },
+                { id: "osTensaoMais12", label: "Tensão +12V:" },
+                { id: "osFusiveis", label: "Fusíveis:" },
+                { id: "osPadronizada", label: "Padronizada:" },
+                { id: "osNobreak", label: "Nobreak:" }
+            );
+        } else if (mod.toLowerCase() === "tesc") {
+            campos.push(
+                { id: "osCaboFlex", label: "Cabo Flex:" },
+                { id: "osFusiveis", label: "Fusíveis:" },
+                { id: "osNobreak", label: "Nobreak:" }
+            );
+        }
+
+        campos.forEach(c => {
+            const div = document.createElement("div");
+            div.innerHTML = `<label for="${c.id}">${c.label}</label><input type="text" id="${c.id}" required>`;
+            container.appendChild(div);
+        });
+    });
+
+    document.querySelectorAll('input[name="status_servico"]').forEach(r => {
+        r.addEventListener("change", function() {
+            const bloco = document.getElementById("blocoPendencia");
+            const txt = document.getElementById("osPendencia");
+            if (this.value === "Pendente") {
+                bloco.classList.remove("hidden");
+                txt.required = true;
+            } else {
+                bloco.classList.add("hidden");
+                txt.required = false;
+                txt.value = "";
+            }
+        });
+    });
+
+    document.querySelectorAll('input[name="utilizou_material"]').forEach(r => {
+        r.addEventListener("change", function() {
+            const bloco = document.getElementById("blocoListaMateriais");
+            if (this.value === "Sim") {
+                bloco.classList.remove("hidden");
+            } else {
+                bloco.classList.add("hidden");
+            }
+        });
+    });
+
+    document.querySelectorAll('input[name="trabalho_altura"]').forEach(r => {
+        r.addEventListener("change", function() {
+            const bloco = document.getElementById("blocoTrabalhadores");
+            const inp = document.getElementById("osTrabalhadores");
+            if (this.value === "Sim") {
+                bloco.classList.remove("hidden");
+                inp.required = true;
+            } else {
+                bloco.classList.add("hidden");
+                inp.required = false;
+                inp.value = "";
+            }
+        });
+    });
+
+    // --- REVISÃO E SALVAMENTO ---
+    document.getElementById("formOS").addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        let codigosSelecionados = [];
+        if (sessao.filial === "Niterói") {
+            codigosSelecionados = Array.from(document.querySelectorAll(".chk-codigo-os:checked")).map(c => c.value);
+            if (codigosSelecionados.length === 0) {
+                alert("Selecione ao menos um Código do Serviço.");
+                return;
+            }
+        }
+
+        const usouMat = document.querySelector('input[name="utilizou_material"]:checked').value;
+        const materiaisLista = [];
+        const materiaisFormatados = [];
+
+        if (usouMat === "Sim") {
+            const itensMarcados = document.querySelectorAll("#gridMateriaisOS .checkbox-item");
+            let erroQtd = false;
+            itensMarcados.forEach(item => {
+                const chk = item.querySelector(".chk-mat-os");
+                if (chk && chk.checked) {
+                    const nome = chk.getAttribute("data-nome");
+                    const isFita = chk.getAttribute("data-fita") === "true";
+                    const isCabo = chk.getAttribute("data-cabo") === "true";
+
+                    if (isFita) {
+                        materiaisLista.push({ material: nome, quantidade: "Utilizado" });
+                        materiaisFormatados.push(nome);
+                    } else {
+                        const qtdInp = item.querySelector(".qtd-mat-os");
+                        const qtd = qtdInp ? qtdInp.value : 0;
+                        if (!qtd || Number(qtd) <= 0) {
+                            erroQtd = true;
+                        }
+                        const unid = isCabo ? `${qtd} metros de ${nome}` : `${qtd}x ${nome}`;
+                        materiaisLista.push({ material: nome, quantidade: qtd });
+                        materiaisFormatados.push(unid);
+                    }
+                }
+            });
+
+            if (materiaisLista.length === 0) {
+                alert("Você marcou que utilizou materiais. Selecione pelo menos um item.");
+                return;
+            }
+            if (erroQtd) {
+                alert("Informe a quantidade utilizada para todos os materiais selecionados.");
+                return;
+            }
+        }
+
+        const getVal = id => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
+        
+        const dtIniISO = getVal("osDataInicial");
+        const dtFinISO = getVal("osDataFinal");
+        
+        const converterISOparaBR = (iso) => {
+            if (!iso || !iso.includes("-")) return iso;
+            const p = iso.split("-");
+            return `${p[2]}/${p[1]}/${p[0]}`;
+        };
+
+        osEmRevisao = {
+            action: "salvarOS",
+            filial: sessao.filial,
+            controladora: getVal("osControladora"),
+            tipo_servico: document.querySelector('input[name="tipo_servico"]:checked').value,
+            data_inicial: converterISOparaBR(dtIniISO),
+            hora_inicial: getVal("osHoraInicial"),
+            data_final: converterISOparaBR(dtFinISO),
+            hora_final: getVal("osHoraFinal"),
+            codigos_servico: codigosSelecionados.join(", "),
+            descricao_servico: getVal("osDescricaoBreve"),
+            modelo_controlador: getVal("osModeloControlador"),
+            tensao_ca: getVal("osTensaoCA"),
+            aterramento: getVal("osAterramento"),
+            tensao_75vcc: getVal("osTensao75"),
+            tensao_12vcc: getVal("osTensao12"),
+            tensao_24vcc: getVal("osTensao24"),
+            tensao_mais5v: getVal("osTensaoMais5"),
+            tensao_menos5v: getVal("osTensaoMenos5"),
+            tensao_mais12v: getVal("osTensaoMais12"),
+            cabo_flex: getVal("osCaboFlex"),
+            fusiveis: getVal("osFusiveis"),
+            nobreak: getVal("osNobreak"),
+            padronizada: getVal("osPadronizada"),
+            cabeamento: getVal("osCabeamento"),
+            involucro: getVal("osInvolucro"),
+            gabinetes: getVal("osGabinetes"),
+            placas_cpu_potencia: getVal("osPlacas"),
+            grupos_focais: getVal("osGruposFocais"),
+            colunas: getVal("osColunas"),
+            bracos: getVal("osBracos"),
+            status_controladora: document.querySelector('input[name="status_controladora"]:checked').value,
+            status_servico: document.querySelector('input[name="status_servico"]:checked').value,
+            pendencia: getVal("osPendencia"),
+            material_texto: materiaisFormatados.length > 0 ? materiaisFormatados.join(", ") : "Nenhum material utilizado",
+            materiais_lista: materiaisLista,
+            observacao: getVal("osObservacao"),
+            trabalho_altura: document.querySelector('input[name="trabalho_altura"]:checked').value,
+            trabalhadores_altura: getVal("osTrabalhadores"),
+            equipe: getVal("osEquipe"),
+            tecnico: getVal("osTecnico")
+        };
+
+        montarTelaRevisao(osEmRevisao);
+        document.getElementById("botoesAntesEnvio").classList.remove("hidden");
+        document.getElementById("boxPosEnvio").classList.add("hidden");
+        abrirTela("telaRevisaoOS");
+    });
+
+    function montarTelaRevisao(d) {
+        let html = `
+            <div class="revisao-linha"><b>Filial:</b> ${d.filial}</div>
+            <div class="revisao-linha"><b>Controladora:</b> ${d.controladora}</div>
+            <div class="revisao-linha"><b>Tipo de Serviço:</b> ${d.tipo_servico}</div>
+            <div class="revisao-linha"><b>Período:</b> ${d.data_inicial} ${d.hora_inicial} até ${d.data_final} ${d.hora_final}</div>
+            ${d.codigos_servico ? `<div class="revisao-linha"><b>Código(s):</b> ${d.codigos_servico}</div>` : ""}
+            <div class="revisao-linha"><b>Descrição Breve:</b> ${d.descricao_servico}</div>
+            <div class="revisao-linha"><b>Modelo Controlador:</b> ${d.modelo_controlador}</div>
+            <div class="revisao-linha"><b>Tensão CA:</b> ${d.tensao_ca} | <b>Aterramento:</b> ${d.aterramento}</div>
+        `;
+        if (d.modelo_controlador.toLowerCase() === "cross") {
+            html += `<div class="revisao-linha"><b>Saída CC:</b> 7,5V: ${d.tensao_75vcc} | 12V: ${d.tensao_12vcc} | 24V: ${d.tensao_24vcc} | <b>Fusíveis:</b> ${d.fusiveis} | <b>Nobreak:</b> ${d.nobreak} | <b>Padronizada:</b> ${d.padronizada}</div>`;
+        } else if (d.modelo_controlador.toLowerCase() === "dataprom") {
+            html += `<div class="revisao-linha"><b>Saída CC:</b> +5V: ${d.tensao_mais5v} | -5V: ${d.tensao_menos5v} | +12V: ${d.tensao_mais12v} | <b>Fusíveis:</b> ${d.fusiveis} | <b>Nobreak:</b> ${d.nobreak} | <b>Padronizada:</b> ${d.padronizada}</div>`;
+        } else if (d.modelo_controlador.toLowerCase() === "tesc") {
+            html += `<div class="revisao-linha"><b>Cabo Flex:</b> ${d.cabo_flex} | <b>Fusíveis:</b> ${d.fusiveis} | <b>Nobreak:</b> ${d.nobreak}</div>`;
+        }
+        html += `
+            <div class="revisao-linha"><b>Componentes:</b> Cabeamento: ${d.cabeamento} | Invólucro: ${d.involucro} | Gabinetes: ${d.gabinetes} | Placas: ${d.placas_cpu_potencia} | Grupos Focais: ${d.grupos_focais} | Colunas: ${d.colunas} | Braços: ${d.bracos}</div>
+            <div class="revisao-linha"><b>Status Controladora:</b> ${d.status_controladora} | <b>Status Serviço:</b> ${d.status_servico}</div>
+            ${d.pendencia ? `<div class="revisao-linha"><b>Pendência:</b> ${d.pendencia}</div>` : ""}
+            <div class="revisao-linha"><b>Material Utilizado:</b> ${d.material_texto}</div>
+            <div class="revisao-linha"><b>Observação:</b> ${d.observacao}</div>
+            <div class="revisao-linha"><b>Trabalho em Altura:</b> ${d.trabalho_altura} ${d.trabalhadores_altura ? `(${d.trabalhadores_altura})` : ""}</div>
+            <div class="revisao-linha"><b>Equipe:</b> ${d.equipe} | <b>Técnico:</b> ${d.tecnico}</div>
+        `;
+        document.getElementById("conteudoRevisao").innerHTML = html;
+    }
+
+    document.getElementById("btnCorrigirOS").addEventListener("click", () => {
+        abrirTela("telaNovaOS");
+    });
+
+    document.getElementById("btnConfirmarEnvioOS").addEventListener("click", function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.innerText = "Gravando na planilha...";
 
         fetch(URL_APPS_SCRIPT, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                action: "atualizarTransferencia",
-                id_pedido: pedido.id_pedido,
-                origem: pedido.origem,
-                destino: pedido.destino,
-                status: novoStatus,
-                itens: itensAtualizados
-            })
+            body: JSON.stringify(osEmRevisao)
         })
         .then(r => r.json())
         .then(res => {
+            btn.disabled = false;
+            btn.innerText = "✅ Confirmar e Enviar para Planilha";
+
             if (res.result === "success") {
-                alert(`Pedido ${pedido.id_pedido} atualizado para ${novoStatus}!`);
-                carregarPedidosTransferencia();
-                if (novoStatus === "Confirmado") carregarDadosEstoque();
+                osNumeroSalvo = res.numero_os;
+                document.getElementById("botoesAntesEnvio").classList.add("hidden");
+                document.getElementById("boxPosEnvio").classList.remove("hidden");
+                document.getElementById("msgSucessoOS").innerText = `✅ Ordem de Serviço Nº ${osNumeroSalvo} registrada com sucesso na planilha!`;
             } else {
-                alert("Erro ao atualizar: " + res.error);
+                alert("Erro ao salvar: " + (res.error || "Tente novamente."));
             }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerText = "✅ Confirmar e Enviar para Planilha";
+            alert("Erro de comunicação ao salvar a O.S.");
+        });
+    });
+
+    // --- WHATSAPP ---
+    function gerarMensagemWhatsApp(d, numOS) {
+        let msg = `*Manutenção semafórica*\n\n` +
+                  `*Data Inicial:* ${d.data_inicial}\n` +
+                  ` *Horário inicial:* ${d.hora_inicial}\n` +
+                  `*Data final:* ${d.data_final}\n` + 
+                  ` *Horário final:* ${d.hora_final}\n\n` +
+                  ` *Controladora:* ${d.controladora}\n\n`;
+
+        if (d.codigos_servico) {
+            msg += ` *Código:* ${d.codigos_servico}\n\n`;
+        }
+
+        msg += `*Preventiva:*\n` +
+               ` *Entrada de Alimentação (CA):* ${d.tensao_ca}\n` +
+               ` *Aterramento:* ${d.aterramento}\n`;
+
+        const mod = (d.modelo_controlador || "").toLowerCase();
+        if (mod === "cross") {
+            msg += ` *Nobreak:* ${d.nobreak}\n` +
+                   ` *Fusíveis:* ${d.fusiveis}\n` +
+                   ` *Padronizada:* ${d.padronizada}\n` +
+                   ` *Saída da fonte de Alimentação (CC):*\n` +
+                   ` *7,5V:* ${d.tensao_75vcc}\n` +
+                   ` *12V:* ${d.tensao_12vcc}\n` +
+                   ` *24V:* ${d.tensao_24vcc}\n\n`;
+        } else if (mod === "dataprom") {
+            msg += ` *Nobreak:* ${d.nobreak}\n` +
+                   ` *Fusíveis:* ${d.fusiveis}\n` +
+                   ` *Padronizada:* ${d.padronizada}\n` +
+                   ` *Saída da fonte de Alimentação (CC):*\n` +
+                   ` *+5V:* ${d.tensao_mais5v}\n` +
+                   ` *-5V:* ${d.tensao_menos5v}\n` +
+                   ` *+12V:* ${d.tensao_mais12v}\n\n`;
+        } else if (mod === "tesc") {
+            msg += ` *Cabo Flex:* ${d.cabo_flex}\n` +
+                   ` *Nobreak:* ${d.nobreak}\n` +
+                   ` *Fusíveis:* ${d.fusiveis}\n\n`;
+        } else {
+            msg += `\n`;
+        }
+
+        msg += ` *Cabeamento:* ${d.cabeamento}\n` +
+               ` *Invólucro:* ${d.involucro}\n` +
+               ` *Gabinetes:* ${d.gabinetes}\n` +
+               ` *Placas de CPU e Potência:* ${d.placas_cpu_potencia}\n` +
+               ` *Grupos focais:* ${d.grupos_focais}\n` +
+               ` *Colunas:* ${d.colunas}\n` +
+               ` *Braços:* ${d.bracos}\n\n`;
+
+        msg += ` *Status da Controladora:* ${d.status_controladora}\n\n` +
+               ` *Material Utilizado:* ${d.material_texto}\n\n` +
+               ` *Obs.:*\n${d.observacao}\n\n` +
+               ` *Equipe:* ${d.equipe}\n` +
+               ` *Eletrotécnico Responsável:* ${d.tecnico}\n\n` +
+               ` *O.S SM:* ${numOS}`;
+
+        return msg;
+    }
+
+    document.getElementById("btnEnviarWhatsAppOS").addEventListener("click", () => {
+        const texto = gerarMensagemWhatsApp(osEmRevisao, osNumeroSalvo);
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, "_blank");
+    });
+
+    // --- CONSULTA OS ---
+    document.getElementById("btnIrConsultaOS").addEventListener("click", () => {
+        const boxFilial = document.getElementById("boxFiltroFilialConsulta");
+        const boxTec = document.getElementById("boxFiltroTecnicoConsulta");
+        const selFilial = document.getElementById("consFilial");
+
+        if (sessao.perfil === "supervisor") {
+            boxFilial.classList.remove("hidden");
+            boxTec.classList.remove("hidden");
+            selFilial.innerHTML = "";
+            sessao.filiaisAutorizadas.forEach(f => {
+                const opt = document.createElement("option");
+                opt.value = f;
+                opt.innerText = f;
+                if (f === sessao.filial) opt.selected = true;
+                selFilial.appendChild(opt);
+            });
+
+            const selTec = document.getElementById("consTecnico");
+            selTec.innerHTML = '<option value="">Todos</option>';
+            sessao.tecnicos.forEach(t => {
+                const opt = document.createElement("option");
+                opt.value = t;
+                opt.innerText = t;
+                selTec.appendChild(opt);
+            });
+        } else {
+            boxFilial.classList.add("hidden");
+            boxTec.classList.add("hidden");
+        }
+
+        abrirTela("telaConsultaOS");
+    });
+
+    document.getElementById("btnPesquisarOS").addEventListener("click", executarBuscaOS);
+
+    function executarBuscaOS() {
+        const btn = document.getElementById("btnPesquisarOS");
+        btn.disabled = true;
+        btn.innerText = "Buscando...";
+
+        const filialBusca = (sessao.perfil === "supervisor") ? document.getElementById("consFilial").value : sessao.filial;
+        const numOS = document.getElementById("consNumeroOS").value.trim();
+        const dataBuscaISO = document.getElementById("consData").value;
+        const tecnico = (sessao.perfil === "supervisor") ? document.getElementById("consTecnico").value : sessao.usuario;
+        const equipe = document.getElementById("consEquipe").value;
+
+        const url = `${URL_APPS_SCRIPT}?action=buscarOS&filial=${encodeURIComponent(filialBusca)}&filtroOS=${encodeURIComponent(numOS)}&filtroData=${encodeURIComponent(dataBuscaISO)}&filtroTecnico=${encodeURIComponent(tecnico)}&filtroEquipe=${encodeURIComponent(equipe)}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(res => {
+                btn.disabled = false;
+                btn.innerText = "🔍 Buscar Ordens de Serviço";
+                
+                if (res.result === "success") {
+                    cacheConsultaOS = res.lista || [];
+                    renderTabelaConsultaOS(cacheConsultaOS);
+                } else {
+                    alert("Erro na busca: " + res.error);
+                    renderTabelaConsultaOS([]); 
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerText = "🔍 Buscar Ordens de Serviço";
+                console.error(err);
+                alert("Erro de conexão ao buscar.");
+            });
+    }
+
+    function renderTabelaConsultaOS(lista) {
+        const tbody = document.querySelector("#tabelaConsultaOS tbody");
+        tbody.innerHTML = "";
+
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma Ordem de Serviço encontrada.</td></tr>';
+            return;
+        }
+
+        lista.forEach((os, idx) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><b>${os.numero_os}</b></td>
+                <td>${os.data_inicial}</td>
+                <td>${os.controladora}</td>
+                <td>${os.tecnico}</td>
+                <td>${os.equipe}</td>
+                <td>${os.status_servico}</td>
+                <td style="display:flex; gap:5px; flex-wrap:wrap;">
+                    <button type="button" class="btn-primary" style="width:auto; padding:5px 9px; font-size:12px; margin:0;" onclick="abrirModalVisualizarOS(${idx})">Visualizar</button>
+                    <button type="button" class="btn-whats" style="width:auto; padding:5px 9px; font-size:12px; margin:0;" onclick="exportarWhatsAppConsulta(${idx})">WhatsApp</button>
+                    <button type="button" class="btn-pdf" style="width:auto; padding:5px 9px; font-size:12px; margin:0;" onclick="gerarPDFOrdemServico(${idx})">PDF</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
     }
 
-    // --- PDF ESTOQUE ---
-    document.getElementById("btnExportarPDFEstoque").addEventListener("click", () => {
-        if (cacheEstoqueAtual.length === 0) return alert("Não há dados de estoque para exportar.");
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const filial = getFilialEstoqueAtiva();
-
-        doc.setFontSize(14);
-        doc.setTextColor(0, 105, 92);
-        doc.setFont("helvetica", "bold");
-        doc.text("Ecomix Gestão e Planejamento", 14, 15);
+    function abrirModalVisualizarOS(idx) {
+        const os = cacheConsultaOS[idx];
+        document.getElementById("modalNumOS").innerText = os.numero_os;
+        document.getElementById("corpoModalOS").innerText = gerarMensagemWhatsApp(os, os.numero_os);
         
-        doc.setFontSize(11);
-        doc.setTextColor(30, 30, 30);
-        doc.setFont("helvetica", "normal");
-        const dataRel = Utilities.formatDate(new Date(), "America/Sao_Paulo", "dd/MM/yyyy HH:mm");
-        doc.text(`Relatório de Estoque Atual - Filial: ${filial} (Gerado em: ${dataRel})`, 14, 21);
-        doc.line(14, 25, 196, 25);
+        document.getElementById("btnModalWhatsApp").onclick = () => exportarWhatsAppConsulta(idx);
+        document.getElementById("btnModalPDF").onclick = () => gerarPDFOrdemServico(idx);
+        
+        document.getElementById("modalVisualizarOS").classList.remove("hidden");
+    }
 
-        const corpo = cacheEstoqueAtual.map(i => [
-            i.material,
-            formatarDataISOparaBR(i.data_ultima_entrada),
-            i.qtd_ultima_entrada,
-            formatarDataISOparaBR(i.data_ultima_os),
-            i.estoque
-        ]);
-
-        doc.autoTable({
-            startY: 30,
-            head: [["Material", "Últ. Entrada", "Qtd", "Últ. Uso O.S", "Estoque Atual"]],
-            body: corpo,
-            theme: "grid",
-            headStyles: { fillColor: [0, 137, 123], textColor: [255, 255, 255], fontStyle: "bold" },
-            styles: { fontSize: 9, cellPadding: 2 },
-            columnStyles: {
-                0: { cellWidth: 70 },
-                1: { cellWidth: 25 },
-                2: { cellWidth: 15, halign: "center" },
-                3: { cellWidth: 25 },
-                4: { cellWidth: "auto", halign: "center", fontStyle: "bold" }
-            },
-            alternateRowStyles: { fillColor: [245, 252, 251] }
-        });
-
-        doc.save(`Estoque_${filial}_${dataRel.replace(/[\/:\s]/g, "-")}.pdf`);
+    document.getElementById("btnFecharModalOS").addEventListener("click", () => {
+        document.getElementById("modalVisualizarOS").classList.add("hidden");
     });
 
-</script>
-</body>
-</html>
+    function exportarWhatsAppConsulta(idx) {
+        const os = cacheConsultaOS[idx];
+        const texto = gerarMensagemWhatsApp(os, os.numero_os);
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, "_blank");
+    }
+
+    // --- PDF DA ORDEM DE SERVIÇO (LAYOUT EXATO DA IMAGEM) ---
+    function gerarPDFOrdemServico(idx) {
+        const os = cacheConsultaOS[idx];
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF("p", "mm", "a4");
+
+        const fillHeader = [217, 217, 217];
+        const textDark = [20, 20, 20];
+        const borderDark = [60, 60, 60];
+
+        const tipoNorm = (os.tipo_servico || "").toLowerCase();
+        const isCorretivo = tipoNorm.includes("corretivo") ? "X" : "";
+        const isPreventivo = tipoNorm.includes("preventivo") ? "X" : "";
+        const isImplantacao = (tipoNorm.includes("implantação") || tipoNorm.includes("implantacao")) ? "X" : "";
+
+        const statusCtrlNorm = (os.status_controladora || "").toLowerCase();
+        const isOperacional = statusCtrlNorm.includes("operacional") ? "X" : "";
+        const isInoperante = statusCtrlNorm.includes("inoperante") ? "X" : "";
+
+        const statusServNorm = (os.status_servico || "").toLowerCase();
+        const isConcluido = (statusServNorm.includes("concluído") || statusServNorm.includes("concluido")) ? "X" : "";
+        const isPendente = statusServNorm.includes("pendente") ? "X" : "";
+
+        const modNorm = (os.modelo_controlador || "").toLowerCase();
+        let lblCC1 = "TENSÃO 7,5VCC", valCC1 = os.tensao_75vcc || "";
+        let lblCC2 = "TENSÃO 12VCC", valCC2 = os.tensao_12vcc || "";
+        let lblCC3 = "TENSÃO 24VCC", valCC3 = os.tensao_24vcc || "";
+
+        if (modNorm === "dataprom") {
+            lblCC1 = "TENSÃO +5V"; valCC1 = os.tensao_mais5v || "";
+            lblCC2 = "TENSÃO -5V"; valCC2 = os.tensao_menos5v || "";
+            lblCC3 = "TENSÃO +12V"; valCC3 = os.tensao_mais12v || "";
+        } else if (modNorm === "tesc") {
+            lblCC1 = "CABO FLEX"; valCC1 = os.cabo_flex || "";
+            lblCC2 = ""; valCC2 = "";
+            lblCC3 = ""; valCC3 = "";
+        }
+
+        const cellTitle = (txt) => ({
+            content: txt,
+            colSpan: 12,
+            styles: { fillColor: fillHeader, textColor: textDark, fontStyle: "bold", halign: "center", cellPadding: 1.3 }
+        });
+
+        const body = [
+            // Cabeçalho Superior
+            [
+                { content: "", colSpan: 3, styles: { minCellHeight: 11 } },
+                { content: "ORDEM DE SERVIÇO", colSpan: 6, styles: { fontSize: 12, fontStyle: "bold", halign: "center", valign: "middle" } },
+                { content: "Nº SM", colSpan: 2, styles: { fillColor: fillHeader, fontStyle: "bold", halign: "center", valign: "middle" } },
+                { content: String(os.numero_os || ""), colSpan: 1, styles: { fontStyle: "bold", halign: "center", valign: "middle" } }
+            ],
+            // CONTROLADORA
+            [cellTitle("CONTROLADORA")],
+            [{ content: os.controladora || "", colSpan: 12, styles: { cellPadding: 1.8 } }],
+
+            // TIPO DO SERVIÇO
+            [cellTitle("TIPO DO SERVIÇO")],
+            [
+                { content: "CORRETIVO", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isCorretivo, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } },
+                { content: "PREVENTIVO", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isPreventivo, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } },
+                { content: "IMPLANTAÇÃO", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isImplantacao, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } }
+            ],
+
+            // PERÍODO DA ATIVIDADE
+            [cellTitle("PERÍODO DA ATIVIDADE")],
+            [
+                { content: "INÍCIO", colSpan: 5, styles: { fontStyle: "bold", halign: "center" } },
+                { content: "", colSpan: 1 },
+                { content: "TÉRMINO", colSpan: 6, styles: { fontStyle: "bold", halign: "center" } }
+            ],
+            [
+                { content: "DATA", colSpan: 1, styles: { fontStyle: "bold", halign: "right" } },
+                { content: os.data_inicial || "", colSpan: 2, styles: { halign: "center" } },
+                { content: "HORA", colSpan: 1, styles: { fontStyle: "bold", halign: "right" } },
+                { content: os.hora_inicial || "", colSpan: 1, styles: { halign: "center" } },
+                { content: "", colSpan: 1 },
+                { content: "DATA", colSpan: 2, styles: { fontStyle: "bold", halign: "right" } },
+                { content: os.data_final || "", colSpan: 2, styles: { halign: "center" } },
+                { content: "HORA", colSpan: 1, styles: { fontStyle: "bold", halign: "right" } },
+                { content: os.hora_final || "", colSpan: 1, styles: { halign: "center" } }
+            ],
+
+            // CÓDIGO DO SERVIÇO
+            [
+                { content: "CÓDIGO DO SERVIÇO", colSpan: 3, styles: { fillColor: fillHeader, fontStyle: "bold", halign: "center" } },
+                { content: os.codigos_servico || "", colSpan: 9, styles: { halign: "left" } }
+            ],
+
+            // DESCRIÇÃO DO SERVIÇO REALIZADO
+            [cellTitle("DESCRIÇÃO DO SERVIÇO REALIZADO")],
+            [{ content: os.descricao_servico || "", colSpan: 12, styles: { cellPadding: 2, minCellHeight: 11 } }],
+
+            // MANUTENÇÃO PREVENTIVA
+            [cellTitle("MANUTENÇÃO PREVENTIVA")],
+            [
+                { content: os.tensao_ca || "", colSpan: 2, styles: { halign: "left" } },
+                { content: "TENSÃO (CA)", colSpan: 3, styles: { fontStyle: "bold" } },
+                { content: "", colSpan: 1 },
+                { content: os.aterramento || "", colSpan: 2, styles: { halign: "left" } },
+                { content: "ATERRAMENTO", colSpan: 4, styles: { fontStyle: "bold" } }
+            ],
+            [
+                { content: valCC1, colSpan: 2, styles: { halign: "left" } },
+                { content: lblCC1, colSpan: 3, styles: { fontStyle: "bold" } },
+                { content: "", colSpan: 1 },
+                { content: os.fusiveis || "", colSpan: 2, styles: { halign: "left" } },
+                { content: "FUSÍVEIS", colSpan: 4, styles: { fontStyle: "bold" } }
+            ],
+            [
+                { content: valCC2, colSpan: 2, styles: { halign: "left" } },
+                { content: lblCC2, colSpan: 3, styles: { fontStyle: "bold" } },
+                { content: "", colSpan: 1 },
+                { content: os.padronizada || "", colSpan: 2, styles: { halign: "left" } },
+                { content: "PADRONIZADA", colSpan: 4, styles: { fontStyle: "bold" } }
+            ],
+            [
+                { content: valCC3, colSpan: 2, styles: { halign: "left" } },
+                { content: lblCC3, colSpan: 3, styles: { fontStyle: "bold" } },
+                { content: "", colSpan: 1 },
+                { content: os.nobreak || "", colSpan: 2, styles: { halign: "left" } },
+                { content: "NOBREAK", colSpan: 4, styles: { fontStyle: "bold" } }
+            ],
+
+            // COMPONENTES EM LINHA
+            [cellTitle("CABEAMENTO")],
+            [{ content: os.cabeamento || "", colSpan: 12 }],
+
+            [cellTitle("INVÓLUCRO")],
+            [{ content: os.involucro || "", colSpan: 12 }],
+
+            [cellTitle("GABINETES")],
+            [{ content: os.gabinetes || "", colSpan: 12 }],
+
+            [cellTitle("PLACAS DE CPU E POTÊNCIA")],
+            [{ content: os.placas_cpu_potencia || "", colSpan: 12 }],
+
+            [cellTitle("GRUPOS FOCAIS")],
+            [{ content: os.grupos_focais || "", colSpan: 12 }],
+
+            [cellTitle("COLUNAS")],
+            [{ content: os.colunas || "", colSpan: 12 }],
+
+            [cellTitle("BRAÇOS")],
+            [{ content: os.bracos || "", colSpan: 12 }],
+
+            // STATUS DA CONTROLADORA E SERVIÇO
+            [
+                { content: "STATUS DA CONTROLADORA", colSpan: 4, styles: { fontStyle: "bold" } },
+                { content: "OPERACIONAL", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isOperacional, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } },
+                { content: "INOPERANTE", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isInoperante, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } }
+            ],
+            [
+                { content: "STATUS DO SERVIÇO", colSpan: 4, styles: { fontStyle: "bold" } },
+                { content: "CONCLUÍDO", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isConcluido, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } },
+                { content: "PENDENTE", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+                { content: isPendente, colSpan: 1, styles: { fontStyle: "bold", halign: "center" } }
+            ],
+
+            // PENDÊNCIA
+            [cellTitle("PENDÊNCIA")],
+            [{ content: os.pendencia || "", colSpan: 12, styles: { minCellHeight: 7 } }],
+
+            // MATERIAL UTILIZADO
+            [cellTitle("MATERIAL UTILIZADO")],
+            [{ content: os.material_texto || "Nenhum material utilizado", colSpan: 12, styles: { minCellHeight: 7 } }],
+
+            // OBSERVAÇÃO
+            [cellTitle("OBSERVAÇÃO")],
+            [{ content: os.observacao || "", colSpan: 12, styles: { cellPadding: 2, minCellHeight: 12 } }],
+
+            // IDENTIFICAÇÃO
+            [cellTitle("IDENTIFICAÇÃO")],
+            [
+                { content: "EQUIPE", colSpan: 2, styles: { fontStyle: "bold" } },
+                { content: os.equipe || "", colSpan: 2, styles: { halign: "center" } },
+                { content: "TÉCNICO RESPONSÁVEL", colSpan: 4, styles: { fontStyle: "bold" } },
+                { content: os.tecnico || "", colSpan: 4 }
+            ],
+            [
+                { content: "SUPERVISOR", colSpan: 3, styles: { fontStyle: "bold" } },
+                { content: "", colSpan: 9 }
+            ]
+        ];
+
+        const imgLogo = document.getElementById("logoPrincipal");
+
+        doc.autoTable({
+            startY: 8,
+            margin: { left: 10, right: 10, bottom: 8 },
+            body: body,
+            theme: "grid",
+            styles: {
+                font: "helvetica",
+                fontSize: 8.5,
+                textColor: textDark,
+                lineColor: borderDark,
+                lineWidth: 0.25,
+                cellPadding: 1.4,
+                valign: "middle",
+                overflow: "linebreak"
+            },
+            didDrawCell: function(data) {
+                if (data.row.index === 0 && data.column.index === 0 && imgLogo) {
+                    try {
+                        doc.addImage(imgLogo, "PNG", data.cell.x + 2, data.cell.y + 1.2, 42, 8.5);
+                    } catch (e) {}
+                }
+            }
+        });
+
+        doc.save(`OS_${os.numero_os}.pdf`);
+    }
+
+    // --- ESTOQUE E SUB-ABAS ---
+    document.getElementById("btnIrEstoque").addEventListener("click", () => {
+        const boxFilial = document.getElementById("boxSeletorFilialEstoque");
+        const selFilial = document.getElementById("estFilialSelect");
+
+        if (sessao.perfil === "supervisor") {
+            boxFilial.classList.remove("hidden");
+            document.getElementById("tabBtnEntradaNF").classList.remove("hidden");
+            document.getElementById("tabBtnTransferencia").classList.remove("hidden");
+
+            selFilial.innerHTML = "";
+            sessao.filiaisAutorizadas.forEach(f => {
+                const opt = document.createElement("option");
+                opt.value = f;
+                opt.innerText = f;
+                if (f === sessao.filial) opt.selected = true;
+                selFilial.appendChild(opt);
+            });
+        } else {
+            boxFilial.classList.add("hidden");
+            document.getElementById("tabBtnEntradaNF").classList.add("hidden");
+            document.getElementById("tabBtnTransferencia").classList.add("hidden");
+        }
+
+        ativarAbaEstoque("atual");
+        abrirTela("telaEstoque");
+        carregarDadosEstoque();
+    });
+
+    document.getElementById("estFilialSelect").addEventListener("change", carregarDadosEstoque);
+
+    function getFilialEstoqueAtiva() {
+        return (sessao.perfil === "supervisor") ? document.getElementById("estFilialSelect").value : sessao.filial;
+    }
+
+    function ativarAbaEstoque(aba) {
+        ["subTelaEstoqueAtual", "subTelaEntradaNF", "subTelaTransferencia"].forEach(s => document.getElementById(s).classList.add("hidden"));
+        ["tabBtnEstoqueAtual", "tabBtnEntradaNF", "tabBtnTransferencia"].forEach(b => {
+            document.getElementById(b).classList.remove("btn-primary");
+            document.getElementById(b).classList.add("btn-secondary");
+        });
+
+        if (aba === "atual") {
+            document.getElementById("subTelaEstoqueAtual").classList.remove("hidden");
+            document.getElementById("tabBtnEstoqueAtual").classList.replace("btn-secondary", "btn-primary");
+        } else if (aba === "nf") {
+            document.getElementById("subTelaEntradaNF").classList.remove("hidden");
+            document.getElementById("tabBtnEntradaNF").classList.replace("btn-secondary", "btn-primary");
+        } else if (aba === "trans") {
+            document.getElementById("subTelaTransferencia").classList.remove("hidden");
+            document.getElementById("tabBtnTransferencia").classList.replace("btn-secondary", "btn-primary");
+            carregarPedidosTransferencia();
+        }
+    }
+
+    document.getElementById("tabBtnEstoqueAtual").addEventListener("click", () => ativarAbaEstoque("atual"));
+    document.getElementById("tabBtnEntradaNF").addEventListener("click", () => ativarAbaEstoque("nf"));
+    document.getElementById("tabBtnTransferencia").addEventListener("click", () => ativarAbaEstoque("trans"));
+
+    function formatarDataISOparaBR(iso) {
+        if (!iso || iso === "-" || !iso.includes("-")) return iso;
+        const p = iso.split("-");
+        return `${p[2]}/${p[1]}/${p[0]}`;
+    }
+
+    function carregarDadosEstoque() {
+        const filial = getFilialEstoqueAtiva();
+        fetch(`${URL_APPS_SCRIPT}?action=getEstoque&filial=${encodeURIComponent(filial)}`)
+            .then(r => r.json())
+            .then(res => {
+                cacheEstoqueAtual = res.estoque || [];
+                const tbody = document.querySelector("#tabelaEstoque tbody");
+                tbody.innerHTML = "";
+
+                if (cacheEstoqueAtual.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum material cadastrado.</td></tr>';
+                } else {
+                    cacheEstoqueAtual.forEach(item => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td><b>${item.material}</b></td>
+                            <td>${formatarDataISOparaBR(item.data_ultima_entrada)}</td>
+                            <td>${item.qtd_ultima_entrada}</td>
+                            <td>${item.qtd_anterior}</td>
+                            <td>${formatarDataISOparaBR(item.data_ultima_os)}</td>
+                            <td><b>${item.estoque}</b></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                montarListasMateriaisEstoque();
+            });
+    }
+
+    function montarListasMateriaisEstoque() {
+        const lista = cacheEstoqueAtual.map(i => i.material);
+        if (!lista.some(m => m.toLowerCase().includes("fita isolante"))) lista.push("Fita Isolante");
+        if (!lista.some(m => m.toLowerCase().includes("auto fus"))) lista.push("Fita de Auto Fusão");
+
+        const gridNF = document.getElementById("gridMateriaisNF");
+        const gridTrans = document.getElementById("gridMateriaisTrans");
+        gridNF.innerHTML = "";
+        gridTrans.innerHTML = "";
+
+        lista.forEach((mat, i) => {
+            gridNF.innerHTML += `
+                <div class="checkbox-item">
+                    <input type="checkbox" class="chk-nf" data-mat="${mat}" id="nf_${i}">
+                    <label for="nf_${i}" style="margin:0; font-size:12px; flex:1;">${mat}</label>
+                    <input type="number" class="qtd-nf" min="1" placeholder="Qtd" style="width:70px; padding:4px; margin:0;">
+                </div>
+            `;
+            gridTrans.innerHTML += `
+                <div class="checkbox-item">
+                    <input type="checkbox" class="chk-tr" data-mat="${mat}" id="tr_${i}">
+                    <label for="tr_${i}" style="margin:0; font-size:12px; flex:1;">${mat}</label>
+                    <input type="number" class="qtd-tr" min="1" placeholder="Qtd" style="width:70px; padding:4px; margin:0;">
+                </div>
+            `;
+        });
+    }
+
+    document.getElementById("btnRegistrarNF").addEventListener("click", function() {
+        const nfNum = document.getElementById("nfNumero").value.trim();
+        const nfDataISO = document.getElementById("nfData").value;
+        if (!nfNum || !nfDataISO) return alert("Preencha o Número da NF e a Data de Entrada.");
+        
+        const p = nfDataISO.split("-");
+        const nfDataBR = `${p[2]}/${p[1]}/${p[0]}`;
+
+        const itens = [];
+        document.querySelectorAll("#gridMateriaisNF .checkbox-item").forEach(row => {
+            const chk = row.querySelector(".chk-nf");
+            const qtdInp = row.querySelector(".qtd-nf");
+            const qtd = qtdInp ? qtdInp.value : 0;
+            if (chk.checked && qtd > 0) {
+                itens.push({ material: chk.getAttribute("data-mat"), quantidade: qtd });
+            }
+        });
+
+        if (itens.length === 0) return alert("Selecione ao menos um material e informe a quantidade.");
+
+        this.disabled = true;
+        fetch(URL_APPS_SCRIPT, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+                action: "salvarNF",
+                filial: getFilialEstoqueAtiva(),
+                numero_nf: nfNum,
+                data_entrada: nfDataBR,
+                usuario: sessao.usuario,
+                itens: itens
+            })
+        })
+        .then(r => r.json())
+        .then(() => {
+            this.disabled = false;
+            alert("Nota Fiscal registrada com sucesso!");
+            document.getElementById("nfNumero").value = "";
+            document.getElementById("nfData").value = "";
+            carregarDadosEstoque();
+            ativarAbaEstoque("atual");
+        });
+    });
+
+    // --- TRANSFERÊNCIA ---
+    document.getElementById("btnEnviarPedidoTrans").addEventListener("click", function() {
+        const origem = getFilialEstoqueAtiva();
+        const destino = document.getElementById("transDestino").value;
+        const dataPedISO = document.getElementById("transData").value;
+
+        if (origem === destino) return alert("A filial de destino deve ser diferente da filial atual.");
+        if (!dataPedISO) return alert("Informe a data do pedido.");
+
+        const p = dataPedISO.split("-");
+        const dataPedBR = `${p[2]}/${p[1]}/${p[0]}`;
+
+        const itens = [];
+        document.querySelectorAll("#gridMateriaisTrans .checkbox-item").forEach(row => {
+            const chk = row.querySelector(".chk-tr");
+            const qtdInp = row.querySelector(".qtd-tr");
+            const qtd = qtdInp ? Number(qtdInp.value) : 0;
+            if (chk.checked && qtd > 0) {
+                itens.push({ material: chk.getAttribute("data-mat"), quantidade: qtd });
+            }
+        });
+
+        if (itens.length === 0) return alert("Selecione ao menos um material para transferir.");
+
+        this.disabled = true;
+        fetch(URL_APPS_SCRIPT, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+                action: "criarTransferencia",
+                filial_origem: origem,
+                filial_destino: destino,
+                data_pedido: dataPedBR,
+                usuario: sessao.usuario,
+                itens: itens
+            })
+        })
+        .then(r => r.json())
+        .then(() => {
+            this.disabled = false;
+            alert("Pedido de transferência enviado com sucesso!");
+            document.getElementById("transData").value = "";
+            carregarPedidosTransferencia();
+        });
+    });
+
+    function carregarPedidosTransferencia() {
+        const filial = getFilialEstoqueAtiva();
+        const box = document.getElementById("listaPedidosTrans");
+        box.innerHTML = "Carregando pedidos...";
+
+        fetch(`${URL_APPS_SCRIPT}?action=getTransferencias&filial=${encodeURIComponent(filial)}`)
+            .then(r => r.json())
+            .then(res => {
+                const pedidos = res.pedidos || [];
+                if (pedidos.length === 0) {
+                    box.innerHTML = "<p>Nenhum pedido de transferência registrado nesta filial.</p>";
+                    return;
+                }
+
+                box.innerHTML = "";
+                pedidos.forEach((p, idx) => {
+                    const div = document.createElement("div");
+                    div.style.cssText = "border:1px solid #ccc; padding:12px; border-radius:6px; margin-bottom:12px; background:#fdfdfd;";
+                    
+                    let itensHtml = p.itens.map((it, iIdx) => `
+                        <div style="display:flex; align-items:center; gap:8px; margin:4px 0;">
+                            <span style="flex:1; font-size:13px;">${it.material}</span>
+                            <input type="number" id="edit_tr_${idx}_${iIdx}" value="${it.quantidade}" ${p.status !== "Pendente" ? "disabled" : ""} style="width:75px; padding:4px; margin:0; font-size:12px;">
+                        </div>
+                    `).join("");
+
+                    let actionsHtml = "";
+                    if (p.status === "Pendente") {
+                        actionsHtml = `
+                            <div class="grid-2" style="margin-top:10px; gap:8px;">
+                                <button type="button" class="btn-primary" style="font-size:13px; padding:8px;" onclick='responderTransferencia(${JSON.stringify(p)}, ${idx}, "Confirmado")'>✅ Confirmar</button>
+                                <button type="button" class="btn-pdf" style="font-size:13px; padding:8px;" onclick='responderTransferencia(${JSON.stringify(p)}, ${idx}, "Cancelado")'>❌ Cancelar</button>
+                            </div>`;
+                    }
+
+                    div.inner
