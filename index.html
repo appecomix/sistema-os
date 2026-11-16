@@ -497,35 +497,29 @@
         const url = `${URL_APPS_SCRIPT}?action=login&filial=${encodeURIComponent(filial)}&usuario=${encodeURIComponent(usuario)}&senha=${encodeURIComponent(senha)}`;
 
         fetch(url)
-        .then(r => r.text())
-        .then(textoBruto => {
+        .then(r => r.json())
+        .then(res => {
             btn.disabled = false;
             btn.innerText = "Entrar";
 
-            try {
-                const res = JSON.parse(textoBruto);
-                if (res.result === "success") {
-                    sessao = {
-                        usuario: res.user,
-                        perfil: res.perfil,
-                        filial: res.filial,
-                        filiaisAutorizadas: res.filiaisAutorizadas || [res.filial],
-                        tecnicos: res.tecnicos || [],
-                        mapaUrl: res.mapaUrl || "https://www.google.com/maps"
-                    };
+            if (res.result === "success") {
+                sessao = {
+                    usuario: res.user,
+                    perfil: res.perfil,
+                    filial: res.filial,
+                    filiaisAutorizadas: res.filiaisAutorizadas || [res.filial],
+                    tecnicos: res.tecnicos || [],
+                    mapaUrl: res.mapaUrl || "https://www.google.com/maps"
+                };
 
-                    document.getElementById("tituloFilialMenu").innerText = "Filial: " + sessao.filial;
-                    document.getElementById("infoUsuarioMenu").innerText = `${sessao.perfil.toUpperCase()}: ${sessao.usuario}`;
-                    document.getElementById("btnIrMapa").href = sessao.mapaUrl;
+                document.getElementById("tituloFilialMenu").innerText = "Filial: " + sessao.filial;
+                document.getElementById("infoUsuarioMenu").innerText = `${sessao.perfil.toUpperCase()}: ${sessao.usuario}`;
+                document.getElementById("btnIrMapa").href = sessao.mapaUrl;
 
-                    abrirTela("telaMenu");
-                    carregarDadosIniciaisDaFilial(sessao.filial);
-                } else {
-                    msg.innerText = res.error || "Usuário ou senha incorretos.";
-                }
-            } catch (errParse) {
-                console.error("Erro ao converter JSON:", textoBruto);
-                msg.innerText = "Erro no servidor. Detalhe: " + textoBruto.substring(0, 80);
+                abrirTela("telaMenu");
+                carregarDadosIniciaisDaFilial(sessao.filial);
+            } else {
+                msg.innerText = res.error || "Usuário ou senha incorretos.";
             }
         })
         .catch(err => {
@@ -836,7 +830,7 @@
             ${d.pendencia ? `<div class="revisao-linha"><b>Pendência:</b> ${d.pendencia}</div>` : ""}
             <div class="revisao-linha"><b>Material Utilizado:</b> ${d.material_texto}</div>
             <div class="revisao-linha"><b>Observação:</b> ${d.observacao}</div>
-            <div class="revisao-linha"><b>Trabalho em Altura:</b> ${d.trabalho_altura} ${d.trabalhadores_altura ? `(${d.trabalhadores_altura})` : ""}</div>
+            <div class="revisao-linha"><b>Trabalho em Altura:</b> ${d.trabalhadores_altura || "Não houve"}</div>
             <div class="revisao-linha"><b>Equipe:</b> ${d.equipe} | <b>Técnico:</b> ${d.tecnico}</div>
         `;
         document.getElementById("conteudoRevisao").innerHTML = html;
@@ -1247,9 +1241,6 @@
                 doc.rect(margemEsquerda, yPos, larguraUtil, 8, "D");
 
                 secao.conteudo.forEach((item, idx) => {
-                    // Desenha borda da coluna
-                    doc.rect(margemEsquerda + idx * larguraColuna, yPos, larguraColuna, 8, "D");
-                    
                     // Título negrito
                     doc.setFont("helvetica", "bold");
                     doc.text(item[0], margemEsquerda + idx * larguraColuna + 2, yPos + 6);
@@ -1309,9 +1300,6 @@
                             const [label, key] = mediçõesModelo[idx];
                             const xBase = margemEsquerda + col * (larguraUtil / 2);
 
-                            // Borda da coluna
-                            doc.rect(xBase, yPos, larguraUtil / 2, 8, "D");
-                            
                             // Valor normal (Técnico)
                             doc.setFont("helvetica", "normal");
                             doc.text(String(os[key] || "-"), xBase + 2, yPos + 6);
