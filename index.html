@@ -465,6 +465,17 @@
     let cacheConsultaOS = [];
     let cacheEstoqueAtual = [];
 
+    // --- NORMALIZAÇÃO ESTRITA DE DATA PARA dd/mm/aaaa ---
+    function normalizarDataBR(valor) {
+        const s = String(valor || "").trim();
+        if (!s) return "";
+        const matchBR = s.match(/(\d{2}\/\d{2}\/\d{4})/);
+        if (matchBR) return matchBR[1];
+        const matchISO = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (matchISO) return `${matchISO[3]}/${matchISO[2]}/${matchISO[1]}`;
+        return s;
+    }
+
     // --- FUNÇÕES DE NAVEGAÇÃO ---
     function abrirTela(id) {
         ["telaLogin", "telaMenu", "telaNovaOS", "telaRevisaoOS", "telaConsultaOS", "telaEstoque"].forEach(t => {
@@ -761,7 +772,7 @@
         const dtFinISO = getVal("osDataFinal");
         
         const converterISOparaBR = (iso) => {
-            if (!iso || !iso.includes("-")) return iso;
+            if (!iso || !iso.includes("-")) return normalizarDataBR(iso);
             const p = iso.split("-");
             return `${p[2]}/${p[1]}/${p[0]}`;
         };
@@ -820,7 +831,7 @@
             <div class="revisao-linha"><b>Filial:</b> ${d.filial}</div>
             <div class="revisao-linha"><b>Controladora:</b> ${d.controladora}</div>
             <div class="revisao-linha"><b>Tipo de Serviço:</b> ${d.tipo_servico}</div>
-            <div class="revisao-linha"><b>Período:</b> ${d.data_inicial} ${d.hora_inicial} até ${d.data_final} ${d.hora_final}</div>
+            <div class="revisao-linha"><b>Período:</b> ${normalizarDataBR(d.data_inicial)} ${d.hora_inicial} até ${normalizarDataBR(d.data_final)} ${d.hora_final}</div>
             ${d.codigos_servico ? `<div class="revisao-linha"><b>Código(s):</b> ${d.codigos_servico}</div>` : ""}
             <div class="revisao-linha"><b>Descrição Breve:</b> ${d.descricao_servico}</div>
             <div class="revisao-linha"><b>Modelo Controlador:</b> ${d.modelo_controlador}</div>
@@ -882,10 +893,13 @@
 
     // --- WHATSAPP ---
     function gerarMensagemWhatsApp(d, numOS) {
+        const dtIni = normalizarDataBR(d.data_inicial);
+        const dtFin = normalizarDataBR(d.data_final);
+
         let msg = `*Manutenção semafórica*\n\n` +
-                  `*Data Inicial:* ${d.data_inicial}\n` +
+                  `*Data Inicial:* ${dtIni}\n` +
                   ` *Horário inicial:* ${d.hora_inicial}\n` +
-                  `*Data final:* ${d.data_final}\n` + 
+                  `*Data final:* ${dtFin}\n` + 
                   ` *Horário final:* ${d.hora_final}\n\n` +
                   ` *Controladora:* ${d.controladora}\n\n`;
 
@@ -1001,7 +1015,11 @@
                 btn.innerText = "🔍 Buscar Ordens de Serviço";
                 
                 if (res.result === "success") {
-                    cacheConsultaOS = res.lista || [];
+                    cacheConsultaOS = (res.lista || []).map(item => ({
+                        ...item,
+                        data_inicial: normalizarDataBR(item.data_inicial),
+                        data_final: normalizarDataBR(item.data_final)
+                    }));
                     renderTabelaConsultaOS(cacheConsultaOS);
                 } else {
                     alert("Erro na busca: " + res.error);
@@ -1029,7 +1047,7 @@
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td><b>${os.numero_os}</b></td>
-                <td>${os.data_inicial}</td>
+                <td>${normalizarDataBR(os.data_inicial)}</td>
                 <td>${os.controladora}</td>
                 <td>${os.tecnico}</td>
                 <td>${os.equipe}</td>
@@ -1065,11 +1083,14 @@
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, "_blank");
     }
 
-    // --- PDF DA ORDEM DE SERVIÇO (LAYOUT EXATO DA IMAGEM) ---
+    // --- PDF DA ORDEM DE SERVIÇO ---
     function gerarPDFOrdemServico(idx) {
         const os = cacheConsultaOS[idx];
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF("p", "mm", "a4");
+
+        const dtIni = normalizarDataBR(os.data_inicial);
+        const dtFin = normalizarDataBR(os.data_final);
 
         const fillHeader = [217, 217, 217];
         const textDark = [20, 20, 20];
@@ -1141,12 +1162,12 @@
             ],
             [
                 { content: "DATA", colSpan: 1, styles: { fontStyle: "bold", halign: "right" } },
-                { content: os.data_inicial || "", colSpan: 2, styles: { halign: "center" } },
+                { content: dtIni, colSpan: 2, styles: { halign: "center" } },
                 { content: "HORA", colSpan: 1, styles: { fontStyle: "bold", halign: "right" } },
                 { content: os.hora_inicial || "", colSpan: 1, styles: { halign: "center" } },
                 { content: "", colSpan: 1 },
                 { content: "DATA", colSpan: 2, styles: { fontStyle: "bold", halign: "right" } },
-                { content: os.data_final || "", colSpan: 2, styles: { halign: "center" } },
+                { content: dtFin, colSpan: 2, styles: { halign: "center" } },
                 { content: "HORA", colSpan: 1, styles: { fontStyle: "bold", halign: "right" } },
                 { content: os.hora_final || "", colSpan: 1, styles: { halign: "center" } }
             ],
